@@ -11,7 +11,7 @@ export const regisSchema = yup.object({
 });
 // Recruiter Compmpany Registration
 export const companyValidation = yup.object({
-  uploadLogo: yup.string().required("Logo upload is required"),
+  uploadLogo: yup.mixed().required("Logo upload is required"),
   companyName: yup.string().required("Company name is required"),
   industry: yup.string().required("Industry type is required"),
   size: yup.string().oneOf(["1-10", "11-50", "51-200", "201-500", "500+"], "Invalid company size").required("Company size is required"),

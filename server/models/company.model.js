@@ -3,8 +3,8 @@ const companySchema = new mongoose.Schema(
   {
     uploadLogo: {
       type: String,
-      required: true,
     },
+
     companyName: {
       type: String,
       required: true,
@@ -16,23 +16,21 @@ const companySchema = new mongoose.Schema(
     size: {
       type: String,
       enum: ["1-10", "11-50", "51-200", "201-500", "500+"],
-      default: "1-10",
-      required:true,
+      required: true,
     },
     establishedYear: {
       type: Number,
-      required:true,
+      required: true,
     },
-    website: {
-      type: String,
-    },
+    website: String,
+
     location: {
       type: String,
       required: true,
     },
     description: {
       type: String,
-      required:true,
+      required: true,
     },
 
     contactEmail: {
@@ -44,14 +42,18 @@ const companySchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
+
     recruiterId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Users",                     // links to recruiter from Users model
+      ref: "Users",
       required: true,
-    }, 
+    }
   },
   { timestamps: true, versionKey: false }
 );
+
+module.exports = mongoose.model("Company", companySchema);
+
 
 const Company = mongoose.model("Company", companySchema);
 module.exports = Company;

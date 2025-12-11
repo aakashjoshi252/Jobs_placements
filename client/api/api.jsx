@@ -40,8 +40,8 @@ export const applicationApi = axios.create({
     // "http://localhost:3000/applications/company/:recruiterId"
 });
 
-export const uploadApi = axios.create({
-    baseURL: `http://localhost:3000/upload`
+// export const uploadApi = axios.create({
+//     baseURL: `http://localhost:3000/uploads`
     // "http://localhost:3000/upload/save"
     // "http://localhost:3000/upload/getimage"
-})
+// })

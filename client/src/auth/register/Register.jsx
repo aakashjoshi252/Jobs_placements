@@ -1,7 +1,6 @@
   import { useFormik } from "formik";
   import { regisSchema } from "../../schema/index";
   import { NavLink,useNavigate} from "react-router-dom";
-  import "./res.css";
   import {userApi} from "../../../api/api"
   
   const initialValue = {

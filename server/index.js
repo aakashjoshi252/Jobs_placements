@@ -9,7 +9,7 @@ const companyRoute = require("./routes/company.route.js");
 const jobsRoute = require("./routes/jobs.route.js");
 const resumeRoute = require("./routes/resume.route.js");
 const applicationsRoute = require("./routes/applications.route.js");
-const uploadRoute = require("./routes/uploadRoutes.js");  
+// const uploadRoute = require("./routes/uploadRoutes.js");  
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -25,14 +25,14 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use("/uploads", express.static("uploads"));
 // ROUTES
 app.use("/user", userRoute);
 app.use("/company", companyRoute);
 app.use("/jobs", jobsRoute);
 app.use("/resume", resumeRoute);
 app.use("/application", applicationsRoute);
-app.use("/upload", uploadRoute);  
+// app.use("/upload", uploadRoute);  
 
 // 404 HANDLER
 app.use((req, res) =>

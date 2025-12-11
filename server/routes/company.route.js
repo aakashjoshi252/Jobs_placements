@@ -1,8 +1,10 @@
 const express= require("express")
 const companyRoute= express.Router();
 const companyController= require("../controllers/company.controller")
+const upload = require("../config/upload");
 
-companyRoute.post("/register",companyController.createCompany), // create company
+companyRoute.post("/register", upload.single("uploadLogo"), companyController.createCompany);
+
 companyRoute.get("/recruiter/:recruiterId", companyController.getCompanyByRecruiterId);
 companyRoute.get("/:id", companyController.getCompanyById);
 
