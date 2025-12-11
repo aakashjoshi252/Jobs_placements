@@ -28,7 +28,7 @@ export default function Home() {
   };
 
   return (
-    <div className="home w-full">
+    <div className="home w-full mt-6">
 
       <Carousel />
 

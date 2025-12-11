@@ -1,31 +1,23 @@
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { companyApi } from "../../../../api/api";
 
 export default function Profile() {
   const user = useSelector((state) => state.auth.user);
-  const [company, setCompany] = useState(null);
+  const company = useSelector((state) => state.company.data);
+
   const [loading, setLoading] = useState(true);
 
-  const fetchCompany = async (recruiterId) => {
-    try {
-      const response = await companyApi.get(`/recruiter/${recruiterId}`);
-      const companyData = response.data.data || response.data;
-      setCompany(companyData);
-    } catch (err) {
-      console.error("Failed to load company:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (user?._id && user.role === "recruiter") {
-      fetchCompany(user._id);
+    if (!user) return;
+
+    // If recruiter, wait for company data to load from Redux
+    if (user.role === "recruiter") {
+      setLoading(false); // company already fetched in SidePanel
     } else {
+      // Candidate, no need to wait for anything
       setLoading(false);
     }
-  }, [user]);
+  }, [user, company]);
 
   if (!user || loading)
     return <div className="text-center mt-10 text-gray-600">Loading...</div>;
@@ -43,7 +35,6 @@ export default function Profile() {
               Recruiter Profile
             </h2>
 
-            {/* USER INFO */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ProfileField label="Name" value={user.username} />
               <ProfileField label="Email" value={user.email} />
@@ -53,49 +44,55 @@ export default function Profile() {
 
             <hr className="my-10" />
 
-            {/* COMPANY INFO */}
             <h3 className="text-2xl font-semibold text-gray-800 mb-6">
               Company Information
             </h3>
 
-            {company?.uploadLogo && (
-              <img
-                src={company?.uploadLogo.startsWith("http") ? company?.uploadLogo : `/uploads/${company?.uploadLogo}`}
-                alt="Company Logo"
-                width="100"
-                className="w-32 h-32 object-contain mb-6 border rounded-xl"
-              />
+            {!company ? (
+              <p className="text-red-500">Company not found. Please register.</p>
+            ) : (
+              <>
+                {company?.uploadLogo && (
+                  <img
+                    src={
+                      company.uploadLogo.startsWith("http")
+                        ? company.uploadLogo
+                        : `/uploads/${company.uploadLogo}`
+                    }
+                    alt="Company Logo"
+                    className="w-32 h-32 object-contain mb-6 border rounded-xl"
+                  />
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <ProfileField label="Company Name" value={company.companyName} />
+                  <ProfileField label="Company Email" value={company.contactEmail} />
+                  <ProfileField label="Phone" value={company.contactNumber} />
+                  <ProfileField label="Established Year" value={company.establishedYear} />
+                  <ProfileField label="Industry" value={company.industry} />
+                  <ProfileField label="Location" value={company.location} />
+
+                  <div>
+                    <p className="text-gray-500 text-sm">Website</p>
+                    <a
+                      href={company.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-3 bg-gray-50 rounded-lg border text-blue-600 block break-all"
+                    >
+                      {company.website || "Not Provided"}
+                    </a>
+                  </div>
+
+                  <div className="col-span-full">
+                    <ProfileField
+                      label="Description"
+                      value={company.description}
+                    />
+                  </div>
+                </div>
+              </>
             )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ProfileField label="Company Name" value={company?.companyName} />
-              <ProfileField label="Company Email" value={company?.contactEmail} />
-              <ProfileField label="Phone" value={company?.contactNumber} />
-              <ProfileField label="Established Year" value={company?.establishedYear} />
-              <ProfileField label="Industry" value={company?.industry} />
-              <ProfileField label="Location" value={company?.location} />
-
-              {/* Website */}
-              <div>
-                <p className="text-gray-500 text-sm">Website</p>
-                <a
-                  href={company?.website}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-3 bg-gray-50 rounded-lg border text-blue-600 block break-all"
-                >
-                  {company?.website || "Not Provided"}
-                </a>
-              </div>
-
-              {/* Description full width */}
-              <div className="col-span-full">
-                <ProfileField
-                  label="Description"
-                  value={company?.description}
-                />
-              </div>
-            </div>
           </>
         )}
 
@@ -135,7 +132,6 @@ export default function Profile() {
   );
 }
 
-/* ---------- SMALL REUSABLE COMPONENT ---------- */
 function ProfileField({ label, value }) {
   return (
     <div className="flex flex-col">

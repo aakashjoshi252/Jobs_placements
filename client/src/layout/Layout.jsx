@@ -11,9 +11,9 @@ export default function Layout() {
   return (
   <>
     <Header />
-    <div className="flex flex-col md:flex-row min-h-[calc(100vh-140px)]  w-full bg-gray-100">
+    <div className="flex flex-col mt-6 md:flex-row min-h-[calc(100vh-140px)]  w-full bg-gray-100">
       {isLoggedIn && (
-        <aside className="position-fixed top-30 pt-2 w-full md:w-[230px]  text-white  ">
+        <aside className="position-fixed mt-9 pt-3 w-full md:w-[230px]  text-white  ">
           <Sidepanel role={user?.role} />
         </aside>
       )}
