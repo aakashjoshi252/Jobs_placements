@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import "./carou.css";
 
 export default function Carousel() {
   const images = [
@@ -15,30 +14,40 @@ export default function Carousel() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 2000); // auto-slide every 3 seconds
+    }, 2000);
 
     return () => clearInterval(timer);
   }, [images.length]);
 
   return (
-    <div className="carousel-container">
+    <div className="relative w-full overflow-hidden h-64 md:h-80 lg:h-[450px]">
+      {/* Slider */}
       <div
-        className="carousel-slider"
+        className="flex transition-transform duration-700 ease-in-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {images.map((src, index) => (
-          <img key={index} src={src} alt={`slide-${index}`} className="carousel-image" />
+          <img
+            key={index}
+            src={src}
+            alt={`slide-${index}`}
+            className="w-full flex-shrink-0 object-cover"
+          />
         ))}
       </div>
 
       {/* Dots */}
-      <div className="carousel-dots">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
         {images.map((_, index) => (
-          <span
+          <button
             key={index}
-            className={`dot ${index === currentIndex ? "active" : ""}`}
             onClick={() => setCurrentIndex(index)}
-          ></span>
+            className={`w-3 h-3 rounded-full transition-all ${
+              currentIndex === index
+                ? "bg-white scale-125 shadow-md"
+                : "bg-white/50"
+            }`}
+          ></button>
         ))}
       </div>
     </div>

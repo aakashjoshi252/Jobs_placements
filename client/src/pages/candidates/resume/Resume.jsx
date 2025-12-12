@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 export default function EmployeeResume() {
   const navigate = useNavigate();
   const resume = useSelector((state) => state.resume.data);
+  console.log("Resume Data:", resume);
 
   if (!resume) {
     return (

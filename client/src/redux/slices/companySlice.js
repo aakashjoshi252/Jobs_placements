@@ -3,9 +3,9 @@ import { createSlice } from "@reduxjs/toolkit";
 const companySlice = createSlice({
   name: "company",
   initialState: {
-    data: null,       // company object
-    loading: false,   // while fetching
-    error: null,      // any API error
+    data: null,       
+    loading: false,   
+    error: null, 
   },
   reducers: {
     setCompanyLoading: (state) => {

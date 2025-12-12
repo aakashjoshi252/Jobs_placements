@@ -7,7 +7,9 @@ import { useNavigate } from "react-router-dom";
 export default function JobApply() {
   const navigate = useNavigate();
   const LoggedUser = useSelector((state) => state.auth.user);
-
+  const resume = useSelector((state) => state.resume.data);
+  const job = safeParse(localStorage.getItem("selectedJob"));
+  
   const safeParse = (v) => {
     try {
       return JSON.parse(v);
@@ -16,8 +18,6 @@ export default function JobApply() {
     }
   };
 
-  const job = safeParse(localStorage.getItem("selectedJob"));
-  const resume = safeParse(localStorage.getItem("resume"));
 
   const [coverLetter, setCoverLetter] = useState("");
   const [loading, setLoading] = useState(false);

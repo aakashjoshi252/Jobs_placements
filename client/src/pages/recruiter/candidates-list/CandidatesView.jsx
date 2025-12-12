@@ -5,38 +5,38 @@ import { applicationApi } from "../../../../api/api";
 export default function CandidateView() {
   const { applicationId } = useParams();
   const [application, setApplication] = useState(null);
-  const [note, setNote] = useState("");
+  const [notes, setNotes] = useState("");
 
   const fetchData = async () => {
     try {
       const res = await applicationApi.get(`/candidatedata/${applicationId}`);
       setApplication(res.data);
-      setNote(res.data.recruiterNote || "");
+      setNotes(res.data.recruiterNote || "");
     } catch (err) {
       console.error("Error fetching:", err);
     }
   };
 
   const updateStatus = async (status) => {
-    try {
-      await applicationApi.put(`/status/${applicationId}`, { status });
+  try {
+    await applicationApi.put(`/status/${applicationId}`, { status });
 
-      setApplication((prev) => ({
-        ...prev,
-        status,
-        timeline: [
-          ...prev.timeline,
-          { status, date: new Date().toISOString() }
-        ]
-      }));
-    } catch (error) {
-      console.error("Status update failed:", error);
-    }
-  };
+    setApplication((prev) => ({
+      ...prev,
+      status,
+      timeline: [
+        ...(prev.timeline || []),   
+        { status, date: new Date().toISOString() }
+      ]
+    }));
+  } catch (error) {
+    console.error("Status update failed:", error);
+  }
+};
 
   const saveNote = async () => {
     try {
-      await applicationApi.put(`/note/${applicationId}`, { note });
+      await applicationApi.put(`/status/${applicationId}`, { notes });
       alert("Note saved");
     } catch (error) {
       console.error("Failed to save note:", error);
@@ -150,8 +150,8 @@ export default function CandidateView() {
           <h3 className="text-xl font-semibold text-gray-800">Recruiter Notes</h3>
           <textarea
             className="w-full mt-2 border border-gray-300 rounded-lg p-3 min-h-[120px]"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
             placeholder="Write your notes..."
           />
           <button
