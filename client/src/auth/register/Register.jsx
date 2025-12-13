@@ -16,7 +16,7 @@
     const navigate=useNavigate();
     const submitHandler = async (values, { resetForm }) => {
       try {
-        const response= await userApi.post("/user/register/",values);
+        const response= await userApi.post("/register/",values);
         console.log("Form submitted:", values);
         alert("Registration Successful!");
         resetForm();

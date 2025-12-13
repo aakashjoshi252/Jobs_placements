@@ -1,4 +1,4 @@
-const Users = require("../models/user.model");
+const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
 
@@ -14,58 +14,84 @@ const userController = {
         return res.status(400).json({ message: "Please enter all required inputs" });
       }
 
-      const existUser = await Users.findOne({ $or: [{ email }, { phone }] });
+      const existUser = await User.findOne({ $or: [{ email }, { phone }] });
       if (existUser) {
         return res.status(409).json({ message: "User already exists.", data: existUser.email });
       }
 
-      const newUser = await Users.create(req.body);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      const newUser = await User.create(
+        {
+          username,
+          email,
+          password: hashedPassword,
+          role,
+          phone,
+        }
+      );
+
       return res.status(201).json({ message: "User created successfully", data: newUser });
     } catch (error) {
       console.error("Error creating user:", error);
       return res.status(500).json({ message: "Internal server error", error });
     }
   },
+  loginUser: async (req, res) =>{
+    try {
+      const { email, password } = req.body;
 
-  // Login user by Email + Role + Password
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
 
-loginUser: async (req, res) => {
- const { email, password } = req.body;
+      const user = await User.findOne({ email });
 
-  try {
-    const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
 
-    if (!user)
-      return res.status(401).json({ message: "Invalid credentials" });
+      const isMatch = await bcrypt.compare(password, user.password);
 
-    const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
 
-    if (!isMatch)
-      return res.status(401).json({ message: "Invalid credentials" });
+      const token = generateToken(user);
 
-    const token = generateToken(user);
+      // 🍪 SET HTTP-ONLY COOKIE
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: false,          // true in production (HTTPS)
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
-    res.json({
-      message: "Login successful",
-      token,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-}
-,
+      return res.status(200).json({
+        message: "Login successful",
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  },
+  logoutUser : (req, res) => {
+  res.clearCookie("token");
+  res.status(200).json({ message: "Logged out successfully" });
+},
+
   // Update user by ID
   updateUsersById: async (req, res) => {
     try {
       const id = req.params.id;
       const updatedData = req.body;
-      const updateUser = await Users.findByIdAndUpdate(id, updatedData, { new: true });
+      const updateUser = await User.findByIdAndUpdate(id, updatedData, { new: true });
       if (!updateUser) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -83,7 +109,7 @@ loginUser: async (req, res) => {
       if (!id) {
         return res.status(404).json({ message: "User ID required" });
       }
-      const deletedUser = await Users.findByIdAndDelete(id);
+      const deletedUser = await User.findByIdAndDelete(id);
       if (!deletedUser) {
         return res.status(404).json({ message: "User not found" });
       }

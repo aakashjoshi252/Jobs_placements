@@ -2,6 +2,9 @@ require("dotenv").config();
 const cors = require("cors");
 const express = require("express");
 const connectDb = require("./config/config.js");
+const cookieParser = require("cookie-parser");
+
+
 
 // IMPORT ROUTES
 const userRoute = require("./routes/user.route.js");
@@ -24,6 +27,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 // ROUTES

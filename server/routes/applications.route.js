@@ -11,6 +11,11 @@ applicationsRoute.post("/apply", protect, isCandidate, applyJob);
 applicationsRoute.patch("/approve/:applicationId", protect, isRecruiter, approveApplication);
 applicationsRoute.patch("/reject/:applicationId", protect, isRecruiter, rejectApplication);
 
+// router.post("/", protect, isCandidate, applyJob);
+// router.get("/applied/:id", protect, isCandidate, getAppliedJobs);
+
+// router.get("/candidatedata/:id", protect, isRecruiter, getCandidateData);
+// applicationsRoute.put("/status/:id", protect, isRecruiter, updateStatus);
 
 
 module.exports = applicationsRoute;

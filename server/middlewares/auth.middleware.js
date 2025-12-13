@@ -1,49 +1,39 @@
 const jwt = require("jsonwebtoken");
-const Users = require("../models/user.model");
+const User = require("../models/user.model");
 
-/**
- * Protect routes - verifies JWT token
- */
+
+//  Protect routes - verifies JWT token
+
 exports.protect = async (req, res, next) => {
   let token;
 
-  // Get token from header
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
+  // 🍪 Read token from cookie
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
   }
 
-  // Token missing
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized: No token provided" });
+    return res.status(401).json({ message: "Unauthorized: No token" });
   }
 
   try {
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Attach user to request
-    const user = await Users.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized: User not found" });
+      return res.status(401).json({ message: "User not found" });
     }
 
     req.user = user;
-    req.user.id = user._id;
-    req.user.role = user.role;
-
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 
-/**
- * Recruiter-only access
- */
+
+//  Recruiter-only access
 exports.isRecruiter = (req, res, next) => {
   if (req.user.role !== "recruiter") {
     return res.status(403).json({ message: "Access denied: Recruiter only" });
@@ -51,9 +41,8 @@ exports.isRecruiter = (req, res, next) => {
   next();
 };
 
-/**
- * Candidate-only access
- */
+//  Candidate-only access
+
 exports.isCandidate = (req, res, next) => {
   if (req.user.role !== "candidate") {
     return res.status(403).json({ message: "Access denied: Candidate only" });
