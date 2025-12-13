@@ -9,7 +9,7 @@ const companyRoute = require("./routes/company.route.js");
 const jobsRoute = require("./routes/jobs.route.js");
 const resumeRoute = require("./routes/resume.route.js");
 const applicationsRoute = require("./routes/applications.route.js");
-// const uploadRoute = require("./routes/uploadRoutes.js");  
+const dashboardRoutes = require("./routes/dashboard.route.js");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -32,7 +32,7 @@ app.use("/company", companyRoute);
 app.use("/jobs", jobsRoute);
 app.use("/resume", resumeRoute);
 app.use("/application", applicationsRoute);
-// app.use("/upload", uploadRoute);  
+app.use("/dashboard", dashboardRoutes); 
 
 // 404 HANDLER
 app.use((req, res) =>

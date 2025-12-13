@@ -1,13 +1,16 @@
-const express= require("express")
-const applicationsRoute= express.Router();
-const applicationsController= require("../controllers/applications.controller")
+const express = require("express")
+const applicationsRoute = express.Router();
 
-applicationsRoute.post("/apply", applicationsController.applyForJob);
-applicationsRoute.put("/status/:applicationId", applicationsController.updateApplicationStatus);
-applicationsRoute.get("/candidatedata/:id", applicationsController.getApplicationsById);
-applicationsRoute.get("/applied/:candidateId", applicationsController.getApplicationsByCandidate);
-applicationsRoute.get("/recruiter/:recruiterId", applicationsController.getApplicationsByRecruiter);
-// applicationsRoute.get("/job/:jobId", applicationsController.getApplicationsByJob);
+const { applyJob, approveApplication, rejectApplication, } = require("../controllers/applications.controller");
+const { protect, isRecruiter, isCandidate, } = require("../middlewares/auth.middleware");
+
+// Candidate applies
+applicationsRoute.post("/apply", protect, isCandidate, applyJob);
+
+// Recruiter actions
+applicationsRoute.patch("/approve/:applicationId", protect, isRecruiter, approveApplication);
+applicationsRoute.patch("/reject/:applicationId", protect, isRecruiter, rejectApplication);
 
 
-module.exports= applicationsRoute;
+
+module.exports = applicationsRoute;

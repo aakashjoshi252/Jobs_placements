@@ -1,244 +1,95 @@
-const Applications = require("../models/application.model");
+const Application = require("../models/application.model");
 const Job = require("../models/jobs.model");
 const Company = require("../models/company.model")
 const Users = require("../models/user.model");
 
-const applicationsController={
-// APPLY FOR A JOB
-// ------------------------------------
-applyForJob : async (req, res) => {
+exports.applyJob = async (req, res) => {
   try {
-    const { jobId, candidateId, resumeId, coverLetter = "" } = req.body;
+    const { jobId } = req.body;
+    const candidateId = req.user.id;
 
-    if (!jobId || !candidateId || !resumeId) {
-      return res.status(400).json({ message: "Missing required fields!" });
-    }
-
-    const job = await Job.findById(jobId);
+    // check job exists
+    const job = await Job.findById(jobId).populate("company");
     if (!job) {
-      return res.status(404).json({ message: "Job not found!" });
+      return res.status(404).json({ message: "Job not found" });
     }
 
-    const recruiterId = job.recruiterId;
-    const company = await Company.findOne({ recruiterId });
-
-    if (!company) {
-      return res
-        .status(404)
-        .json({ message: "Company not found for recruiter!" });
-    }
-
-    const alreadyApplied = await Applications.findOne({ jobId, candidateId });
-    if (alreadyApplied) {
-      return res
-        .status(400)
-        .json({ message: "You have already applied to this job!" });
-    }
-
-    const application = await Applications.create({
-      jobId,
-      candidateId,
-      recruiterId,
-      companyId: company._id,
-      resumeId,
-      coverLetter,
-      status: "Applied",
+    // prevent duplicate application
+    const existing = await Application.findOne({
+      job: jobId,
+      candidate: candidateId,
     });
 
-    return res.status(201).json({
-      message: "Job applied successfully!",
+    if (existing) {
+      return res.status(400).json({ message: "Already applied to this job" });
+    }
+
+    const application = await Application.create({
+      job: jobId,
+      candidate: candidateId,
+      recruiter: job.createdBy,
+      company: job.company,
+      status: "PENDING",
+    });
+
+    res.status(201).json({
+      message: "Job applied successfully",
       application,
     });
   } catch (error) {
-    console.error("Apply Job Error:", error);
-    return res
-      .status(500)
-      .json({ message: "Server Error!", error: error.message });
+    res.status(500).json({ message: error.message });
   }
-},
-// ------------------------------------
-// UPDATE APPLICATION STATUS
-// (Recruiter Only)
-// ------------------------------------
-updateApplicationStatus : async (req, res) => {
+};
+ exports.approveApplication = async (req, res) => {
   try {
+    const recruiterId = req.user.id;
     const { applicationId } = req.params;
-    const { status, interviewDate, notes } = req.body;
 
-    // Validate status
-    const validStatus = [
-      "Applied", 
-      "Reviewed",
-      "Shortlisted",
-      "Interview-Scheduled",
-      "Rejected",
-      "Selected",
-    ];
-
-    if (!validStatus.includes(status)) {
-      return res.status(400).json({ message: "Invalid status!" });
-    }
-
-    const application = await Applications.findById(applicationId);
-
-    if (!application) {
-      return res.status(404).json({ message: "Application not found!" });
-    }
-
-    // Update fields
-    application.status = status;
-
-    if (interviewDate) application.interviewDate = interviewDate;
-    if (notes) application.notes = notes;
-
-    await application.save();
-
-    res.status(200).json({
-      message: "Application status updated!",
-      application,
-    });
-  } catch (error) {
-    console.error("Update Status Error:", error);
-    res.status(500).json({ message: "Server Error!", error: error.message });
-  }
-},
-// ------------------------------------
-// GET APPLICATIONS FOR A CANDIDATE
-// ------------------------------------
-// controllers/applicationController.js
-
-getApplicationsByCandidate : async (req, res) => {
-  try {
-    const { candidateId } = req.params; // from /applied/:candidateId
-
-    if (!candidateId) {
-      return res.status(400).json({ message: "candidateId is required" });
-    }
-
-    const applications = await Applications.find({ candidateId })
-      .populate({
-        path: "jobId",
-        model: "Job",
-        select: "title location salary jobType companyId",
-        populate: {
-          path: "companyId",
-          model: "Company",
-          select: "companyName",
-        },
-      })
-      .populate({
-        path: "resumeId",
-        model: "Resume",
-        select: "fileName createdAt",
-      })
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({ applications });
-  } catch (error) {
-    console.error("Get Applied Jobs Error:", error);
-    return res
-      .status(500)
-      .json({ message: "Server Error!", error: error.message });
-  }
-},
-// ------------------------------------
-// GET APPLICATIONS FOR A RECRUITER
-// (All applicants for their jobs)
-// ------------------------------------
-getApplicationsByRecruiter : async (req, res) => {
-  try {
-    const { recruiterId } = req.params;
-
-    const applications = await Applications.find({ recruiterId })
-       .populate({
-        path: "jobId",
-        model: "Job",
-        select: "title location salary jobType companyId",
-        populate: {
-          path: "companyId",
-          model: "Company",
-          select: "companyName",
-        },
-      })
-      .populate({
-        path: "resumeId",
-        model: "Resume",
-        select: "fileName createdAt",
-      })
-      .populate({
-        path: "candidateId",
-        model: "Users",
-        select: "username email phone",
-      })
-      .sort({ createdAt: -1 });
-
-    res.status(200).json(applications);
-  } catch (error) {
-    console.error("Fetch Recruiter Applications Error:", error);
-    res.status(500).json({ message: "Server Error!", error: error.message });
-  }
-},
-// ------------------------------------
-// GET APPLICATIONS FOR A SPECIFIC JOB
-// (Applicants for one job)
-// ------------------------------------
-getApplicationsByJob : async (req, res) => {
-  try {
-    const { jobId } = req.params;
-
-    const applications = await Applications.find({ jobId })
-      .populate("candidateId")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json(applications);
-  } catch (error) {
-    console.error("Fetch Job Applications Error:", error);
-    res.status(500).json({ message: "Server Error!", error: error.message });
-  }
-},
-getApplicationsById: async (req, res) => {
- try {
-    const { id } = req.params;
-
-    // Validate MongoDB ObjectId
-    if (!id) {
-      return res.status(400).json({ message: "Invalid Application ID" });
-    }
-
-    const application = await Applications.findById(id)
-      .populate({
-        path: "candidateId",
-        model: "Users",
-        select: "username email phone",
-      })
-      .populate({
-        path: "jobId",
-        model: "Job",
-        select: "title location salary jobType description companyId",
-        populate: {
-          path: "companyId",
-          model: "Company",
-          select: "companyName logo",
-        },
-      })
-      .populate({
-        path: "resumeId",
-        model: "Resume",
-        select: "fullName jobTitle skills experiences education languages summary address phone email",
-      });
+    const application = await Application.findById(applicationId).populate("job");
 
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
     }
 
-    return res.status(200).json(application);
+    // check recruiter owns the job
+    if (application.recruiter.toString() !== recruiterId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    application.status = "APPROVED";
+    await application.save();
+
+    res.json({
+      message: "Application approved",
+      application,
+    });
   } catch (error) {
-    console.error("Error fetching application:", error);
-    return res.status(500).json({ message: "Server Error", error: error.message });
+    res.status(500).json({ message: error.message });
   }
-}
 };
+ exports.rejectApplication = async (req, res) => {
+  try {
+    const recruiterId = req.user.id;
+    const { applicationId } = req.params;
 
+    const application = await Application.findById(applicationId);
 
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
 
-module.exports= applicationsController;
+    if (application.recruiter.toString() !== recruiterId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    application.status = "REJECTED";
+    await application.save();
+
+    res.json({
+      message: "Application rejected",
+      application,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

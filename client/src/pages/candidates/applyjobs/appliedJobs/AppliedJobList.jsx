@@ -5,17 +5,22 @@ import { useNavigate } from "react-router-dom";
 
 export default function AppliedJobs() {
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user);
+  const { user, token } = useSelector((state) => state.auth);
 
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAppliedJobs = async () => {
-      if (!user?._id) return;
+      if (!user?._id || !token) return;
 
       try {
-        const res = await applicationApi.get(`/applied/${user._id}`);
+        const res = await applicationApi.get(`/apply/${user._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         setApplications(res.data.applications || []);
       } catch (err) {
         console.error("Fetch Applied Jobs Error:", err);
@@ -23,8 +28,9 @@ export default function AppliedJobs() {
         setLoading(false);
       }
     };
+
     fetchAppliedJobs();
-  }, [user?._id]);
+  }, [user?._id, token]);
 
   if (!user?._id) {
     return (
@@ -58,8 +64,8 @@ export default function AppliedJobs() {
 
       <div className="grid md:grid-cols-2 gap-8">
         {applications.map((app) => {
-          const job = app.jobId;
-          const company = job?.companyId;
+          const job = app.job;
+          const company = app.company;
 
           return (
             <div
@@ -76,16 +82,16 @@ export default function AppliedJobs() {
                 {company?.companyName || "N/A"}
               </p>
 
-              {/* Status Badge */}
+              {/* ✅ STATUS BADGE (FIXED) */}
               <div className="mb-3">
                 <span
                   className={`px-3 py-1 text-sm rounded-full font-medium
                     ${
-                      app.status === "Pending"
+                      app.status === "PENDING"
                         ? "bg-yellow-100 text-yellow-700"
-                        : app.status === "Rejected"
+                        : app.status === "REJECTED"
                         ? "bg-red-100 text-red-700"
-                        : app.status === "Selected"
+                        : app.status === "APPROVED"
                         ? "bg-green-100 text-green-700"
                         : "bg-gray-200 text-gray-700"
                     }

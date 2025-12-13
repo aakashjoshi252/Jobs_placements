@@ -1,4 +1,8 @@
 const Users = require("../models/user.model");
+const bcrypt = require("bcryptjs");
+const generateToken = require("../utils/generateToken");
+
+
 
 const userController = {
   // Create a new user
@@ -26,34 +30,33 @@ const userController = {
   // Login user by Email + Role + Password
 
 loginUser: async (req, res) => {
+ const { email, password } = req.body;
+
   try {
-    const { email, role, password } = req.body;
+    const user = await User.findOne({ email });
 
-    if (!email || !role || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+    if (!user)
+      return res.status(401).json({ message: "Invalid credentials" });
 
-    const user = await Users.findOne({ email, role });
-    if (!user) {
-      return res.status(404).json({ message: "Invalid email or role" });
-    }
+    const isMatch = await bcrypt.compare(password, user.password);
 
-  
-    if (user.password !== password) {
-      return res.status(401).json({ message: "Invalid password" });
-    }
+    if (!isMatch)
+      return res.status(401).json({ message: "Invalid credentials" });
 
-    return res.status(200).json({
+    const token = generateToken(user);
+
+    res.json({
       message: "Login successful",
-      data: user,
+      token,
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
     });
-
   } catch (error) {
-    console.error("Login error:", error);
-    return res.status(500).json({
-      message: "Internal server error",
-      error: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 }
 ,
