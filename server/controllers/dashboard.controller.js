@@ -1,43 +1,89 @@
 const Job = require("../models/jobs.model");
 const Application = require("../models/application.model");
+const mongoose = require("mongoose");
 
 exports.recruiterDashboard = async (req, res) => {
   try {
-    const recruiterId = req.user.id;
+    const recruiterId = req.user._id;
 
-    const totalJobs = await Job.countDocuments({ createdBy: recruiterId });
+    // 1️⃣ Total jobs posted by recruiter
+    const totalJobs = await Job.countDocuments({
+      recruiterId,
+    });
 
-    const applications = await Application.find({ recruiter: recruiterId });
+    // 2️⃣ Find recruiter's jobs
+    const recruiterJobs = await Job.find({ recruiterId }).select("_id");
 
-    const stats = {
-      totalJobs,
-      totalApplications: applications.length,
-      pending: applications.filter(a => a.status === "PENDING").length,
-      approved: applications.filter(a => a.status === "APPROVED").length,
-      rejected: applications.filter(a => a.status === "REJECTED").length,
-    };
+    const jobIds = recruiterJobs.map(job => job._id);
 
-    res.json(stats);
+    // 3️⃣ Total applications on recruiter's jobs
+    const totalApplications = await Application.countDocuments({
+      jobId: { $in: jobIds },
+    });
+
+    // 4️⃣ Shortlisted candidates
+    const shortlisted = await Application.countDocuments({
+      jobId: { $in: jobIds },
+      status: "Shortlisted",
+    });
+
+    // 5️⃣ Selected candidates
+    const selected = await Application.countDocuments({
+      jobId: { $in: jobIds },
+      status: "Selected",
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalJobs,
+        totalApplications,
+        shortlisted,
+        selected,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Recruiter dashboard error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load dashboard data",
+    });
   }
 };
-
 exports.candidateDashboard = async (req, res) => {
   try {
-    const candidateId = req.user.id;
-
-    const applications = await Application.find({ candidate: candidateId });
-
-    const stats = {
-      totalApplied: applications.length,
-      pending: applications.filter(a => a.status === "PENDING").length,
-      approved: applications.filter(a => a.status === "APPROVED").length,
-      rejected: applications.filter(a => a.status === "REJECTED").length,
-    };
-
-    res.json(stats);
+    const candidateId = req.user._id;
+    // 1️⃣ Total applications by candidate
+    const totalApplications = await Application.countDocuments({
+      candidateId,
+    });
+    // 2️⃣ Applications status count
+    const pending = await Application.countDocuments({
+      candidateId,
+      status: "Pending",
+    });
+    const shortlisted = await Application.countDocuments({
+      candidateId,
+      status: "Shortlisted",
+    });
+    const selected = await Application.countDocuments({
+      candidateId,
+      status: "Selected",
+    });
+    res.status(200).json({
+      success: true,
+      data: {
+        totalApplications,
+        pending,
+        shortlisted,
+        selected,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Candidate dashboard error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load dashboard data",
+    });
   }
 };

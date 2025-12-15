@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { api } from "../../api/api";
+import { dashboardApi } from "../../../api/api";
 
 export default function RecruiterHome() {
   const { token } = useSelector((state) => state.auth);
   const [stats, setStats] = useState(null);
+  console.log("RecruiterHome rendered", stats);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await api.get("/dashboard/recruiter", {
+        const res = await dashboardApi.get("/recruiter", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        setStats(res.data);
+        setStats(res.data.data);
       } catch (err) {
         console.error("Dashboard error:", err);
       }
@@ -30,10 +31,10 @@ export default function RecruiterHome() {
       <h1 className="text-3xl font-bold mb-6">Recruiter Dashboard</h1>
 
       <div className="grid md:grid-cols-4 gap-6">
-        <Card title="Jobs Posted" value={stats.totalJobs} />
-        <Card title="Total Applications" value={stats.totalApplications} />
-        <Card title="Pending" value={stats.pending} />
-        <Card title="Approved" value={stats.approved} />
+        <Card title="Jobs Posted" value={stats.totalJobs || 0} />
+        <Card title="Total Applications" value={stats.totalApplications || 0} />
+        <Card title="Pending" value={stats.pending || 0} />
+        <Card title="Approved" value={stats.approved || 0} />
       </div>
     </div>
   );

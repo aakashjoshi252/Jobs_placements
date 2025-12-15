@@ -6,6 +6,7 @@ import { loginSuccess } from "../../redux/slices/authSlice";
 import { userApi, companyApi } from "../../../api/api";
 
 const initialValue = {
+  role: "candidate",
   email: "",
   password: "",
 };
@@ -59,7 +60,7 @@ export default function Login() {
         navigate("/admin/home");
       }
     } catch (error) {
-      setFieldError("email", "Invalid email or password");
+      setFieldError("email", "Invalid email or password or role");
     }
   };
 
@@ -78,6 +79,21 @@ export default function Login() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* role */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">
+              Role
+            </label>
+            <select
+              name="role"
+              value={values.role}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-2.5 bg-gray-50"
+            >
+              <option value="candidate">Candidate</option>
+              <option value="recruiter">Recruiter</option>
+            </select>
+          </div>
 
           {/* Email */}
           <div>
@@ -92,9 +108,7 @@ export default function Login() {
               onChange={handleChange}
               className="w-full border rounded-lg p-2.5 bg-gray-50"
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
+            
           </div>
 
           {/* Password */}
@@ -111,6 +125,9 @@ export default function Login() {
               className="w-full border rounded-lg p-2.5 bg-gray-50"
             />
           </div>
+          {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
 
           {/* Buttons */}
           <div className="flex gap-3 pt-2">

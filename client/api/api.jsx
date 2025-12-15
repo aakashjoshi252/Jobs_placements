@@ -1,60 +1,37 @@
-import axios from "axios"
-export const api = axios.create({
-    baseURL: `http://localhost:3000`
+import axios from "axios";
 
-    // "http://localhost:3000/user/login/"
-    // "http://localhost:3000/user/register/"
+const BASE_URL = "http://localhost:3000";
+
+export const dashboardApi = axios.create({
+  baseURL: `${BASE_URL}/dashboard`,
+  withCredentials: true, // ✅ send cookies
 });
-
+// ================= USER =================
 export const userApi = axios.create({
-    baseURL: `http://localhost:3000/user`
-
-    // "http://localhost:3000/user/login/"
-    // "http://localhost:3000/user/register/"
-});
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  baseURL: `${BASE_URL}/user`,
+  withCredentials: true, // ✅ send cookies
 });
 
+// ================= COMPANY =================
 export const companyApi = axios.create({
-    baseURL: `http://localhost:3000/company`
-
-    // "http://localhost:3000/company/:id"
-    // "http://localhost:3000/company/recruiter/:recruiterId"
+  baseURL: `${BASE_URL}/company`,
+  withCredentials: true, // ✅ REQUIRED
 });
+
+// ================= JOBS =================
 export const jobsApi = axios.create({
-    baseURL: `http://localhost:3000/jobs`
-
-    // http://localhost:3000/jobs/create" 
-    // http://localhost:3000/jobs/:id"" 
-    // "http://localhost:3000/jobs/"
-    // "http://localhost:3000/jobs/recruiter/:recruiterId"
-    // "http://localhost:3000/jobs/company/:recruiterId"
+  baseURL: `${BASE_URL}/jobs`,
+  withCredentials: true,
 });
+
+// ================= RESUME =================
 export const resumeApi = axios.create({
-    baseURL: `http://localhost:3000/resume`
-
-    // http://localhost:3000/resume/create" 
-    // "http://localhost:3000/resume/"
-    // "http://localhost:3000/resume/recruiter/:recruiterId"
-    // "http://localhost:3000/resume/company/:recruiterId"
+  baseURL: `${BASE_URL}/resume`,
+  withCredentials: true,
 });
 
+// ================= APPLICATION =================
 export const applicationApi = axios.create({
-    baseURL: `http://localhost:3000/application`
-
-    // http://localhost:3000//application/apply" 
-    // "http://localhost:3000/applications/"
-    // "http://localhost:3000/applications/recruiter/:recruiterId"
-    // "http://localhost:3000/applications/company/:recruiterId"
+  baseURL: `${BASE_URL}/applications`,
+  withCredentials: true,
 });
-
-// export const uploadApi = axios.create({
-//     baseURL: `http://localhost:3000/uploads`
-    // "http://localhost:3000/upload/save"
-    // "http://localhost:3000/upload/getimage"
-// })

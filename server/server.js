@@ -21,6 +21,7 @@ const port = process.env.PORT || 5000;
 connectDb;   
 // MIDDLEWARE
 app.use(cors({
+  credentials: true,
   origin: "http://localhost:5173",
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
