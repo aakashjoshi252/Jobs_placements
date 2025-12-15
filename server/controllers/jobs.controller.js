@@ -1,4 +1,4 @@
-const Jobs = require("../models/jobs.model")
+const Job = require("../models/jobs.model")
 // const Users = require("../models/user.model")
 const mongoose = require("mongoose");
 const jobsController = ({
@@ -31,7 +31,7 @@ const jobsController = ({
       // Ensure skills is always an array
       const skillsArray = Array.isArray(skills) ? skills : skills.split(",").map(s => s.trim());
 
-      const newJob = await Jobs.create({
+      const newJob = await Job.create({
         title,
         description,
         jobLocation,
@@ -67,7 +67,9 @@ const jobsController = ({
   },
   fetchJobs: async (req, res) => {
     try {
-      const allJobs = await Jobs.find({}).populate("companyId", "companyName location").populate("recruiterId", "username email");
+      const allJobs = await Job.find({})
+      .populate("companyId", "companyName location")
+      .populate("recruiterId", "username email");
       res.status(200).json(allJobs);
     } catch (error) {
       res.status(500).json({ message: "Error fetching jobs", error });
@@ -76,7 +78,7 @@ const jobsController = ({
   fetchJobById: async (req, res) => {
     try {
       const { id } = req.params;
-      const job = await Jobs.findById(id).populate("companyId", "companyName location").populate("recruiterId", "username email");
+      const job = await Job.findById(id).populate("companyId", "companyName location").populate("recruiterId", "username email");
 
       if (!job) return res.status(404).json({ message: "Job not found" });
 
@@ -91,7 +93,7 @@ const jobsController = ({
       if (!recruiterId) {
         return res.status(400).json({ message: "Recruiter ID required!" });
       }
-      const jobs = await Jobs.find({ recruiterId:recruiterId});
+      const jobs = await Job.find({ recruiterId:recruiterId});
       // Proper empty check
       if (jobs.length === 0) {
         return res.status(404).json({ message: "No jobs found for this recruiter!" });
@@ -108,7 +110,7 @@ const jobsController = ({
       if (!companyId) {
         return res.status(400).json({ message: "Recruiter ID required!" });
       }
-      const jobs = await Jobs.find({ companyId:companyId});
+      const jobs = await Job.find({ companyId:companyId});
       // Proper empty check
       if (jobs.length === 0) {
         return res.status(404).json({ message: "No jobs found for this recruiter!" });
@@ -117,6 +119,33 @@ const jobsController = ({
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: "Server error", error });
+    }
+  },
+  updateJobId: async (req, res) => {
+    try {
+     const { id } = req.params;
+     const updates = req.body;
+     const updatedJob = await Job.findByIdAndUpdate(id, updates, { new: true });
+     if (!updatedJob) {
+       return res.status(404).json({ message: "Job not found" });
+     }
+
+      return res.status(200).json({ message: "Job updated successfully", job: updatedJob });
+    } catch (error) {
+       return res.status(500).json({ message: "Error updating job", error });
+    }
+    
+  },
+  deleteJobId: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deletedJob = await Job.findByIdAndDelete(id);
+      if (!deletedJob) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+      return res.status(200).json({ message: "Job deleted successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: "Error deleting job", error });
     }
   },
 });

@@ -54,7 +54,7 @@ const companyController = {
       if (existCompany) {
         return res.status(409).json({
           message: "Company already exists.",
-          data: existCompany
+          data: existCompany.companyName || null
         });
       }
 
@@ -126,7 +126,43 @@ const companyController = {
       res.status(500).json({ message: "Server error", error });
     }
   },
-
+  updateCompanyById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      if (req.file) {
+        updateData.uploadLogo = `/uploads/${req.file.filename}`;
+      }
+      const updatedCompany = await Company.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true }
+      );
+      if (!updatedCompany) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      return res.status(200).json({
+        message: "Company updated successfully",
+        data: updatedCompany
+      });
+    } catch (error) {
+      console.error("Error updating company:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  },
+  deleteCompanyById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deletedCompany = await Company.findByIdAndDelete(id);
+      if (!deletedCompany) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      return res.status(200).json({ message: "Company deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting company:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  },
 };
 
 module.exports = companyController;

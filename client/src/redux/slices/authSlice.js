@@ -1,30 +1,55 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
-  user: JSON.parse(localStorage.getItem("user")) || null,
-  isLoggedIn: !!localStorage.getItem("user"),
-  user: null,
-  token: localStorage.getItem("token") || null,
-};
+// 🔹 Load user from sessionStorage
+const storedUser = sessionStorage.getItem("user")
+  ? JSON.parse(sessionStorage.getItem("user"))
+  : null;
 
 const authSlice = createSlice({
   name: "auth",
-  initialState,
+  initialState: {
+    user: storedUser,
+    isAuthenticated: !!storedUser,
+    loading: false,
+  },
   reducers: {
     loginSuccess: (state, action) => {
       state.user = action.payload;
-      state.isLoggedIn = true;
-      localStorage.setItem("user", JSON.stringify(action.payload));
-    },
-    logoutUser: (state) => {
-      state.user = null;
-      state.isLoggedIn = false;
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      state.isAuthenticated = true;
+      state.loading = false;
 
+      // ✅ Save to sessionStorage
+      sessionStorage.setItem("user", JSON.stringify(action.payload));
+    },
+
+    authLoaded: (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+      state.loading = false;
+
+      sessionStorage.setItem("user", JSON.stringify(action.payload));
+    },
+
+    logout: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.loading = false;
+
+      // ❌ Clear sessionStorage
+      sessionStorage.removeItem("user");
+    },
+
+    authFailed: (state) => {
+      state.loading = false;
     },
   },
 });
 
-export const { loginSuccess, logoutUser } = authSlice.actions;
+export const {
+  loginSuccess,
+  logout,
+  authLoaded,
+  authFailed,
+} = authSlice.actions;
+
 export default authSlice.reducer;

@@ -38,9 +38,9 @@ const userController = {
       return res.status(500).json({ message: "Internal server error", error });
     }
   },
-  loginUser: async (req, res) =>{
+  loginUser: async (req, res) => {
     try {
-      const { email, password,role } = req.body;
+      const { email, password } = req.body;
 
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
@@ -81,10 +81,28 @@ const userController = {
       return res.status(500).json({ message: "Internal server error" });
     }
   },
-  logoutUser : (req, res) => {
-  res.clearCookie("token");
-  res.status(200).json({ message: "Logged out successfully" });
-},
+  logoutUser: (req, res) => {
+    res.clearCookie("token");
+    res.status(200).json({ message: "Logged out successfully" });
+  },
+  // Get logged in user details
+  getLoggedInUser: async (req, res) => {
+    try {
+      const userId = req.user._id;
+      const user = await User.findById(userId).select("-password");
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      return res.status(200).json({
+        message: "User fetched successfully", user
+      });
+
+    } catch (error) {
+      console.error("Error fetching logged in user:", error);
+      return res.status(500).json({ message: "Internal server error", error });
+    }
+  },
+
 
   // Update user by ID
   updateUsersById: async (req, res) => {

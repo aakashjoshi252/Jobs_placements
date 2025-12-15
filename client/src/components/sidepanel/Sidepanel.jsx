@@ -2,7 +2,7 @@ import { FiChevronsRight } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { logoutUser } from "../../redux/slices/authSlice";
+import { logout } from "../../redux/slices/authSlice";
 import { companyApi, resumeApi } from "../../../api/api";
 import { setResume } from "../../redux/slices/resumeSlice";
 import { setCompany } from "../../redux/slices/companySlice";
@@ -15,6 +15,7 @@ export default function SidePanel({ role }) {
   const loggedUser = useSelector((state) => state.auth.user);
   const resume = useSelector((state) => state.resume.data);
   const company = useSelector((state) => state.company.data);
+  console.log("Company in Sidepanel:", loggedUser);  
 
   // Fetch recruiter company
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function SidePanel({ role }) {
 
   const logoutHandler = () => {
     if (window.confirm("Are you sure you want to logout?")) {
-      dispatch(logoutUser());
+      dispatch(logout());
       navigate("/login");
     }
   };

@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { loginSuccess } from "../../redux/slices/authSlice";
+import { loginSuccess} from "../../redux/slices/authSlice";
 import { userApi, companyApi } from "../../../api/api";
 
 const initialValue = {
-  role: "candidate",
   email: "",
   password: "",
 };
@@ -14,53 +12,53 @@ const initialValue = {
 export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [recruiterId, setRecruiterId] = useState(null);
-
-  // Fetch company AFTER recruiter login
-  useEffect(() => {
-    if (!recruiterId) return;
-
-    const fetchCompany = async () => {
-      try {
-        const res = await companyApi.get(`/recruiter/${recruiterId}`);
-        const comp = res.data?.data || res.data;
-
-        if (!comp) {
-          navigate("/recruiter/company/registration");
-        } else {
-          navigate("/recruiter/home");
-        }
-      } catch {
-        navigate("/recruiter/company/registration");
-      }
-    };
-
-    fetchCompany();
-  }, [recruiterId, navigate]);
 
   const submitHandler = async (values, { setFieldError }) => {
     try {
-      const response = await userApi.post("/login", values);
+      // ✅ Cookie-based login
+      const res = await userApi.post("/login", values, {
+        withCredentials: true,
+      });
 
-      const user = response.data.user;
-
+      const user = res.data.user;
       if (!user) {
         return setFieldError("email", "Login failed");
       }
 
-      // ✅ Save user in redux (NO TOKEN)
+      // ✅ Store user ONLY (NO TOKEN)
       dispatch(loginSuccess(user));
 
-      // ✅ Role-based navigation
+      // ✅ Role-based redirect
       if (user.role === "candidate") {
         navigate("/candidate/home");
-      } else if (user.role === "recruiter") {
-        setRecruiterId(user._id);
-      } else {
+      }
+
+      if (user.role === "recruiter") {
+        // check company
+        try {
+          const companyRes = await companyApi.get(
+            `/recruiter/${user._id}`,
+            { withCredentials: true }
+          );
+
+          const company = companyRes.data?.data || companyRes.data;
+
+          if (!company) {
+            navigate("/recruiter/company/registration");
+          } else {
+            navigate("/recruiter/home");
+          }
+        } catch {
+          navigate("/recruiter/company/registration");
+        }
+      }
+
+      if (user.role === "admin") {
         navigate("/admin/home");
       }
-    } catch (error) {
-      setFieldError("email", "Invalid email or password or role");
+
+    } catch (err) {
+      setFieldError("email", "Invalid email, password or role");
     }
   };
 
@@ -79,8 +77,9 @@ export default function Login() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* role */}
-          <div>
+
+          {/* Role */}
+          {/* <div>
             <label className="block text-gray-700 font-medium mb-1">
               Role
             </label>
@@ -93,7 +92,7 @@ export default function Login() {
               <option value="candidate">Candidate</option>
               <option value="recruiter">Recruiter</option>
             </select>
-          </div>
+          </div> */}
 
           {/* Email */}
           <div>
@@ -103,12 +102,10 @@ export default function Login() {
             <input
               type="email"
               name="email"
-              placeholder="Enter email"
               value={values.email}
               onChange={handleChange}
               className="w-full border rounded-lg p-2.5 bg-gray-50"
             />
-            
           </div>
 
           {/* Password */}
@@ -119,21 +116,20 @@ export default function Login() {
             <input
               type="password"
               name="password"
-              placeholder="Enter password"
               value={values.password}
               onChange={handleChange}
               className="w-full border rounded-lg p-2.5 bg-gray-50"
             />
           </div>
-          {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
 
-          {/* Buttons */}
+          {errors.email && (
+            <p className="text-red-500 text-sm">{errors.email}</p>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold"
             >
               Login
             </button>
@@ -141,7 +137,7 @@ export default function Login() {
             <button
               type="button"
               onClick={handleReset}
-              className="w-full bg-gray-200 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-300 transition"
+              className="w-full bg-gray-200 text-gray-700 py-2.5 rounded-lg font-semibold"
             >
               Reset
             </button>

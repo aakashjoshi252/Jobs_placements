@@ -55,7 +55,7 @@ const jobsSchema = new mongoose.Schema({
   // Only recruiter of that company can post job
   recruiterId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Users",
+    ref: "User",
     required: true,
   },
   // Optional display fields (redundant but useful for UI)

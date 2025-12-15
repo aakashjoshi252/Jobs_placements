@@ -5,12 +5,13 @@ const { protect, isRecruiter } = require("../middlewares/auth.middleware.js");
 
 // Correct routes
 jobsRoute.post("/create", protect, isRecruiter,jobsController.createJob); // create jobs
-jobsRoute.get("/", jobsController.fetchJobs);
+jobsRoute.put("/:id", protect, isRecruiter, jobsController.updateJobId);
+jobsRoute.delete("/:id", protect, isRecruiter, jobsController.deleteJobId);
+
+jobsRoute.get("/", jobsController.fetchJobs); // fetch all jobs
 jobsRoute.get("/:id", jobsController.fetchJobById);
 jobsRoute.get("/recruiter/:recruiterId", jobsController.fetchJobsByRecruiter);
 jobsRoute.get("/company/:companyId", jobsController.fetchJobsByCompany);
-// jobsRoute.put("/:id", protect, isRecruiter, jobsController.updateJob);
-// jobsRoute.delete("/:id", protect, isRecruiter, jobsController.deleteJob);
 
 
 

@@ -59,11 +59,31 @@ const resumeController = {
             res.status(500).json({ message: "Server Error", error });
         }
     },
+    updateResume: async (req, res) => {
+        try {
+            const updated = await Resume.findByIdAndUpdate(
+                req.params.id,
+                req.body,
+                { new: true }
+            );
+            if (!updated) {
+                return res.status(404).json({ message: "Resume not found" });
+            }
 
+            res.status(200).json({
+                message: "Resume updated successfully",
+                data: updated,
+            });
+        } catch (error) {
+            console.error("Error updating resume:", error);
+            res.status(500).json({ message: "Server Error", error });
+        }
+    },
     // Delete Resume by ID
     deleteResume: async (req, res) => {
         try {
-            const deleted = await Resume.findByIdAndDelete(req.params.id);
+            const {id} = req.params;
+            const deleted = await Resume.findByIdAndDelete(id);
 
             if (!deleted) {
                 return res.status(404).json({ message: "Resume not found" });
