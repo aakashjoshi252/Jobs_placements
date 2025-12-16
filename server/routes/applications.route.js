@@ -8,10 +8,9 @@ applicationsRoute.post("/apply", protect, isCandidate, applicationController.app
 applicationsRoute.get("/applied/:candidateId", protect, isCandidate,applicationController.getApplicationsByCandidate);
 
 // Recruiter actions
+applicationsRoute.get("/received/:recruiterId", protect, isRecruiter, applicationController.getApplicationsByRecruiter);
 applicationsRoute.patch("/status/:applicationId", protect, isRecruiter, applicationController.applicationStatus);
-
-// router.get("/candidatedata/:id", protect, isRecruiter, getCandidateData);
-// applicationsRoute.put("/status/:id", protect, isRecruiter, updateStatus);
+applicationsRoute.get("/candidatedata/:id", protect, isRecruiter, applicationController.getCandidateData);
 
 
 module.exports = applicationsRoute;

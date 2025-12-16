@@ -30,8 +30,8 @@ const applicationController = {
 
       // Prevent duplicate application
       const existing = await Application.findOne({
-        job: jobId,
-        candidate: candidateId
+        jobId: jobId,
+        candidateId: candidateId
       });
 
       if (existing) {
@@ -40,7 +40,7 @@ const applicationController = {
         });
       }
 
-      // Create application (USE CORRECT FIELD NAMES)
+      // Create application 
       const application = await Application.create({
         jobId: jobId,
         candidateId: candidateId,
@@ -60,40 +60,68 @@ const applicationController = {
     }
   },
 
- getApplicationsByCandidate: async (req, res) => {
-  try {
-    const candidateId = req.user._id;
+  getApplicationsByCandidate: async (req, res) => {
+    try {
+      const candidateId = req.user._id;
 
-    // Allow only candidates
-    if (req.user.role !== "candidate") {
-      return res.status(403).json({
-        message: "Only candidates can view their applications"
+      // Allow only candidates
+      if (req.user.role !== "candidate") {
+        return res.status(403).json({
+          message: "Only candidates can view their applications"
+        });
+      }
+
+      const applications = await Application.find({
+        candidateId: candidateId
+      })
+        .populate("jobId")
+        .populate("companyId")
+        .populate("recruiterId", "username email")
+        .sort({ createdAt: -1 });
+
+      return res.status(200).json({
+        message: "Applications fetched successfully",
+        data: applications
+      });
+
+    } catch (error) {
+      console.error("Get Applications Error:", error);
+      res.status(500).json({
+        message: "Internal server error",
+        error: error.message
       });
     }
-
-    const applications = await Application.find({
-      candidateId: candidateId
-    })
-      .populate("jobId")
-      .populate("companyId")
-      .populate("recruiterId", "username email")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      message: "Applications fetched successfully",
-      data: applications
-    });
-
-  } catch (error) {
-    console.error("Get Applications Error:", error);
-    res.status(500).json({
-      message: "Internal server error",
-      error: error.message
-    });
   }
-}
-,
+  ,
   // Recruiter updates application status
+  getApplicationsByRecruiter: async (req, res) => {
+    try {
+      const recruiterId = req.user._id;
+      // Allow only recruiters
+      if (req.user.role !== "recruiter") {
+        return res.status(403).json({
+          message: "Only recruiters can view received applications"
+        });
+      }
+      const applications = await Application.find({
+        recruiterId: recruiterId
+      })
+        .populate("jobId")
+        .populate("companyId")
+        .populate("candidateId", "username email")
+        .sort({ createdAt: -1 });
+      return res.status(200).json({
+        message: "Received applications fetched successfully",
+        data: applications
+      });
+    } catch (error) {
+      console.error("Get Received Applications Error:", error);
+      res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  },
   applicationStatus: async (req, res) => {
     try {
       const recruiterId = req.user._id;
@@ -165,41 +193,55 @@ const applicationController = {
       });
     }
   },
-  getApplicationsByRecruiter: async (req, res) => {
+  getCandidateData: async (req, res) => {
     try {
-      const recruiterId = req.user.id;
-      const applications = await Application.find({ recruiter: recruiterId })
-        .populate("job")
-        .populate("company")
-        .populate("candidate", "name email");
-      res.json({ applications });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  },
-  updateApplicationStatus: async (req, res) => {
-    try {
-      const recruiterId = req.user.id;
-      const { applicationId } = req.params;
-      const { status } = req.body;
-      const application = await Application.findById(applicationId);
+      const recruiterId = req.user._id;
+      const { id } = req.params;
+
+      // Only recruiters allowed
+      if (req.user.role !== "recruiter") {
+        return res.status(403).json({
+          message: "Only recruiters can access candidate data"
+        });
+      }
+
+      const application = await Application.findById(id)
+        .populate({
+          path: "candidateId",
+          select: "username email phone"
+        })
+        .populate({
+          path: "jobId",
+          select: "title description salary jobLocation"
+        });
 
       if (!application) {
-        return res.status(404).json({ message: "Application not found" });
+        return res.status(404).json({
+          message: "Application not found"
+        });
       }
-      if (application.recruiter.toString() !== recruiterId) {
-        return res.status(403).json({ message: "Not authorized" });
+
+      // Check recruiter owns this application
+      if (application.recruiterId.toString() !== recruiterId.toString()) {
+        return res.status(403).json({
+          message: "Not authorized"
+        });
       }
-      application.status = status;
-      await application.save();
-      res.json({
-        message: "Application status updated",
-        application,
+
+      res.status(200).json({
+        message: "Candidate data fetched successfully",
+        candidateData: application.candidateId,
+        jobData: application.job
       });
+
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error("Get Candidate Data Error:", error);
+      res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
     }
-  }
+  },
 };
 
 
