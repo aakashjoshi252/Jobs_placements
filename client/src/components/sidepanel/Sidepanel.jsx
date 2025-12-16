@@ -13,6 +13,7 @@ export default function SidePanel({ role }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const loggedUser = useSelector((state) => state.auth.user);
+  console.log("Logged User in Sidepanel:", loggedUser);
   const resume = useSelector((state) => state.resume.data);
   const company = useSelector((state) => state.company.data);
   console.log("Company in Sidepanel:", loggedUser);  

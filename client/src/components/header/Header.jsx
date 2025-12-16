@@ -3,7 +3,6 @@ import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../redux/slices/authSlice";
-import { userApi } from "../../../api/api";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -12,15 +11,9 @@ export default function Header() {
 
   const user = useSelector((state) => state.auth.user);
 
-  const logoutHandler = async () => {
+  // ✅ JWT logout (frontend only)
+  const handleLogout = () => {
     if (!window.confirm("Are you sure you want to logout?")) return;
-
-    try {
-      // ✅ clear cookie on backend
-      await userApi.post("/logout", {}, { withCredentials: true });
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
 
     dispatch(logout());
     navigate("/login");
@@ -29,7 +22,6 @@ export default function Header() {
   return (
     <header className="bg-gray-900 shadow-sm fixed top-0 left-0 w-full z-50">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-
         {/* Logo */}
         <NavLink
           to="/"
@@ -43,16 +35,32 @@ export default function Header() {
           className="md:hidden flex flex-col gap-1.5"
           onClick={() => setMenuOpen(!menuOpen)}
         >
-          <span className={`w-6 h-0.5 bg-gray-100 transition ${menuOpen ? "rotate-45 translate-y-1.5" : ""}`} />
-          <span className={`w-6 h-0.5 bg-gray-100 transition ${menuOpen ? "opacity-0" : ""}`} />
-          <span className={`w-6 h-0.5 bg-gray-100 transition ${menuOpen ? "-rotate-45 -translate-y-1.5" : ""}`} />
+          <span
+            className={`w-6 h-0.5 bg-gray-100 transition ${
+              menuOpen ? "rotate-45 translate-y-1.5" : ""
+            }`}
+          />
+          <span
+            className={`w-6 h-0.5 bg-gray-100 transition ${
+              menuOpen ? "opacity-0" : ""
+            }`}
+          />
+          <span
+            className={`w-6 h-0.5 bg-gray-100 transition ${
+              menuOpen ? "-rotate-45 -translate-y-1.5" : ""
+            }`}
+          />
         </button>
 
         {/* Links */}
         <ul
           className={`md:flex md:static absolute top-full left-0 w-full md:w-auto bg-gray-900 md:bg-transparent
           flex-col md:flex-row gap-5 px-6 py-4 md:p-0 transition
-          ${menuOpen ? "opacity-100 visible" : "opacity-0 invisible md:visible md:opacity-100"}`}
+          ${
+            menuOpen
+              ? "opacity-100 visible"
+              : "opacity-0 invisible md:visible md:opacity-100"
+          }`}
           onClick={() => setMenuOpen(false)}
         >
           {!user && (
@@ -71,7 +79,10 @@ export default function Header() {
 
           {!user ? (
             <li>
-              <NavLink to="/contact" className="text-gray-100 hover:text-blue-600">
+              <NavLink
+                to="/contact"
+                className="text-gray-100 hover:text-blue-600"
+              >
                 Contact
               </NavLink>
             </li>
@@ -101,7 +112,7 @@ export default function Header() {
                 {user.username || user.email}
               </NavLink>
               <button
-                onClick={logoutHandler}
+                onClick={handleLogout}
                 className="text-sm px-3 py-1 rounded-md text-white hover:bg-red-700"
               >
                 Logout

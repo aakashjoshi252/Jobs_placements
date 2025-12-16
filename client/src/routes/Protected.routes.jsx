@@ -1,14 +1,16 @@
-const ProtectedRoute = ({ children, role }) => {
-  const { user, loading } = useSelector(state => state.auth);
+import { useSelector } from "react-redux";
+import { Navigate, Outlet } from "react-router-dom";
 
-  if (loading) return <p>Loading...</p>;
+const PrivateRoute = ({ role }) => {
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
-  if (!user) return <Navigate to="/login" />;
+  if (!isAuthenticated) return <Navigate to="/login" />;
 
-  if (role && user.role !== role) {
-    return <Navigate to="/" />;
+  if (role && user?.role !== role) {
+    return <Navigate to="/unauthorized" />;
   }
 
-  return children;
+  return <Outlet />;
 };
-export default ProtectedRoute;
+
+export default PrivateRoute;

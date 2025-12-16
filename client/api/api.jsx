@@ -1,37 +1,44 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "http://localhost:3000"; // backend
 
+// 🔐 COMMON CONFIG (VERY IMPORTANT)
+const axiosConfig = {
+  withCredentials: true, // 🔥 SEND COOKIES
+};
+
+// ================= DASHBOARD =================
 export const dashboardApi = axios.create({
   baseURL: `${BASE_URL}/dashboard`,
-  withCredentials: true, //  send cookies
+  ...axiosConfig,
 });
+
 // ================= USER =================
 export const userApi = axios.create({
   baseURL: `${BASE_URL}/user`,
-  withCredentials: true, //  send cookies
+  ...axiosConfig,
 });
 
 // ================= COMPANY =================
 export const companyApi = axios.create({
   baseURL: `${BASE_URL}/company`,
-  withCredentials: true, //  REQUIRED
+  ...axiosConfig,
 });
 
 // ================= JOBS =================
 export const jobsApi = axios.create({
   baseURL: `${BASE_URL}/jobs`,
-  withCredentials: true,
+  ...axiosConfig,
 });
 
 // ================= RESUME =================
 export const resumeApi = axios.create({
   baseURL: `${BASE_URL}/resume`,
-  withCredentials: true,
+  ...axiosConfig,
 });
 
 // ================= APPLICATION =================
 export const applicationApi = axios.create({
   baseURL: `${BASE_URL}/application`,
-  withCredentials: true,
+  ...axiosConfig,
 });

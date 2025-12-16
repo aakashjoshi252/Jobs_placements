@@ -1,8 +1,8 @@
 import { useFormik } from "formik";
-import { useDispatch } from "react-redux";
-import { userApi, companyApi } from "../../../api/api";
-import { loginSuccess} from "../../redux/slices/authSlice";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { loginSuccess} from "../../redux/slices/authSlice";
+import { userApi, companyApi } from "../../../api/api";
 
 const initialValue = {
   email: "",
@@ -15,7 +15,7 @@ export default function Login() {
 
   const submitHandler = async (values, { setFieldError }) => {
     try {
-      // Cookie-based login
+      // ✅ Cookie-based login
       const res = await userApi.post("/login", values, {
         withCredentials: true,
       });
@@ -24,10 +24,11 @@ export default function Login() {
       if (!user) {
         return setFieldError("email", "Login failed");
       }
-      //  Store user ONLY (NO TOKEN)
+
+      // ✅ Store user ONLY (NO TOKEN)
       dispatch(loginSuccess(user));
 
-      //  Role-based redirect
+      // ✅ Role-based redirect
       if (user.role === "candidate") {
         navigate("/candidate/home");
       }
@@ -76,6 +77,22 @@ export default function Login() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* Role */}
+          {/* <div>
+            <label className="block text-gray-700 font-medium mb-1">
+              Role
+            </label>
+            <select
+              name="role"
+              value={values.role}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-2.5 bg-gray-50"
+            >
+              <option value="candidate">Candidate</option>
+              <option value="recruiter">Recruiter</option>
+            </select>
+          </div> */}
 
           {/* Email */}
           <div>

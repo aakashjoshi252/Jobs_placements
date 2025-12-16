@@ -8,6 +8,13 @@ export const store = configureStore({
     resume: resumeReducer,
     company: companyReducer,
     },
+    middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['auth/loginSuccess'],
+      },
+    }),
 });
+
 
 export default store;

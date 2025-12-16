@@ -75,6 +75,7 @@ const userController = {
           username: user.username,
           email: user.email,
           role: user.role,
+          token: token,
         },
       });
     } catch (error) {

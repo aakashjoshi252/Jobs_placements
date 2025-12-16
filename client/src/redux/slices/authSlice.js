@@ -1,7 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-// Load user from sessionStorage
-const storedUser = sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")) : null;
+// 🔹 Load user from sessionStorage
+const storedUser = sessionStorage.getItem("user")
+  ? JSON.parse(sessionStorage.getItem("user"))
+  : null;
 
 const authSlice = createSlice({
   name: "auth",
@@ -15,7 +17,8 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = true;
       state.loading = false;
-      //  Save to sessionStorage
+
+      // ✅ Save to sessionStorage
       sessionStorage.setItem("user", JSON.stringify(action.payload));
     },
 
@@ -23,6 +26,7 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = true;
       state.loading = false;
+
       sessionStorage.setItem("user", JSON.stringify(action.payload));
     },
 
@@ -31,7 +35,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.loading = false;
 
-      //  Clear sessionStorage
+      // ❌ Clear sessionStorage
       sessionStorage.removeItem("user");
     },
 
@@ -41,5 +45,11 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginSuccess, logout, authLoaded, authFailed, } = authSlice.actions;
+export const {
+  loginSuccess,
+  logout,
+  authLoaded,
+  authFailed,
+} = authSlice.actions;
+
 export default authSlice.reducer;
