@@ -4,18 +4,18 @@ const BASE_URL = "http://localhost:3000";
 
 export const dashboardApi = axios.create({
   baseURL: `${BASE_URL}/dashboard`,
-  withCredentials: true, // ✅ send cookies
+  withCredentials: true, //  send cookies
 });
 // ================= USER =================
 export const userApi = axios.create({
   baseURL: `${BASE_URL}/user`,
-  withCredentials: true, // ✅ send cookies
+  withCredentials: true, //  send cookies
 });
 
 // ================= COMPANY =================
 export const companyApi = axios.create({
   baseURL: `${BASE_URL}/company`,
-  withCredentials: true, // ✅ REQUIRED
+  withCredentials: true, //  REQUIRED
 });
 
 // ================= JOBS =================
@@ -32,6 +32,6 @@ export const resumeApi = axios.create({
 
 // ================= APPLICATION =================
 export const applicationApi = axios.create({
-  baseURL: `${BASE_URL}/applications`,
+  baseURL: `${BASE_URL}/application`,
   withCredentials: true,
 });

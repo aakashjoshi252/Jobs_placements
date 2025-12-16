@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 export default function AppliedJobs() {
   const navigate = useNavigate();
   const { user, token } = useSelector((state) => state.auth);
+  console.log("User in AppliedJobs:", user._id);
 
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +16,7 @@ export default function AppliedJobs() {
       if (!user?._id || !token) return;
 
       try {
-        const res = await applicationApi.get(`/apply/${user._id}`, {
+        const res = await applicationApi.get(`/applied/${user._id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

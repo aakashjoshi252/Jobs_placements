@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { api } from "../../../api/api";
+import { dashboardApi } from "../../../api/api";
 
 export default function CandidateHome() {
   const { token } = useSelector((state) => state.auth);
@@ -9,7 +9,7 @@ export default function CandidateHome() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await api.get("/dashboard/candidate", {
+        const res = await dashboardApi.get("/dashboard/candidate", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
