@@ -2,9 +2,9 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:3000"; // backend
 
-// 🔐 COMMON CONFIG (VERY IMPORTANT)
+//  COMMON CONFIG (VERY IMPORTANT)
 const axiosConfig = {
-  withCredentials: true, // 🔥 SEND COOKIES
+  withCredentials: true, //  SEND COOKIES
 };
 
 // ================= DASHBOARD =================

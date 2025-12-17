@@ -1,12 +1,11 @@
 import { Outlet } from "react-router-dom";
-import Footer from "../components/footer/Footer";
+import { useSelector } from "react-redux";
 import Header from "../components/header/Header";
 import Sidepanel from "../components/sidepanel/Sidepanel";
-import { useSelector } from "react-redux";
+import Footer from "../components/footer/Footer";
 
 export default function Layout() {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
-
   return (
     <>
       <Header />

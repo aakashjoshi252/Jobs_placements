@@ -11,7 +11,7 @@ export default function Header() {
 
   const user = useSelector((state) => state.auth.user);
 
-  // ✅ JWT logout (frontend only)
+  //  JWT logout (frontend only)
   const handleLogout = () => {
     if (!window.confirm("Are you sure you want to logout?")) return;
 

@@ -6,88 +6,85 @@ import { applicationApi } from "../../../../api/api";
 export default function CandidateView() {
   const { applicationId } = useParams();
   const { token } = useSelector((state) => state.auth);
+  const jobId = sessionStorage.getItem("selectedJob");
 
   const [application, setApplication] = useState(null);
   const [notes, setNotes] = useState("");
 
-  const fetchData = async () => {
-    try {
-      const res = await applicationApi.get(`/applications/${applicationId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  // ---------------- FETCH APPLICATION ----------------
+  const fetchApplication = async () => {
+    if (!applicationId) return;
 
-      setApplication(res.data.application);
+    try {
+      const res = await applicationApi.get(
+        `/candidatedata/${applicationId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setApplication(res.data.data);
       setNotes(res.data.application?.recruiterNote || "");
     } catch (err) {
-      console.error("Error fetching application:", err);
+      console.error("Fetch application error:", err);
     }
   };
 
+  // ---------------- STATUS ACTIONS ----------------
   const approve = async () => {
     try {
       const res = await applicationApi.patch(
-        `/applications/approve/${applicationId}`,
-        {},
+        `/status/${applicationId}`,
+        { recruiterNote: notes },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       setApplication(res.data.application);
-    } catch (error) {
-      console.error("Approve failed:", error);
-    }
-  };
-
-  const reject = async () => {
-    try {
-      const res = await applicationApi.patch(
-        `/applications/reject/${applicationId}`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setApplication(res.data.application);
-    } catch (error) {
-      console.error("Reject failed:", error);
+    } catch (err) {
+      console.error("Approve failed:", err);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchApplication();
   }, [applicationId]);
 
-  if (!application)
-    return <h2 className="text-center p-6 text-xl">Loading...</h2>;
+  if (!application) {
+    return (
+      <h2 className="text-center p-6 text-xl text-gray-600">
+        Loading application...
+      </h2>
+    );
+  }
 
-  const user = application.candidate;
+  const candidate = application.candidate;
   const resume = application.resume;
   const job = application.job;
 
   return (
     <div className="flex justify-center py-10 px-4">
-      <div className="w-full max-w-3xl bg-white shadow-lg rounded-2xl p-6 border border-gray-200">
+      <div className="w-full max-w-3xl bg-white shadow-lg rounded-2xl p-6 border">
 
         {/* Candidate Info */}
         <h2 className="text-3xl font-semibold text-gray-900">
-          {resume?.fullName || user?.username}
+          {resume?.fullName || candidate?.username}
         </h2>
-        <p className="text-gray-600">{user?.email}</p>
+        <p className="text-gray-600">{candidate?.email}</p>
         <p className="text-lg font-medium text-blue-700 mt-1">
           {resume?.jobTitle}
         </p>
 
-        {/* Job */}
+        {/* Job Info */}
         <section className="mt-6">
-          <h3 className="text-xl font-semibold text-gray-800">Applied For</h3>
+          <h3 className="text-xl font-semibold text-gray-800">
+            Applied For
+          </h3>
           <p className="text-gray-700 mt-1">{job?.title}</p>
         </section>
 
-        {/* STATUS (READ-ONLY BADGE) */}
+        {/* Status */}
         <section className="mt-6">
           <h3 className="text-xl font-semibold text-gray-800">Status</h3>
 
@@ -106,19 +103,19 @@ export default function CandidateView() {
           </span>
         </section>
 
-        {/* ACTION BUTTONS */}
+        {/* Actions */}
         {application.status === "PENDING" && (
           <div className="flex gap-4 mt-6">
             <button
               onClick={approve}
-              className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
+              className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
             >
               Approve
             </button>
 
             <button
               onClick={reject}
-              className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition"
+              className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
             >
               Reject
             </button>
@@ -132,15 +129,12 @@ export default function CandidateView() {
           </h3>
 
           <textarea
-            className="w-full mt-2 border border-gray-300 rounded-lg p-3 min-h-[120px]"
+            className="w-full mt-2 border rounded-lg p-3 min-h-[120px]"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Internal notes (optional)"
           />
-
-          {/* NOTE SAVE CAN BE ADDED LATER */}
         </section>
-
       </div>
     </div>
   );

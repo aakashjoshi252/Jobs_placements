@@ -70,6 +70,10 @@ exports.candidateDashboard = async (req, res) => {
       candidateId,
       status: "Selected",
     });
+    const rejected = await Application.countDocuments({
+      candidateId,
+      status: "Rejected",
+    })
     res.status(200).json({
       success: true,
       data: {
@@ -77,6 +81,7 @@ exports.candidateDashboard = async (req, res) => {
         pending,
         shortlisted,
         selected,
+        rejected
       },
     });
   } catch (error) {

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 export default function EmployeeResume() {
   const navigate = useNavigate();
   const resume = useSelector((state) => state.resume.data);
-  console.log("Resume Data:", resume);
 
   if (!resume) {
     return (
@@ -92,7 +91,7 @@ export default function EmployeeResume() {
 
       <section className="text-right">
         <button
-          onClick={() => navigate("/candidate/create-resume")}
+          onClick={() => navigate("/candidate/edit-resume")}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           Edit Resume

@@ -8,12 +8,13 @@ export default function CandidatesList() {
   const [loading, setLoading] = useState(true);
 
   const loggedUser = useSelector((state) => state.auth.user);
+  console.log("Logged User:", applications);
   const navigate = useNavigate();
 
-  const fetchCandidates = async (id) => {
+  const fetchCandidates = async () => {
     try {
-      const { data } = await applicationApi.get(`/recruiter/${id}`);
-      setApplications(data);
+      const res = await applicationApi.get(`/received/${loggedUser._id}`);
+      setApplications(res.data.data || res.data);
     } catch (error) {
       console.error("Error fetching candidates:", error);
     } finally {

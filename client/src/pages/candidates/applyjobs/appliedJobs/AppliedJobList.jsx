@@ -5,33 +5,37 @@ import { useNavigate } from "react-router-dom";
 
 export default function AppliedJobs() {
   const navigate = useNavigate();
-  const { user, token } = useSelector((state) => state.auth);
-  console.log("User in AppliedJobs:", user._id);
+  const { user } = useSelector((state) => state.auth);
 
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [error, setError] = useState("");
+  
   useEffect(() => {
+    if (!user?._id) return;
+
     const fetchAppliedJobs = async () => {
-      if (!user?._id || !token) return;
-
       try {
-        const res = await applicationApi.get(`/applied/${user._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        setLoading(true);
 
-        setApplications(res.data.applications || []);
+        const res = await applicationApi.get(`/applied/${user._id}`);
+
+        const apps =
+          res?.data?.applications ||
+          res?.data?.data ||
+          [];
+
+        setApplications(apps);
       } catch (err) {
         console.error("Fetch Applied Jobs Error:", err);
+        setError("Failed to load applied jobs");
       } finally {
         setLoading(false);
       }
     };
 
     fetchAppliedJobs();
-  }, [user?._id, token]);
+  }, [user?._id]);
 
   if (!user?._id) {
     return (
@@ -45,6 +49,14 @@ export default function AppliedJobs() {
     return (
       <p className="text-center mt-10 text-gray-500 text-lg">
         Loading applied jobs...
+      </p>
+    );
+  }
+
+  if (error) {
+    return (
+      <p className="text-center mt-10 text-red-500 text-lg">
+        {error}
       </p>
     );
   }
@@ -65,17 +77,16 @@ export default function AppliedJobs() {
 
       <div className="grid md:grid-cols-2 gap-8">
         {applications.map((app) => {
-          const job = app.job;
-          const company = app.company;
+          const job = app.job || app.jobId;
+          const company = app.company || app.companyId;
 
           return (
             <div
               key={app._id}
-              className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 transition-transform hover:-translate-y-1"
+              className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:-translate-y-1 transition"
             >
-              {/* Job Title + Company */}
               <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                {job?.title}
+                {job?.title || "Job Title"}
               </h3>
 
               <p className="text-gray-600 mb-3">
@@ -83,30 +94,29 @@ export default function AppliedJobs() {
                 {company?.companyName || "N/A"}
               </p>
 
-              {/* ✅ STATUS BADGE (FIXED) */}
-              <div className="mb-3">
-                <span
-                  className={`px-3 py-1 text-sm rounded-full font-medium
-                    ${
-                      app.status === "PENDING"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : app.status === "REJECTED"
-                        ? "bg-red-100 text-red-700"
-                        : app.status === "APPROVED"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-200 text-gray-700"
-                    }
-                  `}
-                >
-                  {app.status}
-                </span>
-              </div>
+              {/* Status Badge */}
+              <span
+                className={`inline-block mb-3 px-3 py-1 text-sm rounded-full font-medium
+                  ${
+                    app.status === "PENDING"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : app.status === "REJECTED"
+                      ? "bg-red-100 text-red-700"
+                      : app.status === "APPROVED"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-200 text-gray-700"
+                  }
+                `}
+              >
+                {app.status}
+              </span>
 
-              {/* Other Details */}
               <div className="space-y-1 text-gray-700">
                 <p>
                   <span className="font-medium">Applied On:</span>{" "}
-                  {new Date(app.createdAt).toLocaleDateString()}
+                  {app.createdAt
+                    ? new Date(app.createdAt).toLocaleDateString()
+                    : "N/A"}
                 </p>
 
                 {job?.location && (
@@ -124,13 +134,11 @@ export default function AppliedJobs() {
                 )}
               </div>
 
-              {/* Action Button */}
               <button
                 onClick={() =>
                   navigate(`/candidate/CompanyAboutCard/${company?._id}`)
                 }
-                className="mt-5 w-full bg-blue-600 text-white py-2.5 rounded-xl
-                hover:bg-blue-700 transition-all font-medium shadow-sm"
+                className="mt-5 w-full bg-blue-600 text-white py-2.5 rounded-xl hover:bg-blue-700 transition font-medium"
               >
                 View Company
               </button>

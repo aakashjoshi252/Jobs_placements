@@ -19,7 +19,7 @@ export default function Jobs() {
   }, []);
 
   const handleSelectJob = (jobId) => {
-    localStorage.setItem("selectedJobId", jobId);
+    sessionStorage.setItem("selectedJobId", jobId);
   };
 
   return (

@@ -23,6 +23,7 @@ const CompanyAboutCard = lazy(() => import('./pages/candidates/jobs/companyDetai
 const Recruiterhome = lazy(() => import('./pages/recruiter/Home.jsx'))
 const Employeehome = lazy(() => import('./pages/candidates/Home.jsx'))
 const CreateResume = lazy(() => import('./pages/candidates/resume/create/CreateResume.jsx'))
+const EditResume = lazy(() => import('./pages/candidates/resume/create/EditResume.jsx'))
 const FAQ = lazy(() => import('./pages/common/faq/FAQ.jsx'))
 const PrivacyPolicy = lazy(() => import('./pages/common/privecy&policiy/PrivacyPolicy.jsx'))
 const BlogList = lazy(() => import('./pages/common/blogs/BlogList.jsx'))
@@ -176,6 +177,10 @@ const routes = createBrowserRouter([
       {
         path: "/candidate/create-resume",
         element: <Suspense fallback={<h2>Loading...</h2>}><CreateResume /></Suspense>
+      },
+      {
+        path: "/candidate/edit-resume",
+        element: <Suspense fallback={<h2>Loading...</h2>}><EditResume /></Suspense>
       },
       {
         path: "/candidate/CompanyAboutCard/:id",

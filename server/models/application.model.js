@@ -19,6 +19,11 @@ const applicationSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    resumeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Resume",
+      required: true,
+    },
 
     companyId: {
       type: mongoose.Schema.Types.ObjectId,

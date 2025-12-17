@@ -46,6 +46,7 @@ const applicationController = {
         candidateId: candidateId,
         recruiterId: job.recruiterId,
         companyId: job.companyId,
+        resumeId: req.body.resumeId,
         status: "PENDING"
       });
 
@@ -108,6 +109,7 @@ const applicationController = {
       })
         .populate("jobId")
         .populate("companyId")
+        .populate("resumeId")
         .populate("candidateId", "username email")
         .sort({ createdAt: -1 });
       return res.status(200).json({
@@ -209,6 +211,10 @@ const applicationController = {
         .populate({
           path: "candidateId",
           select: "username email phone"
+        })
+        .populate({
+          path: "resumeId",
+          select: "education experience skills"
         })
         .populate({
           path: "jobId",

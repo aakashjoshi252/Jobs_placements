@@ -6,108 +6,115 @@ import { useNavigate } from "react-router-dom";
 
 export default function JobApply() {
   const navigate = useNavigate();
+
   const LoggedUser = useSelector((state) => state.auth.user);
   const resume = useSelector((state) => state.resume.data);
-  const job = safeParse(localStorage.getItem("selectedJob"));
-  
-  const safeParse = (v) => {
+  console.log("Resume in JobApply:", resume._id);
+
+  const job = (() => {
     try {
-      return JSON.parse(v);
-    } catch (e) {
+      return JSON.parse(sessionStorage.getItem("selectedJob"));
+    } catch {
       return null;
     }
-  };
-
+  })();
 
   const [coverLetter, setCoverLetter] = useState("");
   const [loading, setLoading] = useState(false);
 
   const jobId = job?._id;
   const companyId = job?.companyId?._id || job?.companyId;
+  const recruiterId = job?.recruiterId?._id || job?.recruiterId;
+  const resumeId = resume?._id?._id || resume._id;
 
   const handleApply = async () => {
-    if (!jobId || !LoggedUser?._id || !resume?._id) {
-      alert("Missing job details or resume!");
+    if (!jobId || !LoggedUser?._id || !resume?._id || !recruiterId) {
+      alert("Missing required application details");
       return navigate(`/candidate/CompanyAboutCard/${companyId}`);
     }
-
-    setLoading(true);
 
     const applicationData = {
       jobId,
       candidateId: LoggedUser._id,
-      resumeId: resume._id,
-      coverLetter,
+      recruiterId,
+      resumeId: resumeId,
+      companyId,
+      coverLetter, // optional (safe even if backend ignores)
     };
 
     try {
+      setLoading(true);
       await applicationApi.post("/apply", applicationData);
       alert("Application Submitted Successfully!");
       navigate("/candidate/applications/list");
-    } catch (err) {
-      console.log("Application Error:", err);
-      alert(
-        err?.response?.data?.message || "Error applying for the job."
-      );
+    } catch (error) {
+      console.error("Apply Error:", error);
+      alert(error?.response?.data?.message || "Failed to apply");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-  <div className="apply-job-form max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md border">
-    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Apply for Job</h2>
+    <div className="max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md border">
+      <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+        Apply for Job
+      </h2>
 
-    <div className="apply-info-box bg-gray-100 p-4 rounded-lg mb-4 border">
-      <p className="text-gray-700 mb-1">
-        <strong className="font-medium">Job Title:</strong> {job?.title}
-      </p>
-      <p className="text-gray-700">
-        <strong className="font-medium">Company:</strong> {job?.companyId?.companyName}
-      </p>
+      {/* Job Info */}
+      <div className="bg-gray-100 p-4 rounded-lg mb-4 border">
+        <p className="text-gray-700">
+          <strong>Job Title:</strong> {job?.title || "-"}
+        </p>
+        <p className="text-gray-700">
+          <strong>Company:</strong> {job?.companyId?.companyName || "-"}
+        </p>
+      </div>
+
+      {/* Candidate Info */}
+      <input
+        type="text"
+        value={LoggedUser?.username || ""}
+        readOnly
+        className="w-full p-3 mb-3 border rounded-lg bg-gray-100"
+      />
+
+      <input
+        type="email"
+        value={LoggedUser?.email || ""}
+        readOnly
+        className="w-full p-3 mb-3 border rounded-lg bg-gray-100"
+      />
+
+      <input
+        type="text"
+        value={resume?.phone || "Not Provided"}
+        readOnly
+        className="w-full p-3 mb-3 border rounded-lg bg-gray-100"
+      />
+
+      {/* Cover Letter */}
+      <textarea
+        placeholder="Write cover letter (optional)"
+        value={coverLetter}
+        onChange={(e) => setCoverLetter(e.target.value)}
+        className="w-full p-3 h-32 border rounded-lg mb-4 resize-none focus:ring-2 focus:ring-blue-500"
+      />
+
+      {/* Apply Button */}
+      <button
+        onClick={handleApply}
+        disabled={loading || !resume?._id}
+        className={`w-full py-3 rounded-lg text-white font-medium transition
+          ${
+            loading || !resume?._id
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }
+        `}
+      >
+        {loading ? "Applying..." : "Apply Now"}
+      </button>
     </div>
-
-    <input
-      type="text"
-      value={LoggedUser?.username || ""}
-      readOnly
-      className="w-full p-3 mb-3 border rounded-lg bg-gray-100 text-gray-700"
-    />
-
-    <input
-      type="email"
-      value={LoggedUser?.email || ""}
-      readOnly
-      className="w-full p-3 mb-3 border rounded-lg bg-gray-100 text-gray-700"
-    />
-
-    <input
-      type="text"
-      value={LoggedUser?.phone || 'Not Provided'}
-      readOnly
-      className="w-full p-3 mb-3 border rounded-lg bg-gray-100 text-gray-700"
-    />
-
-    <textarea
-      placeholder="Write cover letter (optional)"
-      value={coverLetter}
-      onChange={(e) => setCoverLetter(e.target.value)}
-      className="w-full p-3 h-32 border rounded-lg mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-
-    <button
-      onClick={handleApply}
-      disabled={loading || !resume?._id}
-      className={`
-        w-full py-3 rounded-lg text-white font-medium transition 
-        ${loading || !resume?._id 
-          ? "bg-gray-400 cursor-not-allowed" 
-          : "bg-blue-600 hover:bg-blue-700"}
-      `}
-    >
-      {loading ? "Applying..." : "Apply Now"}
-    </button>
-  </div>
-);
-
+  );
 }

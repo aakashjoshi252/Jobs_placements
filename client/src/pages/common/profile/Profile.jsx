@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 export default function Profile() {
   const user = useSelector((state) => state.auth.user);
+  const resume = useSelector((state) => state.resume.data);
   const company = useSelector((state) => state.company.data);
 
   const [loading, setLoading] = useState(true);
@@ -118,7 +119,7 @@ export default function Profile() {
 
             <div className="space-y-6">
               <ProfileField label="Email" value={user.email} />
-              <ProfileField label="Phone Number" value={user.phone} />
+              <ProfileField label="Phone Number" value={resume?.phone} />
             </div>
           </>
         )}
