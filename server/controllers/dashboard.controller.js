@@ -1,5 +1,7 @@
 const Job = require("../models/jobs.model");
 const Application = require("../models/application.model");
+const User = require("../models/user.model");  
+const Company = require("../models/company.model");
 const mongoose = require("mongoose");
 
 exports.recruiterDashboard = async (req, res) => {
@@ -89,6 +91,119 @@ exports.candidateDashboard = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to load dashboard data",
+    });
+  }
+};
+exports.adminDashboard = async (req, res) => {
+  try {
+    // 1️⃣ Total users
+    const User = mongoose.model("User");
+    const totalUsers = await User.countDocuments();
+    // 2️⃣ Total jobs
+    const totalJobs = await Job.countDocuments();
+    // 3️⃣ Total applications
+    const totalApplications = await Application.countDocuments();
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        totalJobs,
+        totalApplications,
+      },
+    });
+  } catch (error) {
+    console.error("Admin dashboard error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load dashboard data",
+    });
+  }
+};
+// ---------------------- Global Stats Controllers ------------------ //
+exports.getjobsCount = async (req, res) => {
+  try {
+    const jobsCount = await Job.countDocuments();
+    res.status(200).json({
+      success: true,
+      data: {
+        jobsCount,
+      },
+    });
+  } catch (error) {
+    console.error("Get jobs count error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get jobs count",
+    });
+  }
+};
+exports.getapplicationsCount = async (req, res) => {
+  try {
+    const applicationsCount = await Application.countDocuments();
+    res.status(200).json({
+      success: true,
+      data: {
+        applicationsCount,
+      },
+    });
+  } catch (error) {
+    console.error("Get applications count error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get applications count",
+    });
+  } 
+};
+exports.getrecruitersCount = async (req, res) => {
+  try {
+    
+    const recruitersCount = await User.countDocuments({ role: "recruiter" });
+    res.status(200).json({
+      success: true,  
+      data: {
+        recruitersCount,
+      },
+    });
+  } catch (error) {
+    console.error("Get recruiters count error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get recruiters count",
+    });
+  } 
+};
+exports.getcandidatesCount = async (req, res) => {
+  try {
+    
+    const candidatesCount = await User.countDocuments({ role: "candidate" });
+    res.status(200).json({  
+      success: true,
+      data: {
+        candidatesCount,
+      },
+    });
+  } catch (error) {
+    console.error("Get candidates count error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get candidates count",
+    });
+  }
+};
+exports.getcompaniesCount = async (req, res) => {
+  try {
+    const companiesCount = await Company.countDocuments();
+    res.status(200).json({
+      success: true,
+      data: {
+        companiesCount,
+      },
+    });
+  } catch (error) {
+    console.error("Get companies count error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get companies count",
     });
   }
 };

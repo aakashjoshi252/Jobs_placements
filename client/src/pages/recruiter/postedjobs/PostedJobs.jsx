@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { jobsApi } from "../../../../api/api";
-
+import { useNavigate } from "react-router-dom";
 export default function PostedJobs() {
+  const navigate = useNavigate();
   const [postedJobs, setPostedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const loggedUser = useSelector((state) => state.auth.user);
-
   const fetchJobsByRecruiter = async () => {
     try {
       const res = await jobsApi.get(`/recruiter/${loggedUser._id}`);
@@ -17,13 +17,36 @@ export default function PostedJobs() {
       setLoading(false);
     }
   };
+  const handleDelete = async (jobId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this job?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await jobsApi.delete(`/${jobId}`);
+
+      // Remove deleted job from UI
+      setPostedJobs((prevJobs) =>
+        prevJobs.filter((job) => job._id !== jobId)
+      );
+
+      alert("Job deleted successfully!");
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to delete job");
+    }
+  };
 
   useEffect(() => {
     fetchJobsByRecruiter();
   }, []);
 
   return (
+
     <div className="px-6 py-4">
+
+
       <h1 className="text-3xl font-bold text-gray-800 mb-6">
         Your Posted Jobs
       </h1>
@@ -105,13 +128,17 @@ export default function PostedJobs() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
-                  <button className="flex-1 bg-yellow-400 text-gray-900 font-medium py-2 rounded-md hover:bg-yellow-500 transition">
+                  <button onClick={() => navigate(`/recruiter/company/postedjobs/edit/${job._id}`)} className="flex-1 bg-yellow-400 text-gray-900 font-medium py-2 rounded-md hover:bg-yellow-500 transition">
                     Edit
                   </button>
 
-                  <button className="flex-1 bg-red-500 text-white font-medium py-2 rounded-md hover:bg-red-600 transition">
+                  <button
+                    onClick={() => handleDelete(job._id)}
+                    className="flex-1 bg-red-500 text-white font-medium py-2 rounded-md hover:bg-red-600 transition"
+                  >
                     Delete
                   </button>
+
                 </div>
               </div>
             ))

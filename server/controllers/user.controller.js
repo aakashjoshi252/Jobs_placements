@@ -75,6 +75,7 @@ const userController = {
           username: user.username,
           email: user.email,
           role: user.role,
+          phone:user.phone,
           token: token,
         },
       });
@@ -103,8 +104,6 @@ const userController = {
       return res.status(500).json({ message: "Internal server error", error });
     }
   },
-
-
   // Update user by ID
   updateUsersById: async (req, res) => {
     try {
@@ -120,7 +119,6 @@ const userController = {
       return res.status(500).json({ message: "Internal server error", error });
     }
   },
-
   // Delete user by ID
   deleteUsersById: async (req, res) => {
     try {

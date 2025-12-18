@@ -18,7 +18,9 @@ const CompanyView = lazy(() => import('./pages/recruiter/company/Company.jsx'))
 const CompanyRegistration = lazy(() => import('./pages/recruiter/compRegis/CompRegis.jsx'))
 const JobPost = lazy(() => import('./pages/recruiter/jobPost/JobPost.jsx'))
 const PostedJobs = lazy(() => import('./pages/recruiter/postedjobs/PostedJobs.jsx'))
+const EditJob= lazy(()=>import ('./pages/recruiter/postedjobs/editJobs/EditJob.jsx'))
 const Profile = lazy(() => import('./pages/common/profile/Profile.jsx'))
+const EditProfile= lazy(()=>import("./pages/common/profile/edit/EditProfile.jsx"))
 const CompanyAboutCard = lazy(() => import('./pages/candidates/jobs/companyDetails/CompanyCard.jsx'))
 const Recruiterhome = lazy(() => import('./pages/recruiter/Home.jsx'))
 const Employeehome = lazy(() => import('./pages/candidates/Home.jsx'))
@@ -144,12 +146,20 @@ const routes = createBrowserRouter([
         element: <Suspense fallback={<h2>Loading...</h2>}><Profile /></Suspense>
       },
       {
+        path:"/recruiter/profile/edit/profile/:userId",
+        element: <Suspense fallback={ <h2>Loading... </h2> } > <EditProfile/> </Suspense>
+      },
+      {
         path: "/recruiter/company/jobpost",
         element: <Suspense fallback={<h2>Loading...</h2>}><JobPost /></Suspense>
       },
       {
         path: "/recruiter/company/postedjobs",
         element: <Suspense fallback={<h2>Loading...</h2>}><PostedJobs /></Suspense>
+      },
+      {
+        path:"/recruiter/company/postedjobs/edit/:jobId",
+        element: <Suspense fallback={<h2>Loading...</h2>}> <EditJob /> </Suspense>
       },
       {
         path: "/recruiter/candidates-list",
@@ -174,6 +184,10 @@ const routes = createBrowserRouter([
       {
         path: "/candidate/profile",
         element: <Suspense fallback={<h2>Loading...</h2>}><Profile /></Suspense>
+      },
+      {
+        path:"/candidate/profile/edit/profile/:userId",
+        element: <Suspense fallback={ <h2>Loading... </h2> } > <EditProfile/> </Suspense>
       },
       {
         path: "/candidate/resume",

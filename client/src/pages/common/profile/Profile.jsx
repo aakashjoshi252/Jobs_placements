@@ -1,33 +1,48 @@
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
+  const navigate = useNavigate();
+
   const user = useSelector((state) => state.auth.user);
   const resume = useSelector((state) => state.resume.data);
   const company = useSelector((state) => state.company.data);
-
+  const userId=user._id
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-
-    // If recruiter, wait for company data to load from Redux
-    if (user.role === "recruiter") {
-      setLoading(false); // company already fetched in SidePanel
-    } else {
-      // Candidate, no need to wait for anything
-      setLoading(false);
-    }
+    setLoading(false);
   }, [user, company]);
 
-  if (!user || loading)
-    return <div className="text-center mt-10 text-gray-600">Loading...</div>;
+  if (!user || loading) {
+    return (
+      <div className="text-center mt-10 text-gray-600">
+        Loading...
+      </div>
+    );
+  }
 
-  const role = user?.role;
+  const role = user.role;
 
   return (
     <div className="max-w-4xl mx-auto mt-10">
-      <div className="bg-white shadow-lg rounded-2xl p-8 border border-gray-100">
+      <div className="bg-white shadow-lg rounded-2xl p-8 border border-gray-100 relative">
+
+        {/* EDIT PROFILE BUTTON */}
+        <button
+          onClick={() =>
+            navigate(
+              role === "recruiter"
+                ? `/recruiter/profile/edit/profile/${userId}`
+                : `/candidate/profile/edit/profile/${userId}`
+            )
+          }
+          className="absolute top-6 right-6 bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+        >
+          Edit Profile
+        </button>
 
         {/* ------------------ RECRUITER VIEW ------------------ */}
         {role === "recruiter" && (
@@ -50,10 +65,12 @@ export default function Profile() {
             </h3>
 
             {!company ? (
-              <p className="text-red-500">Company not found. Please register.</p>
+              <p className="text-red-500">
+                Company not found. Please register.
+              </p>
             ) : (
               <>
-                {company?.uploadLogo && (
+                {company.uploadLogo && (
                   <img
                     src={
                       company.uploadLogo.startsWith("http")
@@ -113,20 +130,24 @@ export default function Profile() {
 
               <div>
                 <p className="text-gray-500 text-sm">Full Name</p>
-                <p className="font-medium text-gray-900">{user.username}</p>
+                <p className="font-medium text-gray-900">
+                  {user.username}
+                </p>
               </div>
             </div>
 
             <div className="space-y-6">
               <ProfileField label="Email" value={user.email} />
-              <ProfileField label="Phone Number" value={resume?.phone} />
+              <ProfileField label="Phone Number" value={user.phone} />
             </div>
           </>
         )}
 
         {/* ------------------ DEFAULT ------------------ */}
         {role !== "candidate" && role !== "recruiter" && (
-          <p className="text-center text-red-500">Not Authorized</p>
+          <p className="text-center text-red-500">
+            Not Authorized
+          </p>
         )}
       </div>
     </div>
