@@ -32,8 +32,9 @@ const Jobs = lazy(() => import('./pages/candidates/jobs/Jobs.jsx'))
 const JobApply = lazy(() => import('./pages/candidates/applyjobs/JobApply.jsx'))
 const AppliedJobs = lazy(() => import('./pages/candidates/applyjobs/appliedJobs/AppliedJobList.jsx'))
 const CandidatesList = lazy(() => import('./pages/recruiter/candidates-list/Candidates.jsx'))
-const CandidatesView = lazy(() => import('./pages/recruiter/candidates-list/CandidatesView.jsx'))
+const CandidatesView = lazy(() => import('./pages/recruiter/candidates-list/cadidatedata/CandidateOverview.jsx'))
 const CompanyEdit = lazy(() => import('./pages/recruiter/company/edit/EditCompnay.jsx'))
+const CandidateProfile = lazy(() => import('./pages/recruiter/candidates-list/cadidatedata/CadidatesData.jsx'))
 const ChatBox = lazy(() => import('./components/chatbox/Chatbox.jsx'))
 const blogsData = [
   {
@@ -160,6 +161,10 @@ const routes = createBrowserRouter([
       },{
         path: "/chatbox",
         element: <Suspense fallback={<h2>Loading...</h2>}><ChatBox /></Suspense>
+      },
+      {
+        path: "/recruiter/candidates-list/candidate/:applicationId",
+        element: <Suspense fallback={<h2>Loading...</h2>}><CandidateProfile /></Suspense>
       },
       // For Employee
       {

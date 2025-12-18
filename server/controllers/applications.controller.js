@@ -124,6 +124,29 @@ const applicationController = {
       });
     }
   },
+  getApplicationById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const application = await Application.findById(id)
+        .populate("jobId")
+        .populate("companyId")
+        .populate("resumeId")
+        .populate("candidateId", "username email phone");
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+      res.status(200).json({
+        message: "Application fetched successfully",
+        application
+      });
+    } catch (error) {
+      console.error("Get Application By ID Error:", error);
+      res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  },
   applicationStatus: async (req, res) => {
     try {
       const recruiterId = req.user._id;
@@ -208,18 +231,9 @@ const applicationController = {
       }
 
       const application = await Application.findById(id)
-        .populate({
-          path: "candidateId",
-          select: "username email phone"
-        })
-        .populate({
-          path: "resumeId",
-          select: "education experience skills"
-        })
-        .populate({
-          path: "jobId",
-          select: "title description salary jobLocation"
-        });
+        .populate("candidateId")
+        .populate("resumeId")
+        .populate("jobId");
 
       if (!application) {
         return res.status(404).json({
@@ -237,7 +251,9 @@ const applicationController = {
       res.status(200).json({
         message: "Candidate data fetched successfully",
         candidateData: application.candidateId,
-        jobData: application.job
+        jobData: application.jobId,
+        resumeData: application.resumeId,
+        application: application,
       });
 
     } catch (error) {

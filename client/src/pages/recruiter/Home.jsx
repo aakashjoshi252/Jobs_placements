@@ -5,8 +5,6 @@ import { dashboardApi } from "../../../api/api";
 export default function RecruiterHome() {
   const { token } = useSelector((state) => state.auth);
   const [stats, setStats] = useState(null);
-  console.log("RecruiterHome rendered", stats);
-
   useEffect(() => {
     const fetchStats = async () => {
       try {

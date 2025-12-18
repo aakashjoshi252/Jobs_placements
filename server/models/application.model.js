@@ -40,6 +40,9 @@ const applicationSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    recruiterNote: {
+      type: String,
+    },
   },
   { timestamps: true, versionKey: false }
 );

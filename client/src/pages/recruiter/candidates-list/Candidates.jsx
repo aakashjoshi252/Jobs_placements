@@ -8,7 +8,6 @@ export default function CandidatesList() {
   const [loading, setLoading] = useState(true);
 
   const loggedUser = useSelector((state) => state.auth.user);
-  console.log("Logged User:", applications);
   const navigate = useNavigate();
 
   const fetchCandidates = async () => {
@@ -24,7 +23,7 @@ export default function CandidatesList() {
 
   useEffect(() => {
     if (loggedUser?._id) {
-      fetchCandidates(loggedUser._id);
+      fetchCandidates();
     }
   }, [loggedUser]);
 
@@ -63,14 +62,12 @@ export default function CandidatesList() {
         Applicants List
       </h2>
 
-      {/* CARDS LIST */}
       <div className="grid gap-5">
         {applications.map((app) => (
           <div
             key={app._id}
             className="bg-white rounded-xl shadow-md p-5 border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-5"
           >
-            {/* Left Section */}
             <div>
               <h3 className="text-xl font-semibold text-gray-900">
                 {app.candidateId?.username}
@@ -90,10 +87,8 @@ export default function CandidatesList() {
               </span>
             </div>
 
-            {/* Buttons */}
             <div className="flex gap-3">
               <button
-                // onClick={() => navigate(`/recruiter/chat/${app.candidateId?._id}`)}
                 onClick={() => navigate('/chatbox')}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
               >

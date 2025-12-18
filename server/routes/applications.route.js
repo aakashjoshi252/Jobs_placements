@@ -9,6 +9,7 @@ applicationsRoute.get("/applied/:candidateId", protect, isCandidate,applicationC
 
 // Recruiter actions
 applicationsRoute.get("/received/:recruiterId", protect, isRecruiter, applicationController.getApplicationsByRecruiter);
+applicationsRoute.get("/:applicationId", protect,isRecruiter, applicationController.getApplicationById);
 applicationsRoute.patch("/status/:applicationId", protect, isRecruiter, applicationController.applicationStatus);
 applicationsRoute.get("/candidatedata/:id", protect, isRecruiter, applicationController.getCandidateData);
 
