@@ -50,7 +50,7 @@ export default function JobPost() {
 
         alert("Job posted successfully!");
         resetForm();
-        navigate("/recruiter/home");
+        navigate("/recruiter/company/postedjobs");
       } catch (error) {
         alert(error.response?.data?.message || "Failed to post job");
       }

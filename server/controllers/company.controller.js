@@ -96,8 +96,13 @@ const companyController = {
       if (!company) {
         return res.status(404).json({ message: "Company not found!" });
       }
-
-      return res.status(200).json(company);
+      const companyData = {
+        ...company.toObject(),
+        uploadLogo: company.uploadLogo
+          ? `${req.protocol}://${req.get("host")}${company.uploadLogo}`
+          : null,
+      };
+      return res.status(200).json(companyData);
 
     } catch (error) {
       console.error("Company fetch error:", error);
@@ -109,21 +114,35 @@ const companyController = {
     try {
       const { recruiterId } = req.params;
 
-      if (!recruiterId)
-        return res.status(400).json({ message: "Recruiter ID required!" });
+      if (!recruiterId) {
+        return res.status(400).json({
+          message: "Recruiter ID is required",
+        });
+      }
 
-      const company = await Company.findOne({
-        recruiterId: new mongoose.Types.ObjectId(recruiterId)
+      const company = await Company.findOne({ recruiterId });
+
+      if (!company) {
+        return res.status(404).json({
+          message: "Company not found",
+        });
+      }
+
+      const companyData = {
+        ...company.toObject(),
+        uploadLogo: company.uploadLogo
+          ? `${req.protocol}://${req.get("host")}${company.uploadLogo}`
+          : null,
+      };
+
+      return res.status(200).json({
+        data: companyData,
       });
-
-      if (!company)
-        return res.status(404).json({ message: "Company not found!" });
-
-      return res.status(200).json({ data: company });
-
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Server error", error });
+      console.error("Get Company Error:", error);
+      return res.status(500).json({
+        message: "Server error",
+      });
     }
   },
   updateCompanyById: async (req, res) => {

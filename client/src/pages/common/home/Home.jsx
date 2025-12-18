@@ -5,7 +5,8 @@ import { jobsApi, dashboardApi } from "../../../../api/api";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
-  const navigate= useNavigate();
+  const navigate = useNavigate();
+
   const [categories, setCategories] = useState([]);
   const [featuredJobs, setFeaturedJobs] = useState([]);
   const [stats, setStats] = useState({
@@ -14,11 +15,14 @@ export default function Home() {
     candidates: 0,
   });
 
+  // ✅ CORRECT FILTER STATE
   const [filters, setFilters] = useState({
-    keyword: "",
+    title: "",
+    company: "",
     location: "",
   });
 
+  // ================= FETCH HOME DATA =================
   const fetchHomeData = async () => {
     try {
       const [
@@ -52,8 +56,6 @@ export default function Home() {
     fetchHomeData();
   }, []);
 
-  const searchHandler = (e) => e.preventDefault();
-
   return (
     <div className="home w-full bg-gray-50">
 
@@ -61,8 +63,8 @@ export default function Home() {
       <Carousel />
 
       {/* ================= HERO ================= */}
-      <section className="mt-10 py-20 text-center bg-gradient-to-r from-emerald-900 to-emerald-900 text-white">
-        <div className="max-w-3xl mx-auto px-4">
+      <section className="mt-10 py-20 text-center bg-gradient-to-r from-emerald-900 to-emerald-800 text-white">
+        <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-4xl font-bold mb-3">
             Find Your Dream Job
           </h1>
@@ -70,21 +72,30 @@ export default function Home() {
             Search thousands of verified job opportunities
           </p>
 
-          <form
-            onSubmit={searchHandler}
-            className="flex flex-col md:flex-row gap-4 justify-center"
-          >
+          {/* 🔍 FILTER INPUTS */}
+          <div className="flex flex-col md:flex-row gap-4 justify-center">
             <input
-              className="px-4 py-3 rounded-md text-gray-800 w-full md:w-80 bg-white focus:ring-2 focus:ring-emerald-400 outline-none"
+              className="px-4 py-3 rounded-md text-gray-800 w-full md:w-72 bg-white focus:ring-2 focus:ring-emerald-400 outline-none"
               type="text"
-              placeholder="Job title or keyword"
-              value={filters.keyword}
+              placeholder="Job title"
+              value={filters.title}
               onChange={(e) =>
-                setFilters({ ...filters, keyword: e.target.value })
+                setFilters({ ...filters, title: e.target.value })
               }
             />
+
             <input
-              className="px-4 py-3 rounded-md text-gray-800 w-full md:w-60 bg-white focus:ring-2 focus:ring-emerald-400 outline-none"
+              className="px-4 py-3 rounded-md text-gray-800 w-full md:w-64 bg-white focus:ring-2 focus:ring-emerald-400 outline-none"
+              type="text"
+              placeholder="Company"
+              value={filters.company}
+              onChange={(e) =>
+                setFilters({ ...filters, company: e.target.value })
+              }
+            />
+
+            <input
+              className="px-4 py-3 rounded-md text-gray-800 w-full md:w-56 bg-white focus:ring-2 focus:ring-emerald-400 outline-none"
               type="text"
               placeholder="Location"
               value={filters.location}
@@ -92,13 +103,7 @@ export default function Home() {
                 setFilters({ ...filters, location: e.target.value })
               }
             />
-            <button
-              type="submit"
-              className="bg-white text-emerald-700 font-semibold px-6 py-3 rounded-md hover:bg-emerald-100 transition"
-            >
-              Search Jobs
-            </button>
-          </form>
+          </div>
         </div>
       </section>
 
@@ -165,7 +170,10 @@ export default function Home() {
         <h2 className="text-3xl font-bold mb-6">
           Ready to Grow Your Career?
         </h2>
-        <button onClick={()=>navigate("/login")} className="bg-white text-emerald-700 px-8 py-3 rounded-lg font-semibold hover:bg-emerald-100 transition">
+        <button
+          onClick={() => navigate("/login")}
+          className="bg-white text-emerald-700 px-8 py-3 rounded-lg font-semibold hover:bg-emerald-100 transition"
+        >
           Get Started
         </button>
       </section>
@@ -173,6 +181,7 @@ export default function Home() {
   );
 }
 
+// ================= STAT COMPONENT =================
 function StatBox({ label, value }) {
   return (
     <div className="text-center">
