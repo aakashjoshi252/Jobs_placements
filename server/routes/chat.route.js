@@ -1,33 +1,17 @@
-// routes/chat.routes.js
-import express from "express";
-import Chat from "../models/Chat.js";
-import Message from "../models/Message.js";
-
+const express = require("express");
 const router = express.Router();
+const chatController = require("../controllers/chat.controller.js");
 
-/* Create / Get chat */
-router.post("/create", async (req, res) => {
-  const { candidateId, recruiterId, jobId } = req.body;
+// Note: Add your auth middleware if you have it
+// const { isAuthenticated } = require("../middlewares/auth.middleware.js");
 
-  let chat = await Chat.findOne({
-    participants: { $all: [candidateId, recruiterId] },
-    jobId,
-  });
+// Create or get chat
+router.post("/create", chatController.createChat);
 
-  if (!chat) {
-    chat = await Chat.create({
-      participants: [candidateId, recruiterId],
-      jobId,
-    });
-  }
+// Get all chats for user
+router.get("/user/:userId", chatController.getUserChats);
 
-  res.json(chat);
-});
+// Get messages for a chat
+router.get("/:chatId/messages", chatController.getChatMessages);
 
-/* Get messages */
-router.get("/:chatId/messages", async (req, res) => {
-  const messages = await Message.find({ chatId: req.params.chatId });
-  res.json(messages);
-});
-
-export default router;
+module.exports = router;

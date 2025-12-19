@@ -96,6 +96,7 @@ export default function EmployeeResume() {
         >
           Edit Resume
         </button>
+        <button onClick={()=>navigate(-1)}>Back</button>
       </section>
     </div>
   );

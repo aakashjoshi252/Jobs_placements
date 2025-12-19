@@ -36,7 +36,7 @@ export default function RecruiterHome() {
         {/* Navigation */}
         <ul className="flex items-center gap-4">
           <li>
-            <button onClick={()=>navigate("/chatbox")} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition">
+            <button onClick={()=>navigate("/chat")} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition">
               Chats
             </button>
           </li>

@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { Provider } from "react-redux";
 import { store } from "./redux/store.js";
+import { SocketProvider } from "./context/SocketContext.jsx";
 
 // Lazy Loading Pages
 const Layout = lazy(() => import('./layout/Layout.jsx'));
@@ -18,9 +19,9 @@ const CompanyView = lazy(() => import('./pages/recruiter/company/Company.jsx'))
 const CompanyRegistration = lazy(() => import('./pages/recruiter/compRegis/CompRegis.jsx'))
 const JobPost = lazy(() => import('./pages/recruiter/jobPost/JobPost.jsx'))
 const PostedJobs = lazy(() => import('./pages/recruiter/postedjobs/PostedJobs.jsx'))
-const EditJob= lazy(()=>import ('./pages/recruiter/postedjobs/editJobs/EditJob.jsx'))
+const EditJob = lazy(() => import('./pages/recruiter/postedjobs/editJobs/EditJob.jsx'))
 const Profile = lazy(() => import('./pages/common/profile/Profile.jsx'))
-const EditProfile= lazy(()=>import("./pages/common/profile/edit/EditProfile.jsx"))
+const EditProfile = lazy(() => import("./pages/common/profile/edit/EditProfile.jsx"))
 const CompanyAboutCard = lazy(() => import('./pages/candidates/jobs/companyDetails/CompanyCard.jsx'))
 const Recruiterhome = lazy(() => import('./pages/recruiter/Home.jsx'))
 const Employeehome = lazy(() => import('./pages/candidates/Home.jsx'))
@@ -37,7 +38,10 @@ const CandidatesList = lazy(() => import('./pages/recruiter/candidates-list/Cand
 const CandidatesView = lazy(() => import('./pages/recruiter/candidates-list/cadidatedata/CandidateOverview.jsx'))
 const CompanyEdit = lazy(() => import('./pages/recruiter/company/edit/EditCompnay.jsx'))
 const CandidateProfile = lazy(() => import('./pages/recruiter/candidates-list/cadidatedata/CadidatesData.jsx'))
-const ChatBox = lazy(() => import('./components/chatbox/Chatbox.jsx'))
+
+// Chat Components - NEW
+const ChatPage = lazy(() => import('./pages/common/chatpage/Chatpage.jsx'))
+
 const blogsData = [
   {
     _id: "101",
@@ -101,14 +105,13 @@ const blogsData = [
   }
 ];
 
-
 const routes = createBrowserRouter([
   {
     path: "/",
     element: <Suspense fallback={<h2>Loading...</h2>}><Layout /></Suspense>,
     children: [
       {
-        index: true,   // Globel or common
+        index: true,   // Global or common
         element: <Suspense fallback={<h2>Loading...</h2>}><Home /></Suspense>
       },
       {
@@ -118,14 +121,27 @@ const routes = createBrowserRouter([
       {
         path: "contact",
         element: <Suspense fallback={<h2>Loading...</h2>}><ContactLazy /></Suspense>
-      }, {
+      },
+      {
         path: "login",
         element: <Suspense fallback={<h2>Loading...</h2>}><Login /></Suspense>
-      }, {
+      },
+      {
         path: "login/register",
         element: <Suspense fallback={<h2>Loading...</h2>}><Register /></Suspense>
       },
-      // for Recruiter
+      
+      // ========== CHAT ROUTES (Available to both Recruiter & Candidate) ==========
+      {
+        path: "/chat",
+        element: <Suspense fallback={<h2>Loading...</h2>}><ChatPage /></Suspense>
+      },
+      {
+        path: "/messages",
+        element: <Suspense fallback={<h2>Loading...</h2>}><ChatPage /></Suspense>
+      },
+
+      // ========== RECRUITER ROUTES ==========
       {
         path: "/recruiter/company/:id",
         element: <Suspense fallback={<h2>Loading...</h2>}><CompanyView /></Suspense>
@@ -137,17 +153,18 @@ const routes = createBrowserRouter([
       {
         path: "/recruiter/company/registration",
         element: <Suspense fallback={<h2>Loading...</h2>}><CompanyRegistration /></Suspense>
-      }, {
+      },
+      {
         path: "/recruiter/home",
-        element: <Recruiterhome />
+        element: <Suspense fallback={<h2>Loading...</h2>}><Recruiterhome /></Suspense>
       },
       {
         path: "/recruiter/profile",
         element: <Suspense fallback={<h2>Loading...</h2>}><Profile /></Suspense>
       },
       {
-        path:"/recruiter/profile/edit/profile/:userId",
-        element: <Suspense fallback={ <h2>Loading... </h2> } > <EditProfile/> </Suspense>
+        path: "/recruiter/profile/edit/profile/:userId",
+        element: <Suspense fallback={<h2>Loading...</h2>}><EditProfile /></Suspense>
       },
       {
         path: "/recruiter/company/jobpost",
@@ -158,8 +175,8 @@ const routes = createBrowserRouter([
         element: <Suspense fallback={<h2>Loading...</h2>}><PostedJobs /></Suspense>
       },
       {
-        path:"/recruiter/company/postedjobs/edit/:jobId",
-        element: <Suspense fallback={<h2>Loading...</h2>}> <EditJob /> </Suspense>
+        path: "/recruiter/company/postedjobs/edit/:jobId",
+        element: <Suspense fallback={<h2>Loading...</h2>}><EditJob /></Suspense>
       },
       {
         path: "/recruiter/candidates-list",
@@ -168,15 +185,17 @@ const routes = createBrowserRouter([
       {
         path: "/recruiter/candidates-list/:applicationId",
         element: <Suspense fallback={<h2>Loading...</h2>}><CandidatesView /></Suspense>
-      },{
-        path: "/chatbox",
-        element: <Suspense fallback={<h2>Loading...</h2>}><ChatBox /></Suspense>
       },
       {
         path: "/recruiter/candidates-list/candidate/:applicationId",
         element: <Suspense fallback={<h2>Loading...</h2>}><CandidateProfile /></Suspense>
       },
-      // For Employee
+      {
+        path: "/recruiter/messages",
+        element: <Suspense fallback={<h2>Loading...</h2>}><ChatPage /></Suspense>
+      },
+
+      // ========== CANDIDATE ROUTES ==========
       {
         path: "/candidate/home",
         element: <Suspense fallback={<h2>Loading...</h2>}><Employeehome /></Suspense>
@@ -186,8 +205,8 @@ const routes = createBrowserRouter([
         element: <Suspense fallback={<h2>Loading...</h2>}><Profile /></Suspense>
       },
       {
-        path:"/candidate/profile/edit/profile/:userId",
-        element: <Suspense fallback={ <h2>Loading... </h2> } > <EditProfile/> </Suspense>
+        path: "/candidate/profile/edit/profile/:userId",
+        element: <Suspense fallback={<h2>Loading...</h2>}><EditProfile /></Suspense>
       },
       {
         path: "/candidate/resume",
@@ -203,7 +222,7 @@ const routes = createBrowserRouter([
       },
       {
         path: "/candidate/CompanyAboutCard/:jobId",
-        element: <Suspense fallback={<h2>Loading...</   h2>}><CompanyAboutCard /></Suspense>
+        element: <Suspense fallback={<h2>Loading...</h2>}><CompanyAboutCard /></Suspense>
       },
       {
         path: "/candidate/CompanyAboutCard/jobs/apply",
@@ -214,14 +233,21 @@ const routes = createBrowserRouter([
         element: <Suspense fallback={<h2>Loading...</h2>}><AppliedJobs /></Suspense>
       },
       {
+        path: "/candidate/messages",
+        element: <Suspense fallback={<h2>Loading...</h2>}><ChatPage /></Suspense>
+      },
+
+      // ========== COMMON PAGES ==========
+      {
         path: "/blogs",
         element: <Suspense fallback={<h2>Loading...</h2>}><BlogList /></Suspense>
-      }, {
+      },
+      {
         path: "/blogs/:id",
         element: <Suspense fallback={<h2>Loading...</h2>}><BlogDetails blogs={blogsData} /></Suspense>
       },
       {
-        path: "/privacy-policy/",
+        path: "/privacy-policy",
         element: <Suspense fallback={<h2>Loading...</h2>}><PrivacyPolicy /></Suspense>
       },
       {
@@ -239,8 +265,11 @@ const routes = createBrowserRouter([
     ]
   }
 ]);
+
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-    <RouterProvider router={routes} />
+    <SocketProvider>
+      <RouterProvider router={routes} />
+    </SocketProvider>
   </Provider>
 );

@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { dashboardApi } from "../../../api/api";
 import Jobs from "./jobs/Jobs";
-
+import { useNavigate } from "react-router-dom";
 export default function CandidateHome() {
+  const navigate= useNavigate()
   const { token } = useSelector((state) => state.auth);
   const [stats, setStats] = useState(null);
 
@@ -28,7 +29,33 @@ export default function CandidateHome() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Candidate Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        {/* Title */}
+        <h1 className="text-3xl font-bold text-gray-900">
+          Candidate Dashboard
+        </h1>
+
+        {/* Navigation */}
+        <ul className="flex items-center gap-4">
+          <li>
+            <button onClick={()=>navigate("/chat")} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition">
+              Chats
+            </button>
+          </li>
+
+          <li>
+            <button className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition">
+              Notifications
+            </button>
+          </li>
+
+          <li>
+            <button onClick={()=>navigate(`/candidate/resume`)} className="px-4 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition">
+              Resume
+            </button>
+          </li>
+        </ul>
+      </div>
 
       <div className="grid md:grid-cols-5 gap-5 ">
         <Card title="Applied Jobs" value={stats?.totalApplications || 0 }  />
