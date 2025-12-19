@@ -52,44 +52,52 @@ export default function CompanyEdit() {
   }, [preview]);
 
   /** Submit form */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  setSuccess("");
 
-    try {
-      let logoUrl = company?.uploadLogo;
+  try {
+    const data = new FormData();
 
-      // Upload new logo if selected
-      if (logo) {
-        const data = new FormData();
-        data.append("file", logo);
+    // Text fields
+    Object.entries(formData).forEach(([key, value]) => {
+      data.append(key, value);
+    });
 
-        const uploadRes = await uploadApi.uploadFile(data);
-        logoUrl = uploadRes.data.fileUrl;
-      }
-
-      //  Correct API call
-      await companyApi.put(`/update/${company._id}`, {
-        ...formData,
-        uploadLogo: logoUrl,
-        recruiterId: user?._id,
-      });
-
-      setSuccess("Company details updated successfully!");
-
-      setTimeout(() => {
-        navigate(`/recruiter/company/${company?._id}`);
-      }, 1000);
-
-    } catch (err) {
-      console.error(err);
-      setError("Failed to update company details.");
-    } finally {
-      setLoading(false);
+    // Logo (optional)
+    if (logo) {
+      data.append("uploadLogo", logo); // ⚠️ field name must match backend
     }
-  };
+
+    // Required fields
+    data.append("recruiterId", user._id);
+
+    await companyApi.put(
+      `/update/${company._id}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      }
+    );
+
+    setSuccess("Company details updated successfully!");
+
+    setTimeout(() => {
+      navigate(`/recruiter/company/${company._id}`);
+    }, 1000);
+
+  } catch (err) {
+    console.error(err);
+    setError("Failed to update company details.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (!company) {
     return (

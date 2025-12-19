@@ -1,176 +1,169 @@
 import { useEffect, useState } from "react";
 import { companyApi, jobsApi } from "../../../../../api/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setJobLoading,
+  setJob,
+  setJobError,
+} from "../../../../redux/slices/job";
 
 export default function CompanyAboutPage() {
   const navigate = useNavigate();
-  const jobId = sessionStorage.getItem("selectedJobId");
+  const dispatch = useDispatch();
+  const { jobId } = useParams();
 
-  const [job, setJob] = useState(null);
+  //  Redux selector (job data from store)
+  const { data: job, loading, error } = useSelector(
+    (state) => state.job
+  );
+
+  const isLoggedIn = useSelector((state) => state.auth.user);
+
+  // Local state ONLY for company
   const [company, setCompany] = useState(null);
-  console.log(company)
 
-  const fetchJob = async () => {
-    try {
-      const res = await jobsApi.get(`/${jobId}`);
-      const jobData = res.data;
-      setJob(jobData);
+  // ================= FETCH JOB & COMPANY =================
+  useEffect(() => {
+    const fetchJobAndCompany = async () => {
+      try {
+        dispatch(setJobLoading());
 
-      const companyId = jobData.companyId?._id;
-      if (companyId) {
-        const compRes = await companyApi.get(`/${companyId}`);
-        setCompany(compRes.data);
+        // Fetch job
+        const res = await jobsApi.get(`/${jobId}`);
+        const jobData = res.data;
+        console.log(jobData)
+        dispatch(setJob(jobData));
+
+        // Fetch company
+        const companyId = jobData?.companyId?._id;
+        if (companyId) {
+          const compRes = await companyApi.get(`/${companyId}`);
+          setCompany(compRes.data);
+        }
+      } catch (err) {
+        dispatch(
+          setJobError(
+            err.response?.data?.message || "Failed to load job"
+          )
+        );
       }
-    } catch (err) {
-      console.log("Error:", err);
+    };
+
+    if (jobId) fetchJobAndCompany();
+  }, [jobId, dispatch]);
+
+  // ================= CONDITIONAL BACK =================
+  const handleBack = () => {
+    if (isLoggedIn && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(isLoggedIn ? "/candidate/home" : "/");
     }
   };
 
-  useEffect(() => {
-    fetchJob();
-  }, []);
+  // ================= APPLY =================
+  const handleApplyClick = () => {
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
 
-  const handleApplyClick = (job) => {
-    sessionStorage.setItem("selectedJob", JSON.stringify(job));
+    // Store selected job (from Redux)
     navigate("/candidate/CompanyAboutCard/jobs/apply");
   };
 
- return (
-  <div className="w-full max-w-6xl mx-auto px-4 py-8 md:px-8 md:py-12">
+  // ================= UI STATES =================
+  if (loading)
+    return (
+      <p className="text-center text-lg mt-12">Loading...</p>
+    );
 
-    {!company ? (
-      <p className="text-center text-lg font-medium text-gray-500 mt-12">
+  if (error)
+    return (
+      <p className="text-center text-red-600 mt-12">
+        {error}
+      </p>
+    );
+
+  if (!company || !job)
+    return (
+      <p className="text-center text-lg mt-12">
         Loading company details...
       </p>
-    ) : (
-      <>
-        {/* Back Button */}
-        <button
-          onClick={() => navigate("/candidate/home")}
-          className="
-            mb-6
-            inline-flex items-center justify-center
-            px-6 py-2.5
-            bg-gray-700 text-white
-            rounded-lg font-medium
-            hover:bg-gray-900
-            transition-all duration-200
-            shadow-sm
-          "
-        >
-          ← Back to Home
-        </button>
+    );
 
-        {/* Company Section */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8 mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">
-            About the Company
-          </h1>
+  return (
+    <div className="w-full max-w-6xl mx-auto px-4 py-8 md:px-8 md:py-12">
+      {/* ================= COMPANY INFO ================= */}
+      <div className="bg-white rounded-2xl border p-6 mb-10">
+        <h1 className="text-3xl font-bold mb-6">
+          About the Company
+        </h1>
 
-          {/* Company Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <p className="text-xl font-semibold text-gray-800">
-              {company?.companyName}
-            </p>
+        <div className="flex justify-between mb-6">
+          <p className="text-xl font-semibold">
+            {company.companyName}
+          </p>
 
+          {company.uploadLogo && (
             <img
               src={company.uploadLogo}
               alt="Company logo"
-              className="w-20 h-20 object-contain rounded-md border"
+              className="w-20 h-20 object-contain"
             />
-          </div>
-
-          {/* Description */}
-          <div className="mb-6">
-            <p className="text-sm text-gray-500 font-medium">Description</p>
-            <p className="mt-1 text-gray-800 leading-relaxed">
-              {company.description}
-            </p>
-          </div>
-
-          {/* Company Info Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Info label="Established" value={company.establishedYear} />
-            <Info label="Location" value={company.location} />
-            <Info
-              label="Website"
-              value={
-                <a
-                  href={company.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline break-words"
-                >
-                  {company.website}
-                </a>
-              }
-            />
-            <Info label="Email" value={company.contactEmail} />
-            <Info label="Phone" value={company.contactNumber} />
-          </div>
+          )}
         </div>
 
-        {/* Job Section */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            {job?.title}
-          </h2>
+        <p className="mb-6">{company.description}</p>
 
-          <p className="text-gray-700 leading-relaxed mb-6">
-            {job?.description}
-          </p>
-
-          {/* Job Info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-            <Info label="Location" value={job?.jobLocation} />
-            <Info label="Job Type" value={job?.jobType} />
-            <Info label="Experience" value={job?.experience} />
-            <Info label="Salary" value={job?.salary} />
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => navigate("/candidate/applications/list")}
-              className="
-                w-full
-                bg-gray-700 text-white
-                py-3 rounded-xl
-                font-semibold
-                hover:bg-gray-900
-                transition-all duration-200
-              "
-            >
-              Back to Applied
-            </button>
-
-            <button
-              onClick={() => handleApplyClick(job)}
-              className="
-                w-full
-                bg-blue-600 text-white
-                py-3 rounded-xl
-                font-semibold
-                hover:bg-blue-700
-                transition-all duration-200
-              "
-            >
-              Apply Now
-            </button>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <Info label="Established" value={company.establishedYear} />
+          <Info label="Location" value={company.location} />
+          <Info label="Website" value={company.website} />
+          <Info label="Email" value={company.contactEmail} />
         </div>
-      </>
-    )}
-  </div>
-);
+      </div>
 
+      {/* ================= JOB INFO ================= */}
+      <div className="bg-white rounded-2xl border p-6">
+        <h2 className="text-2xl font-bold mb-4">
+          {job.title}
+        </h2>
 
+        <p className="mb-6">{job.description}</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+          <Info label="Location" value={job.jobLocation} />
+          <Info label="Job Type" value={job.jobType} />
+          <Info label="Experience" value={job.experience} />
+          <Info label="Salary" value={job.salary} />
+        </div>
+
+        <div className="flex gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-full bg-gray-700 text-white py-3 rounded-xl"
+          >
+            Back
+          </button>
+
+          <button
+            onClick={handleApplyClick}
+            className="w-full bg-blue-600 text-white py-3 rounded-xl"
+          >
+            Apply Now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
+
+// ================= INFO COMPONENT =================
 const Info = ({ label, value }) => (
   <div>
-    <p className="text-sm text-gray-500 font-medium">{label}</p>
-    <p className="mt-1 text-gray-800 font-semibold">
-      {value}
-    </p>
+    <p className="text-sm text-gray-500">{label}</p>
+    <p className="font-semibold">{value || "N/A"}</p>
   </div>
 );

@@ -77,6 +77,7 @@ export default function Header() {
             </NavLink>
           </li>
 
+          <li><NavLink to="/jobs" className="text-gray-100 hover:text-blue-600">Jobs</NavLink></li>
           {!user ? (
             <li>
               <NavLink

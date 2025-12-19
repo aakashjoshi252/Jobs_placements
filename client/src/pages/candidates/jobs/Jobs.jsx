@@ -1,11 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
-import { NavLink } from "react-router-dom";
+import { useNavigate} from "react-router-dom";
 import { jobsApi } from "../../../../api/api";
 import Pagination from "../../../components/pagination/Pagination";
 
 const ITEMS_PER_PAGE = 6;
 
-export default function Jobs({ filters }) {
+export default function Jobs({
+  filters = { title: "", company: "", location: "" },
+}) {
+  const navigate= useNavigate();
   const [jobs, setJobs] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -23,27 +26,17 @@ export default function Jobs({ filters }) {
     fetchJobs();
   }, []);
 
-  const handleSelectJob = (jobId) => {
-    sessionStorage.setItem("selectedJobId", jobId);
-  };
-
   // ================= FILTER LOGIC =================
   const filteredJobs = useMemo(() => {
-    return jobs.filter((job) => {
-      const matchTitle = job.title
-        ?.toLowerCase()
-        .includes(filters.title.toLowerCase());
+    const title = filters?.title?.toLowerCase() || "";
+    const company = filters?.company?.toLowerCase() || "";
+    const location = filters?.location?.toLowerCase() || "";
 
-      const matchCompany = job.companyName
-        ?.toLowerCase()
-        .includes(filters.company.toLowerCase());
-
-      const matchLocation = job.jobLocation
-        ?.toLowerCase()
-        .includes(filters.location.toLowerCase());
-
-      return matchTitle && matchCompany && matchLocation;
-    });
+    return jobs.filter((job) => (
+      job.title?.toLowerCase().includes(title) &&
+      job.companyName?.toLowerCase().includes(company) &&
+      job.jobLocation?.toLowerCase().includes(location)
+    ));
   }, [jobs, filters]);
 
   // Reset page when filters change
@@ -54,7 +47,6 @@ export default function Jobs({ filters }) {
   // ================= PAGINATION =================
   const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-
   const paginatedJobs = filteredJobs.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE
@@ -62,7 +54,6 @@ export default function Jobs({ filters }) {
 
   return (
     <>
-      {/* ================= JOB CARDS ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-5">
         {paginatedJobs.length === 0 ? (
           <p className="col-span-full text-center text-gray-500">
@@ -97,22 +88,17 @@ export default function Jobs({ filters }) {
                 <span className="font-semibold">Type:</span>{" "}
                 {job.empType}
               </p>
-
-              <NavLink to={`/candidate/CompanyAboutCard/${job._id}`}>
                 <button
-                  type="button"
-                  onClick={() => handleSelectJob(job._id)}
+                  onClick={() => navigate(`/candidate/CompanyAboutCard/${job._id}`)}
                   className="w-full mt-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
                 >
                   Apply
                 </button>
-              </NavLink>
             </div>
           ))
         )}
       </div>
 
-      {/* ================= PAGINATION ================= */}
       {totalPages > 1 && (
         <Pagination
           currentPage={currentPage}

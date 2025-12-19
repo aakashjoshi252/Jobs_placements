@@ -202,7 +202,7 @@ const routes = createBrowserRouter([
         element: <Suspense fallback={<h2>Loading...</h2>}><EditResume /></Suspense>
       },
       {
-        path: "/candidate/CompanyAboutCard/:id",
+        path: "/candidate/CompanyAboutCard/:jobId",
         element: <Suspense fallback={<h2>Loading...</   h2>}><CompanyAboutCard /></Suspense>
       },
       {

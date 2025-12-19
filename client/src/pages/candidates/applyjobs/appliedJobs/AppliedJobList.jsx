@@ -136,7 +136,7 @@ export default function AppliedJobs() {
 
               <button
                 onClick={() =>
-                  navigate(`/candidate/CompanyAboutCard/${company?._id}`)
+                  navigate(`/candidate/CompanyAboutCard/${job?._id}`)
                 }
                 className="mt-5 w-full bg-blue-600 text-white py-2.5 rounded-xl hover:bg-blue-700 transition font-medium"
               >
