@@ -12,7 +12,11 @@ export const dashboardApi = axios.create({
   baseURL: `${BASE_URL}/dashboard`,
   ...axiosConfig,
 });
-
+// ================= Chat-Box ===================
+export const chatApi = axios.create({
+  baseURL: `${BASE_URL}/chat`,
+  ...axiosConfig,
+});
 // ================= USER =================
 export const userApi = axios.create({
   baseURL: `${BASE_URL}/user`,
