@@ -9,6 +9,7 @@ const ChatBox = ({ chat, onBack }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -18,101 +19,104 @@ const ChatBox = ({ chat, onBack }) => {
 
   if (!chat || !user) return null;
 
-  /* ---------------- CHAT INFO ---------------- */
-
-  const otherUser = chat.participants?.find(
-    (p) => p._id !== user._id
-  );
-
+  const otherUser = chat.participants?.find((p) => p._id !== user._id);
   const chatId = chat._id;
 
   /* ---------------- FETCH MESSAGES ---------------- */
-
   useEffect(() => {
-    if (!chatId) return;
+    if (!chatId || !socket) return;
 
     const fetchMessages = async () => {
       try {
-        const res = await chatApi.get(
-          `/chat/${chatId}/messages`,
-          { withCredentials: true }
-        );
+        setLoading(true);
+        const res = await chatApi.get(`/chat/${chatId}/messages`, {
+          withCredentials: true,
+        });
 
-        console.log("Messages API:", res.data);
-
-        setMessages(
-          Array.isArray(res.data.messages)
-            ? res.data.messages
-            : []
-        );
+        console.log("Messages fetched:", res.data);
+        setMessages(Array.isArray(res.data.messages) ? res.data.messages : []);
       } catch (error) {
         console.error("Error fetching messages:", error);
+        setMessages([]);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchMessages();
 
-    socket?.emit("joinChat", chatId);
+    // Join chat room
+    socket.emit("joinChat", chatId);
+    console.log("Joined chat:", chatId);
 
-    socket?.on("receiveMessage", (message) => {
+    // Listen for new messages
+    const handleReceiveMessage = (message) => {
+      console.log("Received message:", message);
       setMessages((prev) => [...prev, message]);
-    });
+    };
 
-    socket?.on("userTyping", () => setIsTyping(true));
-    socket?.on("userStoppedTyping", () => setIsTyping(false));
+    const handleUserTyping = () => setIsTyping(true);
+    const handleUserStoppedTyping = () => setIsTyping(false);
 
+    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("userTyping", handleUserTyping);
+    socket.on("userStoppedTyping", handleUserStoppedTyping);
+
+    // Cleanup
     return () => {
-      socket?.off("receiveMessage");
-      socket?.off("userTyping");
-      socket?.off("userStoppedTyping");
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("userTyping", handleUserTyping);
+      socket.off("userStoppedTyping", handleUserStoppedTyping);
+      socket.emit("leaveChat", chatId);
     };
   }, [chatId, socket]);
 
   /* ---------------- AUTO SCROLL ---------------- */
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   /* ---------------- SEND MESSAGE ---------------- */
-
   const handleSend = (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !socket) return;
 
-    socket?.emit("sendMessage", {
+    console.log("Sending message:", { chatId, senderId: user._id, text: newMessage });
+
+    socket.emit("sendMessage", {
       chatId,
       senderId: user._id,
-      text: newMessage,
+      text: newMessage.trim(),
     });
 
     setNewMessage("");
-    socket?.emit("stopTyping", { chatId });
+    socket.emit("stopTyping", { chatId });
   };
 
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
 
-    socket?.emit("typing", { chatId });
+    if (!socket) return;
+
+    socket.emit("typing", { chatId, userName: user.username });
 
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      socket?.emit("stopTyping", { chatId });
+      socket.emit("stopTyping", { chatId });
     }, 1000);
   };
 
   /* ---------------- UI ---------------- */
-
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
       {/* Header */}
       <div className="flex items-center gap-4 p-4 bg-blue-600 text-white">
-        <button onClick={onBack} className="lg:hidden">
+        <button onClick={onBack} className="lg:hidden hover:bg-blue-700 p-1 rounded">
           <BiArrowBack size={22} />
         </button>
 
         <div className="w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center font-bold">
-          {otherUser?.email?.charAt(0)?.toUpperCase()}
+          {otherUser?.username?.charAt(0)?.toUpperCase() || otherUser?.email?.charAt(0)?.toUpperCase()}
         </div>
 
         <div>
@@ -125,36 +129,44 @@ const ChatBox = ({ chat, onBack }) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-        {messages.map((msg) => {
-          const isOwn = msg.senderId?._id === user._id;
+        {loading ? (
+          <p className="text-center text-gray-500 mt-8">Loading messages...</p>
+        ) : messages.length === 0 ? (
+          <p className="text-center text-gray-500 mt-8">
+            No messages yet. Start the conversation!
+          </p>
+        ) : (
+          messages.map((msg) => {
+            const isOwn = msg.senderId?._id === user._id || msg.senderId === user._id;
 
-          return (
-            <div
-              key={msg._id}
-              className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-            >
+            return (
               <div
-                className={`px-4 py-2 rounded-2xl max-w-md ${
-                  isOwn
-                    ? "bg-blue-600 text-white rounded-br-none"
-                    : "bg-white text-gray-800 rounded-bl-none shadow"
-                }`}
+                key={msg._id}
+                className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
               >
-                <p>{msg.text}</p>
-                <span className="text-xs opacity-70">
-                  {new Date(msg.createdAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
+                <div
+                  className={`px-4 py-2 rounded-2xl max-w-md ${
+                    isOwn
+                      ? "bg-blue-600 text-white rounded-br-none"
+                      : "bg-white text-gray-800 rounded-bl-none shadow"
+                  }`}
+                >
+                  <p className="break-words">{msg.text}</p>
+                  <span className="text-xs opacity-70">
+                    {new Date(msg.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
 
         {isTyping && (
-          <p className="text-sm text-gray-500">
-            {otherUser?.email} is typing...
+          <p className="text-sm text-gray-500 italic">
+            {otherUser?.username || otherUser?.email} is typing...
           </p>
         )}
 
@@ -170,10 +182,12 @@ const ChatBox = ({ chat, onBack }) => {
             onChange={handleTyping}
             placeholder="Type a message..."
             className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={!socket}
           />
           <button
             type="submit"
-            className="px-5 py-2 bg-blue-600 text-white rounded-full"
+            disabled={!newMessage.trim() || !socket}
+            className="px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             <FiSend />
           </button>
