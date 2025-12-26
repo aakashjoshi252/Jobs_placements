@@ -46,3 +46,9 @@ export const applicationApi = axios.create({
   baseURL: `${BASE_URL}/application`,
   ...axiosConfig,
 });
+
+// ================= Notification =================
+export const notificationApi = axios.create({
+  baseURL: `${BASE_URL}/notifications`,
+  ...axiosConfig,
+});
