@@ -11,6 +11,19 @@ export const SocketProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const user = useSelector((state) => state.auth.user);
 
+  // Request browser notification permission on mount
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          console.log("✅ Notification permission granted");
+        } else {
+          console.log("⚠️ Notification permission denied");
+        }
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (user?._id) {
       const newSocket = io("http://localhost:3000", {
