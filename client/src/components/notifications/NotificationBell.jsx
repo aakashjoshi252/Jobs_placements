@@ -2,18 +2,42 @@ import { useState, useEffect } from "react";
 import { BiBell } from "react-icons/bi";
 import { notificationApi } from "../../../api/api";
 import NotificationDropdown from "./NotificationDropdown";
+import { useSocket } from "../../context/SocketContext";
 
 const NotificationBell = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
+  const { socket } = useSocket();
 
   useEffect(() => {
     fetchUnreadCount();
-    
+
     // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    // Listen for real-time notification events
+    socket.on("newNotification", (notification) => {
+      console.log("New notification received:", notification);
+      setUnreadCount((prev) => prev + 1);
+
+      // Show browser notification if permitted
+      if (Notification.permission === "granted") {
+        new Notification(notification.title, {
+          body: notification.message,
+          icon: "/notification-icon.png",
+        });
+      }
+    });
+
+    return () => {
+      socket.off("newNotification");
+    };
+  }, [socket]);
 
   const fetchUnreadCount = async () => {
     try {
@@ -29,10 +53,11 @@ const NotificationBell = () => {
       <button
         onClick={() => setShowDropdown(!showDropdown)}
         className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+        aria-label="Notifications"
       >
         <BiBell size={24} />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full min-w-[20px]">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
