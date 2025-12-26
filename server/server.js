@@ -55,6 +55,7 @@ const io = new Server(server, {
     origin: "http://localhost:5173",
     credentials: true,
   },
+  transports: ['websocket', 'polling'],
 });
 
 io.on("connection", (socket) => {
@@ -64,19 +65,27 @@ io.on("connection", (socket) => {
   socket.on("userOnline", (userId) => {
     socket.userId = userId;
     socket.join(`user_${userId}`);
-    console.log(`User ${userId} is online`);
+    console.log(`✅ User ${userId} is online (Socket: ${socket.id})`);
   });
 
   // Join a specific chat room
   socket.on("joinChat", (chatId) => {
     socket.join(`chat_${chatId}`);
-    console.log(`Socket ${socket.id} joined chat ${chatId}`);
+    console.log(`✅ Socket ${socket.id} joined chat ${chatId}`);
+  });
+
+  // Leave a chat room
+  socket.on("leaveChat", (chatId) => {
+    socket.leave(`chat_${chatId}`);
+    console.log(`👋 Socket ${socket.id} left chat ${chatId}`);
   });
 
   // Send message
   socket.on("sendMessage", async (data) => {
     try {
       const { chatId, senderId, text } = data;
+      
+      console.log("📨 Sending message:", { chatId, senderId, text });
       
       // Save to database
       const message = await chatController.sendMessage({
@@ -85,7 +94,9 @@ io.on("connection", (socket) => {
         text,
       });
 
-      // Emit to all users in the chat room
+      console.log("💾 Message saved to DB:", message._id);
+
+      // Emit to all users in the chat room (including sender)
       io.to(`chat_${chatId}`).emit("receiveMessage", {
         _id: message._id,
         chatId,
@@ -94,23 +105,32 @@ io.on("connection", (socket) => {
         createdAt: message.createdAt,
       });
 
+      console.log("✅ Message broadcasted to chat room");
+
       // Get chat and notify other participant
       const Chat = require("./models/chatbox.model.js");
       const chat = await Chat.findById(chatId);
+      
       if (chat) {
         const otherUserId = chat.participants.find(
           (id) => id.toString() !== senderId.toString()
         );
         
-        io.to(`user_${otherUserId}`).emit("newMessageNotification", {
-          chatId,
-          message: text,
-          senderId,
-        });
+        if (otherUserId) {
+          io.to(`user_${otherUserId}`).emit("newMessageNotification", {
+            chatId,
+            message: text,
+            senderId,
+          });
+          console.log(`🔔 Notification sent to user ${otherUserId}`);
+        }
       }
     } catch (error) {
-      console.error("Socket sendMessage error:", error);
-      socket.emit("messageError", { error: error.message });
+      console.error("❌ Socket sendMessage error:", error);
+      socket.emit("messageError", { 
+        error: error.message,
+        details: "Failed to send message. Please try again." 
+      });
     }
   });
 
@@ -126,6 +146,10 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("🔴 User disconnected:", socket.id);
   });
+
+  socket.on("error", (error) => {
+    console.error("🔴 Socket error:", error);
+  });
 });
 
 /* ================= 404 HANDLER ================= */
@@ -137,5 +161,5 @@ app.use((req, res) => {
 
 /* ================= START SERVER ================= */
 server.listen(port, () => {
-  console.log(`🚀 Server running on http://localhost:${port}`);
+  console.log(` Server running on http://localhost:${port}`);
 });

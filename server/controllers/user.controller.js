@@ -75,7 +75,7 @@ const userController = {
           username: user.username,
           email: user.email,
           role: user.role,
-          phone:user.phone,
+          phone: user.phone,
           token: token,
         },
       });
@@ -86,6 +86,17 @@ const userController = {
   logoutUser: (req, res) => {
     res.clearCookie("token");
     res.status(200).json({ message: "Logged out successfully" });
+  },
+  getUsers: async (req, res) => {
+    try {
+      const users = await User.find()
+      if (!users) return res.status(404).json({ message: `Users not found` })
+      return res.status(200).json({ message: 'fetched users', data: users })
+
+    } catch {
+      console.error("Error fetching logged in user:", error);
+      return res.status(500).json({ message: "Internal server error", error });
+    }
   },
   // Get logged in user details
   getLoggedInUser: async (req, res) => {
