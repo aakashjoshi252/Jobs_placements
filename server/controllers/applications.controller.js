@@ -2,10 +2,10 @@ const Application = require("../models/application.model");
 const Job = require("../models/jobs.model");
 
 const applicationController = {
-  //candidate applies for a job
+  // Candidate applies for a job
   applyJob: async (req, res) => {
     try {
-      const { jobId } = req.body;
+      const { jobId, resumeId, coverLetter } = req.body;
       const candidateId = req.user._id;
 
       // Allow only candidates
@@ -13,6 +13,15 @@ const applicationController = {
         return res.status(403).json({
           message: "Only candidates can apply for jobs"
         });
+      }
+
+      // Validate required fields
+      if (!jobId) {
+        return res.status(400).json({ message: "Job ID is required" });
+      }
+
+      if (!resumeId) {
+        return res.status(400).json({ message: "Resume ID is required" });
       }
 
       // Check job exists
@@ -40,13 +49,14 @@ const applicationController = {
         });
       }
 
-      // Create application 
+      // Create application
       const application = await Application.create({
         jobId: jobId,
         candidateId: candidateId,
         recruiterId: job.recruiterId,
         companyId: job.companyId,
-        resumeId: req.body.resumeId,
+        resumeId: resumeId,
+        coverLetter: coverLetter || "",
         status: "PENDING"
       });
 
@@ -57,7 +67,10 @@ const applicationController = {
 
     } catch (error) {
       console.error("Apply Job Error:", error);
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ 
+        message: "Failed to submit application",
+        error: error.message 
+      });
     }
   },
 
@@ -92,18 +105,20 @@ const applicationController = {
         error: error.message
       });
     }
-  }
-  ,
-  // Recruiter updates application status
+  },
+
+  // Recruiter gets applications for their jobs
   getApplicationsByRecruiter: async (req, res) => {
     try {
       const recruiterId = req.user._id;
+
       // Allow only recruiters
       if (req.user.role !== "recruiter") {
         return res.status(403).json({
           message: "Only recruiters can view received applications"
         });
       }
+
       const applications = await Application.find({
         recruiterId: recruiterId
       })
@@ -112,10 +127,12 @@ const applicationController = {
         .populate("resumeId")
         .populate("candidateId", "username email")
         .sort({ createdAt: -1 });
+
       return res.status(200).json({
         message: "Received applications fetched successfully",
         data: applications
       });
+
     } catch (error) {
       console.error("Get Received Applications Error:", error);
       res.status(500).json({
@@ -124,21 +141,26 @@ const applicationController = {
       });
     }
   },
+
   getApplicationById: async (req, res) => {
     try {
       const { id } = req.params;
+
       const application = await Application.findById(id)
         .populate("jobId")
         .populate("companyId")
         .populate("resumeId")
         .populate("candidateId", "username email phone");
+
       if (!application) {
         return res.status(404).json({ message: "Application not found" });
       }
+
       res.status(200).json({
         message: "Application fetched successfully",
         application
       });
+
     } catch (error) {
       console.error("Get Application By ID Error:", error);
       res.status(500).json({
@@ -147,6 +169,7 @@ const applicationController = {
       });
     }
   },
+
   applicationStatus: async (req, res) => {
     try {
       const recruiterId = req.user._id;
@@ -218,6 +241,7 @@ const applicationController = {
       });
     }
   },
+
   getCandidateData: async (req, res) => {
     try {
       const recruiterId = req.user._id;
@@ -265,6 +289,5 @@ const applicationController = {
     }
   },
 };
-
 
 module.exports = applicationController;
