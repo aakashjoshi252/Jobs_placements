@@ -6,6 +6,13 @@ exports.getChatMessages = async (req, res) => {
   try {
     const { chatId } = req.params;
 
+    if (!chatId) {
+      return res.status(400).json({
+        success: false,
+        message: "Chat ID is required",
+      });
+    }
+
     const messages = await Message.find({ chatId })
       .populate("senderId", "username email role")
       .sort({ createdAt: 1 });
@@ -30,16 +37,35 @@ exports.createMessage = async (messageData) => {
   try {
     const { chatId, senderId, text } = messageData;
 
+    // Validate required fields
+    if (!chatId || !senderId || !text) {
+      const missingFields = [];
+      if (!chatId) missingFields.push("chatId");
+      if (!senderId) missingFields.push("senderId");
+      if (!text) missingFields.push("text");
+      
+      throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+    }
+
+    // Validate text is not empty after trim
+    if (text.trim() === "") {
+      throw new Error("Message text cannot be empty");
+    }
+
+    console.log("Creating message with:", { chatId, senderId, text: text.substring(0, 50) });
+
     // Create message
     const message = await Message.create({
       chatId,
       senderId,
-      text,
+      text: text.trim(),
     });
+
+    console.log("Message created:", message._id);
 
     // Update chat's lastMessage
     await Chat.findByIdAndUpdate(chatId, {
-      lastMessage: text,
+      lastMessage: text.trim().substring(0, 100),
     });
 
     // Populate sender info before returning
@@ -56,6 +82,13 @@ exports.createMessage = async (messageData) => {
 exports.markAsRead = async (req, res) => {
   try {
     const { messageId } = req.params;
+
+    if (!messageId) {
+      return res.status(400).json({
+        success: false,
+        message: "Message ID is required",
+      });
+    }
 
     const message = await Message.findByIdAndUpdate(
       messageId,
@@ -88,6 +121,13 @@ exports.markAsRead = async (req, res) => {
 exports.deleteMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
+
+    if (!messageId) {
+      return res.status(400).json({
+        success: false,
+        message: "Message ID is required",
+      });
+    }
 
     const message = await Message.findByIdAndDelete(messageId);
 
