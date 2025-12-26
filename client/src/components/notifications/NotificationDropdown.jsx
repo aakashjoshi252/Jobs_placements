@@ -7,7 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 const NotificationDropdown = ({ onClose, onCountUpdate }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // 'all' or 'unread'
+  const [filter, setFilter] = useState("all");
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -58,9 +58,7 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
   const markAllAsRead = async () => {
     try {
       await notificationApi.patch("/mark-all-read");
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, isRead: true }))
-      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       onCountUpdate();
     } catch (error) {
       console.error("Error marking all as read:", error);
@@ -70,9 +68,7 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
   const deleteNotification = async (notificationId) => {
     try {
       await notificationApi.delete(`/${notificationId}`);
-      setNotifications((prev) =>
-        prev.filter((n) => n._id !== notificationId)
-      );
+      setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
       onCountUpdate();
     } catch (error) {
       console.error("Error deleting notification:", error);
@@ -80,24 +76,21 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
   };
 
   const getNotificationIcon = (type) => {
-    switch (type) {
-      case "APPLICATION_SUBMITTED":
-        return "📝";
-      case "APPLICATION_REVIEWED":
-        return "👀";
-      case "APPLICATION_SHORTLISTED":
-        return "⭐";
-      case "APPLICATION_REJECTED":
-        return "❌";
-      case "APPLICATION_APPROVED":
-        return "✅";
-      case "NEW_MESSAGE":
-        return "💬";
-      case "JOB_POSTED":
-        return "📢";
-      default:
-        return "🔔";
-    }
+    const icons = {
+      APPLICATION_SUBMITTED: "📝",
+      APPLICATION_REVIEWED: "👀",
+      APPLICATION_SHORTLISTED: "⭐",
+      APPLICATION_REJECTED: "❌",
+      APPLICATION_APPROVED: "✅",
+      NEW_MESSAGE: "💬",
+      JOB_POSTED: "📢",
+      JOB_UPDATED: "📝",
+      JOB_CLOSED: "🔒",
+      PROFILE_VIEWED: "👁️",
+      RESUME_VIEWED: "📄",
+      SYSTEM: "ℹ️",
+    };
+    return icons[type] || "🔔";
   };
 
   return (
@@ -108,20 +101,22 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Notifications
+          </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <BiX size={24} />
           </button>
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <button
             onClick={() => setFilter("all")}
-            className={`px-3 py-1 rounded-full text-sm ${
+            className={`px-3 py-1 rounded-full text-sm transition-colors ${
               filter === "all"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -131,7 +126,7 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
           </button>
           <button
             onClick={() => setFilter("unread")}
-            className={`px-3 py-1 rounded-full text-sm ${
+            className={`px-3 py-1 rounded-full text-sm transition-colors ${
               filter === "unread"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -139,13 +134,15 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
           >
             Unread
           </button>
-          <button
-            onClick={markAllAsRead}
-            className="ml-auto text-sm text-blue-600 hover:underline"
-          >
-            <BiCheckDouble size={18} className="inline mr-1" />
-            Mark all read
-          </button>
+          {notifications.some((n) => !n.isRead) && (
+            <button
+              onClick={markAllAsRead}
+              className="ml-auto text-sm text-blue-600 hover:underline flex items-center gap-1"
+            >
+              <BiCheckDouble size={18} />
+              Mark all read
+            </button>
+          )}
         </div>
       </div>
 
@@ -153,12 +150,14 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
       <div className="overflow-y-auto flex-1">
         {loading ? (
           <div className="p-8 text-center text-gray-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
             Loading notifications...
           </div>
         ) : notifications.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <span className="text-4xl">🔔</span>
-            <p className="mt-2">No notifications yet</p>
+            <p className="mt-2 font-medium">No notifications yet</p>
+            <p className="text-sm mt-1">We'll notify you when something happens</p>
           </div>
         ) : (
           notifications.map((notification) => (
@@ -174,35 +173,64 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <Link
-                    to={notification.link || "#"}
-                    onClick={() => {
-                      if (!notification.isRead) {
-                        markAsRead(notification._id);
-                      }
-                      onClose();
-                    }}
-                    className="block"
-                  >
-                    <h4 className="font-medium text-gray-900 text-sm mb-1">
-                      {notification.title}
-                    </h4>
-                    <p className="text-sm text-gray-600 mb-2">
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {formatDistanceToNow(new Date(notification.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                  </Link>
+                  {notification.link ? (
+                    <Link
+                      to={notification.link}
+                      onClick={() => {
+                        if (!notification.isRead) {
+                          markAsRead(notification._id);
+                        }
+                        onClose();
+                      }}
+                      className="block group"
+                    >
+                      <h4 className="font-medium text-gray-900 text-sm mb-1 group-hover:text-blue-600">
+                        {notification.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {formatDistanceToNow(
+                          new Date(notification.createdAt),
+                          {
+                            addSuffix: true,
+                          }
+                        )}
+                      </p>
+                    </Link>
+                  ) : (
+                    <div
+                      onClick={() => {
+                        if (!notification.isRead) {
+                          markAsRead(notification._id);
+                        }
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <h4 className="font-medium text-gray-900 text-sm mb-1">
+                        {notification.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {formatDistanceToNow(
+                          new Date(notification.createdAt),
+                          {
+                            addSuffix: true,
+                          }
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2">
                   {!notification.isRead && (
                     <button
                       onClick={() => markAsRead(notification._id)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-blue-600 hover:text-blue-800 transition-colors"
                       title="Mark as read"
                     >
                       <BiCheck size={20} />
@@ -210,7 +238,7 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
                   )}
                   <button
                     onClick={() => deleteNotification(notification._id)}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800 transition-colors"
                     title="Delete"
                   >
                     <BiTrash size={16} />
@@ -224,7 +252,7 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
 
       {/* Footer */}
       {notifications.length > 0 && (
-        <div className="p-3 border-t text-center">
+        <div className="p-3 border-t text-center bg-gray-50">
           <Link
             to="/notifications"
             onClick={onClose}
