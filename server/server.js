@@ -13,6 +13,7 @@ const resumeRoute = require("./routes/resume.route.js");
 const applicationsRoute = require("./routes/applications.route.js");
 const dashboardRoutes = require("./routes/dashboard.route.js");
 const chatRoute = require("./routes/chat.route.js");
+const notificationRoute = require("./routes/notification.route.js");
 
 // SOCKET
 const { Server } = require("socket.io");
@@ -48,6 +49,7 @@ app.use("/resume", resumeRoute);
 app.use("/application", applicationsRoute);
 app.use("/dashboard", dashboardRoutes);
 app.use("/chat", chatRoute);
+app.use("/notifications", notificationRoute);
 
 /* ================= SOCKET.IO ================= */
 const io = new Server(server, {
