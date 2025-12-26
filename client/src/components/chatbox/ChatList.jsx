@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
-import { userApi } from "../../../api/api";
+import { userApi, chatApi } from "../../../api/api";
 import { useSelector } from "react-redux";
 
 const ChatList = ({ onSelectChat }) => {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        setLoading(true);
         const response = await userApi.get("/data", {
           withCredentials: true,
         });
 
-        // remove logged-in user from list
+        // Remove logged-in user from list
         const filteredUsers = response.data.data.filter(
           (u) => u._id !== user?._id
         );
@@ -21,11 +23,33 @@ const ChatList = ({ onSelectChat }) => {
         setUsers(filteredUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     if (user?._id) fetchUsers();
   }, [user]);
+
+  const handleSelectUser = async (selectedUser) => {
+    try {
+      // Create or get existing chat
+      const response = await chatApi.post(
+        "/create",
+        {
+          participantId: selectedUser._id,
+          currentUserId: user._id,
+        },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        onSelectChat(response.data.chat);
+      }
+    } catch (error) {
+      console.error("Error creating/getting chat:", error);
+    }
+  };
 
   return (
     <div className="h-full bg-white rounded-lg shadow-lg overflow-hidden">
@@ -34,7 +58,9 @@ const ChatList = ({ onSelectChat }) => {
       </div>
 
       <div className="overflow-y-auto h-[calc(100%-64px)]">
-        {users.length === 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-500 mt-8">Loading users...</p>
+        ) : users.length === 0 ? (
           <p className="text-center text-gray-500 mt-8">
             No users available
           </p>
@@ -42,7 +68,7 @@ const ChatList = ({ onSelectChat }) => {
           users.map((u) => (
             <div
               key={u._id}
-              onClick={() => onSelectChat(u)}
+              onClick={() => handleSelectUser(u)}
               className="p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3">
