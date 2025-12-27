@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../context/SocketContext";
 import { useSelector } from "react-redux";
-import { chatApi } from "../../../api/api";
+import { chatApi } from "../../api/api";
 import { FiSend } from "react-icons/fi";
 import { BiArrowBack, BiDotsVerticalRounded } from "react-icons/bi";
 import { formatDistanceToNow } from "date-fns";
@@ -84,7 +84,7 @@ const ChatBox = ({ chat, onBack }) => {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-neutral-50 to-primary-50/30 overflow-hidden">
       {/* HEADER - Fixed */}
-      <div className="flex-shrink-0 flex items-center gap-4 px-6 py-4 bg-gradient-primary shadow-lg z-10">
+      <div className="flex-shrink-0 flex items-center gap-4 px-4 sm:px-6 py-4 bg-gradient-primary shadow-lg z-10">
         <button
           onClick={onBack}
           className="lg:hidden p-2 hover:bg-white/20 rounded-lg transition-colors"
@@ -137,21 +137,21 @@ const ChatBox = ({ chat, onBack }) => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {messages.map((m, index) => {
               const isOwn =
                 m.senderId === user._id || m.senderId?._id === user._id;
               const showTimestamp =
                 index === 0 ||
-                new Date(messages[index - 1].createdAt).getTime() -
-                  new Date(m.createdAt).getTime() >
+                new Date(m.createdAt).getTime() -
+                  new Date(messages[index - 1].createdAt).getTime() >
                   300000; // 5 minutes
 
               return (
                 <div key={m._id || index} className="animate-fade-in">
                   {/* Timestamp Divider */}
                   {showTimestamp && (
-                    <div className="flex justify-center my-4">
+                    <div className="flex justify-center my-3">
                       <span className="text-xs text-neutral-500 bg-white px-3 py-1 rounded-full shadow-sm">
                         {formatDistanceToNow(new Date(m.createdAt), {
                           addSuffix: true,
@@ -162,17 +162,32 @@ const ChatBox = ({ chat, onBack }) => {
 
                   {/* Message Bubble */}
                   <div
-                    className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
+                    className={`flex mb-2 ${
+                      isOwn ? "justify-end" : "justify-start"
+                    }`}
                   >
-                    <div className={`max-w-[85%] sm:max-w-[75%] md:max-w-[60%]`}>
+                    <div
+                      className={`max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%]`}
+                    >
                       <div
-                        className={`px-4 py-3 rounded-2xl shadow-md ${
+                        className={`px-4 py-2.5 rounded-2xl shadow-md ${
                           isOwn
-                            ? "bg-gradient-primary text-white rounded-br-none"
-                            : "bg-white text-neutral-800 rounded-bl-none"
+                            ? "bg-gradient-primary text-white rounded-br-sm"
+                            : "bg-white text-neutral-800 rounded-bl-sm"
                         }`}
+                        style={{
+                          wordWrap: "break-word",
+                          overflowWrap: "break-word",
+                          wordBreak: "break-word",
+                        }}
                       >
-                        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                        <p
+                          className="text-sm leading-relaxed"
+                          style={{
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                          }}
+                        >
                           {m.text}
                         </p>
                       </div>
@@ -199,7 +214,7 @@ const ChatBox = ({ chat, onBack }) => {
 
       {/* Typing Indicator - Fixed */}
       {isTyping && (
-        <div className="flex-shrink-0 px-6 py-2 bg-gradient-to-br from-neutral-50 to-primary-50/30">
+        <div className="flex-shrink-0 px-4 sm:px-6 py-2 bg-gradient-to-br from-neutral-50 to-primary-50/30">
           <div className="flex items-center gap-2 text-neutral-500 text-sm">
             <div className="flex gap-1">
               <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" />
@@ -237,12 +252,13 @@ const ChatBox = ({ chat, onBack }) => {
             className="w-full px-4 py-3 rounded-2xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none transition-all"
             style={{
               minHeight: "44px",
-              maxHeight: "128px",
-              overflowY: text.split('\n').length > 3 ? 'auto' : 'hidden',
+              maxHeight: "120px",
+              overflowY: "auto",
             }}
             onInput={(e) => {
-              e.target.style.height = 'auto';
-              e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
+              e.target.style.height = "auto";
+              e.target.style.height =
+                Math.min(e.target.scrollHeight, 120) + "px";
             }}
           />
         </div>
