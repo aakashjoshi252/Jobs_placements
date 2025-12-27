@@ -1,197 +1,244 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../context/SocketContext";
 import { useSelector } from "react-redux";
-import { chatApi } from "../../../api/api";
+import { chatApi } from "../../api/api";
 import { FiSend } from "react-icons/fi";
-import { BiArrowBack } from "react-icons/bi";
+import { BiArrowBack, BiDotsVerticalRounded } from "react-icons/bi";
+import { formatDistanceToNow } from "date-fns";
 
 const ChatBox = ({ chat, onBack }) => {
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [loading, setLoading] = useState(true);
-
   const messagesEndRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
 
   const { socket } = useSocket();
   const user = useSelector((state) => state.auth.user);
 
-  if (!chat || !user) return null;
-
-  const otherUser = chat.participants?.find((p) => p._id !== user._id);
   const chatId = chat._id;
+  const otherUser = chat.participants.find((p) => p._id !== user._id);
 
-  /* ---------------- FETCH MESSAGES ---------------- */
   useEffect(() => {
-    if (!chatId || !socket) return;
-
     const fetchMessages = async () => {
       try {
-        setLoading(true);
         const res = await chatApi.get(`/chat/${chatId}/messages`, {
           withCredentials: true,
         });
-
-        console.log("Messages fetched:", res.data);
-        setMessages(Array.isArray(res.data.messages) ? res.data.messages : []);
+        setMessages(res.data.messages || []);
       } catch (error) {
         console.error("Error fetching messages:", error);
-        setMessages([]);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchMessages();
-
-    // Join chat room
     socket.emit("joinChat", chatId);
-    console.log("Joined chat:", chatId);
 
-    // Listen for new messages
-    const handleReceiveMessage = (message) => {
-      console.log("Received message:", message);
-      setMessages((prev) => [...prev, message]);
-    };
+    socket.on("receiveMessage", (msg) => {
+      setMessages((prev) => [...prev, msg]);
+    });
 
-    const handleUserTyping = () => setIsTyping(true);
-    const handleUserStoppedTyping = () => setIsTyping(false);
+    socket.on("userTyping", () => setIsTyping(true));
+    socket.on("userStoppedTyping", () => setIsTyping(false));
 
-    socket.on("receiveMessage", handleReceiveMessage);
-    socket.on("userTyping", handleUserTyping);
-    socket.on("userStoppedTyping", handleUserStoppedTyping);
-
-    // Cleanup
     return () => {
-      socket.off("receiveMessage", handleReceiveMessage);
-      socket.off("userTyping", handleUserTyping);
-      socket.off("userStoppedTyping", handleUserStoppedTyping);
       socket.emit("leaveChat", chatId);
+      socket.off("receiveMessage");
+      socket.off("userTyping");
+      socket.off("userStoppedTyping");
     };
   }, [chatId, socket]);
 
-  /* ---------------- AUTO SCROLL ---------------- */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  /* ---------------- SEND MESSAGE ---------------- */
-  const handleSend = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !socket) return;
+  const handleTyping = (e) => {
+    setText(e.target.value);
+    socket.emit("typing", { chatId, userName: user.username });
 
-    console.log("Sending message:", { chatId, senderId: user._id, text: newMessage });
+    // Stop typing after 2 seconds of inactivity
+    clearTimeout(window.typingTimeout);
+    window.typingTimeout = setTimeout(() => {
+      socket.emit("stopTyping", { chatId });
+    }, 2000);
+  };
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!text.trim()) return;
 
     socket.emit("sendMessage", {
       chatId,
       senderId: user._id,
-      text: newMessage.trim(),
+      text,
     });
 
-    setNewMessage("");
+    setText("");
     socket.emit("stopTyping", { chatId });
   };
 
-  const handleTyping = (e) => {
-    setNewMessage(e.target.value);
-
-    if (!socket) return;
-
-    socket.emit("typing", { chatId, userName: user.username });
-
-    clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("stopTyping", { chatId });
-    }, 1000);
-  };
-
-  /* ---------------- UI ---------------- */
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
-      {/* Header */}
-      <div className="flex items-center gap-4 p-4 bg-blue-600 text-white">
-        <button onClick={onBack} className="lg:hidden hover:bg-blue-700 p-1 rounded">
-          <BiArrowBack size={22} />
+    <div className="flex flex-col h-full bg-gradient-to-br from-neutral-50 to-primary-50/30">
+      {/* HEADER */}
+      <div className="flex items-center gap-4 px-6 py-4 bg-gradient-primary shadow-lg">
+        <button
+          onClick={onBack}
+          className="lg:hidden p-2 hover:bg-white/20 rounded-lg transition-colors"
+        >
+          <BiArrowBack className="text-white" size={22} />
         </button>
 
-        <div className="w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center font-bold">
-          {otherUser?.username?.charAt(0)?.toUpperCase() || otherUser?.email?.charAt(0)?.toUpperCase()}
+        <div className="relative flex-shrink-0">
+          <div className="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-lg shadow-md">
+            {otherUser.username[0].toUpperCase()}
+          </div>
+          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-success-500 border-2 border-white rounded-full" />
         </div>
 
-        <div>
-          <h3 className="font-semibold">
-            {otherUser?.username || otherUser?.email}
-          </h3>
-          <p className="text-sm capitalize">{otherUser?.role}</p>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-white text-lg">
+            {otherUser.username}
+          </p>
+          <p className="text-xs text-white/80">
+            {isTyping ? "typing..." : "Active now"}
+          </p>
         </div>
+
+        <button className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+          <BiDotsVerticalRounded className="text-white" size={24} />
+        </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-        {loading ? (
-          <p className="text-center text-gray-500 mt-8">Loading messages...</p>
-        ) : messages.length === 0 ? (
-          <p className="text-center text-gray-500 mt-8">
-            No messages yet. Start the conversation!
-          </p>
+      {/* MESSAGES */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 mx-auto bg-primary-100 rounded-full flex items-center justify-center">
+                <FiSend className="text-primary-600" size={24} />
+              </div>
+              <p className="text-neutral-500 font-medium">
+                No messages yet
+              </p>
+              <p className="text-neutral-400 text-sm">
+                Send a message to start the conversation
+              </p>
+            </div>
+          </div>
         ) : (
-          messages.map((msg) => {
-            const isOwn = msg.senderId?._id === user._id || msg.senderId === user._id;
+          messages.map((m, index) => {
+            const isOwn =
+              m.senderId === user._id || m.senderId?._id === user._id;
+            const showTimestamp =
+              index === 0 ||
+              new Date(messages[index - 1].createdAt).getTime() -
+                new Date(m.createdAt).getTime() >
+                300000; // 5 minutes
 
             return (
-              <div
-                key={msg._id}
-                className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-              >
+              <div key={m._id} className="animate-fade-in">
+                {/* Timestamp Divider */}
+                {showTimestamp && (
+                  <div className="flex justify-center my-4">
+                    <span className="text-xs text-neutral-500 bg-white px-3 py-1 rounded-full shadow-sm">
+                      {formatDistanceToNow(new Date(m.createdAt), {
+                        addSuffix: true,
+                      })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Message Bubble */}
                 <div
-                  className={`px-4 py-2 rounded-2xl max-w-md ${
-                    isOwn
-                      ? "bg-blue-600 text-white rounded-br-none"
-                      : "bg-white text-gray-800 rounded-bl-none shadow"
-                  }`}
+                  className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                 >
-                  <p className="break-words">{msg.text}</p>
-                  <span className="text-xs opacity-70">
-                    {new Date(msg.createdAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                  <div
+                    className={`max-w-[75%] md:max-w-[60%] ${
+                      isOwn ? "order-2" : "order-1"
+                    }`}
+                  >
+                    <div
+                      className={`px-4 py-3 rounded-2xl shadow-md ${
+                        isOwn
+                          ? "bg-gradient-primary text-white rounded-br-none"
+                          : "bg-white text-neutral-800 rounded-bl-none"
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed break-words">
+                        {m.text}
+                      </p>
+                    </div>
+                    <p
+                      className={`text-xs text-neutral-400 mt-1 px-1 ${
+                        isOwn ? "text-right" : "text-left"
+                      }`}
+                    >
+                      {new Date(m.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
                 </div>
               </div>
             );
           })
         )}
-
-        {isTyping && (
-          <p className="text-sm text-gray-500 italic">
-            {otherUser?.username || otherUser?.email} is typing...
-          </p>
-        )}
-
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <form onSubmit={handleSend} className="p-4 border-t bg-white">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={handleTyping}
-            placeholder="Type a message..."
-            className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={!socket}
-          />
-          <button
-            type="submit"
-            disabled={!newMessage.trim() || !socket}
-            className="px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            <FiSend />
-          </button>
+      {/* Typing Indicator */}
+      {isTyping && (
+        <div className="px-6 py-2">
+          <div className="flex items-center gap-2 text-neutral-500 text-sm">
+            <div className="flex gap-1">
+              <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" />
+              <span
+                className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
+                style={{ animationDelay: "0.1s" }}
+              />
+              <span
+                className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
+                style={{ animationDelay: "0.2s" }}
+              />
+            </div>
+            <span>{otherUser.username} is typing...</span>
+          </div>
         </div>
+      )}
+
+      {/* INPUT */}
+      <form
+        onSubmit={sendMessage}
+        className="flex items-end gap-3 px-6 py-4 bg-white border-t border-neutral-200 shadow-lg"
+      >
+        <div className="flex-1 relative">
+          <textarea
+            value={text}
+            onChange={handleTyping}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(e);
+              }
+            }}
+            placeholder="Type your message..."
+            rows={1}
+            className="w-full px-4 py-3 pr-12 rounded-2xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none max-h-32 transition-all"
+            style={{
+              minHeight: "44px",
+              maxHeight: "128px",
+            }}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={!text.trim()}
+          className="p-3.5 bg-gradient-primary text-white rounded-2xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-scale"
+        >
+          <FiSend size={20} />
+        </button>
       </form>
     </div>
   );
