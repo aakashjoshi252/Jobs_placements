@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { userApi, chatApi } from "../../api/api";
+import { userApi, chatApi } from "../../../api/api";
 import { useSelector } from "react-redux";
 import { BiSearch, BiMessageSquareDetail } from "react-icons/bi";
 import { formatDistanceToNow } from "date-fns";

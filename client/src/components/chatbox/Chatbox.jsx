@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../context/SocketContext";
 import { useSelector } from "react-redux";
-import { chatApi } from "../../api/api";
+import { chatApi } from "../../../api/api";
 import { FiSend } from "react-icons/fi";
 import { BiArrowBack, BiDotsVerticalRounded } from "react-icons/bi";
 import { formatDistanceToNow } from "date-fns";
