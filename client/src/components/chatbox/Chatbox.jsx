@@ -10,6 +10,7 @@ const ChatBox = ({ chat, onBack }) => {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isWindowFocused, setIsWindowFocused] = useState(true);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
@@ -18,6 +19,65 @@ const ChatBox = ({ chat, onBack }) => {
 
   const chatId = chat._id;
   const otherUser = chat.participants.find((p) => p._id !== user._id);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Track window focus for smart notifications
+  useEffect(() => {
+    const handleFocus = () => setIsWindowFocused(true);
+    const handleBlur = () => setIsWindowFocused(false);
+
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("blur", handleBlur);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, []);
+
+  // Show browser notification
+  const showNotification = (message) => {
+    // Only show notification if window is not focused
+    if (!isWindowFocused && Notification.permission === "granted") {
+      const notification = new Notification(`💬 ${otherUser.username}`, {
+        body: message.text,
+        icon: "/chat-icon.png", // Add your icon in public folder
+        badge: "/badge-icon.png",
+        tag: chatId, // Prevents duplicate notifications
+        requireInteraction: false,
+        silent: false,
+      });
+
+      // Play notification sound
+      playNotificationSound();
+
+      // Auto-close after 5 seconds
+      setTimeout(() => notification.close(), 5000);
+
+      // Click notification to open chat
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    }
+  };
+
+  // Play notification sound
+  const playNotificationSound = () => {
+    try {
+      const audio = new Audio("/notification.mp3"); // Add sound file in public folder
+      audio.volume = 0.5;
+      audio.play().catch((err) => console.log("Audio play failed:", err));
+    } catch (error) {
+      console.log("Notification sound error:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -36,6 +96,12 @@ const ChatBox = ({ chat, onBack }) => {
 
     socket.on("receiveMessage", (msg) => {
       setMessages((prev) => [...prev, msg]);
+      
+      // Show notification if message is from other user
+      const isOwnMessage = msg.senderId === user._id || msg.senderId?._id === user._id;
+      if (!isOwnMessage) {
+        showNotification(msg);
+      }
     });
 
     socket.on("userTyping", () => setIsTyping(true));
@@ -47,7 +113,7 @@ const ChatBox = ({ chat, onBack }) => {
       socket.off("userTyping");
       socket.off("userStoppedTyping");
     };
-  }, [chatId, socket]);
+  }, [chatId, socket, isWindowFocused]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -60,7 +126,6 @@ const ChatBox = ({ chat, onBack }) => {
     setText(e.target.value);
     socket.emit("typing", { chatId, userName: user.username });
 
-    // Stop typing after 2 seconds of inactivity
     clearTimeout(window.typingTimeout);
     window.typingTimeout = setTimeout(() => {
       socket.emit("stopTyping", { chatId });
@@ -145,11 +210,10 @@ const ChatBox = ({ chat, onBack }) => {
                 index === 0 ||
                 new Date(m.createdAt).getTime() -
                   new Date(messages[index - 1].createdAt).getTime() >
-                  300000; // 5 minutes
+                  300000;
 
               return (
-                <div key={m._id || index} className="animate-fade-in">
-                  {/* Timestamp Divider */}
+                <div key={m._id || index}>
                   {showTimestamp && (
                     <div className="flex justify-center my-3">
                       <span className="text-xs text-neutral-500 bg-white px-3 py-1 rounded-full shadow-sm">
@@ -160,7 +224,6 @@ const ChatBox = ({ chat, onBack }) => {
                     </div>
                   )}
 
-                  {/* Message Bubble */}
                   <div
                     className={`flex mb-2 ${
                       isOwn ? "justify-end" : "justify-start"
@@ -178,7 +241,6 @@ const ChatBox = ({ chat, onBack }) => {
                         style={{
                           wordWrap: "break-word",
                           overflowWrap: "break-word",
-                          wordBreak: "break-word",
                         }}
                       >
                         <p
@@ -206,13 +268,12 @@ const ChatBox = ({ chat, onBack }) => {
                 </div>
               );
             })}
-            {/* Scroll anchor */}
             <div ref={messagesEndRef} className="h-1" />
           </div>
         )}
       </div>
 
-      {/* Typing Indicator - Fixed at bottom */}
+      {/* Typing Indicator */}
       {isTyping && (
         <div className="flex-shrink-0 px-4 sm:px-6 py-2 bg-gradient-to-br from-neutral-50 to-primary-50/30">
           <div className="flex items-center gap-2 text-neutral-500 text-sm">
@@ -232,7 +293,7 @@ const ChatBox = ({ chat, onBack }) => {
         </div>
       )}
 
-      {/* INPUT - Fixed at bottom */}
+      {/* INPUT */}
       <form
         onSubmit={sendMessage}
         className="flex-shrink-0 flex items-end gap-3 px-4 sm:px-6 py-4 bg-white border-t border-neutral-200 shadow-lg"
@@ -266,7 +327,7 @@ const ChatBox = ({ chat, onBack }) => {
         <button
           type="submit"
           disabled={!text.trim()}
-          className="flex-shrink-0 p-3.5 bg-gradient-primary text-white rounded-2xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-scale"
+          className="flex-shrink-0 p-3.5 bg-gradient-primary text-white rounded-2xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           <FiSend size={20} />
         </button>
