@@ -82,9 +82,9 @@ const ChatBox = ({ chat, onBack }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-neutral-50 to-primary-50/30 overflow-hidden">
-      {/* HEADER - Fixed */}
-      <div className="flex-shrink-0 flex items-center gap-4 px-4 sm:px-6 py-4 bg-gradient-primary shadow-lg z-10">
+    <div className="flex flex-col h-full bg-gradient-to-br from-neutral-50 to-primary-50/30">
+      {/* HEADER - Sticky at top */}
+      <div className="sticky top-0 z-20 flex-shrink-0 flex items-center gap-4 px-4 sm:px-6 py-4 bg-gradient-primary shadow-lg">
         <button
           onClick={onBack}
           className="lg:hidden p-2 hover:bg-white/20 rounded-lg transition-colors"
@@ -113,126 +113,129 @@ const ChatBox = ({ chat, onBack }) => {
         </button>
       </div>
 
-      {/* MESSAGES - Scrollable */}
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-4"
-        style={{
-          scrollBehavior: "smooth",
-          overscrollBehavior: "contain",
-        }}
-      >
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 mx-auto bg-primary-100 rounded-full flex items-center justify-center">
-                <FiSend className="text-primary-600" size={24} />
+      {/* MESSAGES CONTAINER - Scrollable area */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* MESSAGES - Scrollable */}
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-4"
+          style={{
+            scrollBehavior: "smooth",
+            overscrollBehavior: "contain",
+          }}
+        >
+          {messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-3">
+                <div className="w-16 h-16 mx-auto bg-primary-100 rounded-full flex items-center justify-center">
+                  <FiSend className="text-primary-600" size={24} />
+                </div>
+                <p className="text-neutral-500 font-medium">
+                  No messages yet
+                </p>
+                <p className="text-neutral-400 text-sm">
+                  Send a message to start the conversation
+                </p>
               </div>
-              <p className="text-neutral-500 font-medium">
-                No messages yet
-              </p>
-              <p className="text-neutral-400 text-sm">
-                Send a message to start the conversation
-              </p>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {messages.map((m, index) => {
-              const isOwn =
-                m.senderId === user._id || m.senderId?._id === user._id;
-              const showTimestamp =
-                index === 0 ||
-                new Date(m.createdAt).getTime() -
-                  new Date(messages[index - 1].createdAt).getTime() >
-                  300000; // 5 minutes
+          ) : (
+            <div className="space-y-3">
+              {messages.map((m, index) => {
+                const isOwn =
+                  m.senderId === user._id || m.senderId?._id === user._id;
+                const showTimestamp =
+                  index === 0 ||
+                  new Date(m.createdAt).getTime() -
+                    new Date(messages[index - 1].createdAt).getTime() >
+                    300000; // 5 minutes
 
-              return (
-                <div key={m._id || index} className="animate-fade-in">
-                  {/* Timestamp Divider */}
-                  {showTimestamp && (
-                    <div className="flex justify-center my-3">
-                      <span className="text-xs text-neutral-500 bg-white px-3 py-1 rounded-full shadow-sm">
-                        {formatDistanceToNow(new Date(m.createdAt), {
-                          addSuffix: true,
-                        })}
-                      </span>
-                    </div>
-                  )}
+                return (
+                  <div key={m._id || index} className="animate-fade-in">
+                    {/* Timestamp Divider */}
+                    {showTimestamp && (
+                      <div className="flex justify-center my-3">
+                        <span className="text-xs text-neutral-500 bg-white px-3 py-1 rounded-full shadow-sm">
+                          {formatDistanceToNow(new Date(m.createdAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </div>
+                    )}
 
-                  {/* Message Bubble */}
-                  <div
-                    className={`flex mb-2 ${
-                      isOwn ? "justify-end" : "justify-start"
-                    }`}
-                  >
+                    {/* Message Bubble */}
                     <div
-                      className={`max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%]`}
+                      className={`flex mb-2 ${
+                        isOwn ? "justify-end" : "justify-start"
+                      }`}
                     >
                       <div
-                        className={`px-4 py-2.5 rounded-2xl shadow-md ${
-                          isOwn
-                            ? "bg-gradient-primary text-white rounded-br-sm"
-                            : "bg-white text-neutral-800 rounded-bl-sm"
-                        }`}
-                        style={{
-                          wordWrap: "break-word",
-                          overflowWrap: "break-word",
-                          wordBreak: "break-word",
-                        }}
+                        className={`max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%]`}
                       >
-                        <p
-                          className="text-sm leading-relaxed"
+                        <div
+                          className={`px-4 py-2.5 rounded-2xl shadow-md ${
+                            isOwn
+                              ? "bg-gradient-primary text-white rounded-br-sm"
+                              : "bg-white text-neutral-800 rounded-bl-sm"
+                          }`}
                           style={{
-                            whiteSpace: "pre-wrap",
+                            wordWrap: "break-word",
+                            overflowWrap: "break-word",
                             wordBreak: "break-word",
                           }}
                         >
-                          {m.text}
+                          <p
+                            className="text-sm leading-relaxed"
+                            style={{
+                              whiteSpace: "pre-wrap",
+                              wordBreak: "break-word",
+                            }}
+                          >
+                            {m.text}
+                          </p>
+                        </div>
+                        <p
+                          className={`text-xs text-neutral-400 mt-1 px-1 ${
+                            isOwn ? "text-right" : "text-left"
+                          }`}
+                        >
+                          {new Date(m.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                       </div>
-                      <p
-                        className={`text-xs text-neutral-400 mt-1 px-1 ${
-                          isOwn ? "text-right" : "text-left"
-                        }`}
-                      >
-                        {new Date(m.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-            {/* Scroll anchor */}
-            <div ref={messagesEndRef} className="h-1" />
+                );
+              })}
+              {/* Scroll anchor */}
+              <div ref={messagesEndRef} className="h-1" />
+            </div>
+          )}
+        </div>
+
+        {/* Typing Indicator - Fixed at bottom of messages */}
+        {isTyping && (
+          <div className="flex-shrink-0 px-4 sm:px-6 py-2 bg-gradient-to-br from-neutral-50 to-primary-50/30">
+            <div className="flex items-center gap-2 text-neutral-500 text-sm">
+              <div className="flex gap-1">
+                <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" />
+                <span
+                  className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.1s" }}
+                />
+                <span
+                  className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.2s" }}
+                />
+              </div>
+              <span className="truncate">{otherUser.username} is typing...</span>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Typing Indicator - Fixed */}
-      {isTyping && (
-        <div className="flex-shrink-0 px-4 sm:px-6 py-2 bg-gradient-to-br from-neutral-50 to-primary-50/30">
-          <div className="flex items-center gap-2 text-neutral-500 text-sm">
-            <div className="flex gap-1">
-              <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" />
-              <span
-                className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
-                style={{ animationDelay: "0.1s" }}
-              />
-              <span
-                className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
-                style={{ animationDelay: "0.2s" }}
-              />
-            </div>
-            <span className="truncate">{otherUser.username} is typing...</span>
-          </div>
-        </div>
-      )}
-
-      {/* INPUT - Fixed */}
+      {/* INPUT - Fixed at bottom */}
       <form
         onSubmit={sendMessage}
         className="flex-shrink-0 flex items-end gap-3 px-4 sm:px-6 py-4 bg-white border-t border-neutral-200 shadow-lg"
