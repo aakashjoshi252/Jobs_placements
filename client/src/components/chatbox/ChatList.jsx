@@ -70,7 +70,11 @@ const ChatList = ({ onSelectChat }) => {
 
       {/* USERS LIST - Scrollable */}
       <div
+<<<<<<< HEAD
         className="flex-1 overflow-y-auto overflow-y-hidden bg-neutral-50"
+=======
+        className="flex-1 overflow-y-auto overflow-x-hidden bg-neutral-50"
+>>>>>>> d8acecaed4a19deb3a318f96852137fbf591c684
         style={{
           scrollBehavior: "smooth",
           overscrollBehavior: "contain",
@@ -84,7 +88,11 @@ const ChatList = ({ onSelectChat }) => {
             </div>
           </div>
         ) : filteredUsers.length === 0 ? (
+<<<<<<< HEAD
           <div className="flex flex-col items-center overflow-y-auto overflow-y-hidden justify-center h-full p-8 text-center">
+=======
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+>>>>>>> d8acecaed4a19deb3a318f96852137fbf591c684
             <div className="w-20 h-20 bg-neutral-200 rounded-full flex items-center justify-center mb-4">
               <BiMessageSquareDetail className="text-neutral-400" size={32} />
             </div>
