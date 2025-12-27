@@ -27,9 +27,31 @@ const port = process.env.PORT || 3000;
 connectDb;
 
 /* ================= MIDDLEWARE ================= */
+// Allow multiple origins (localhost and network IP)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://192.168.1.17:5173", // Your network IP
+  process.env.FRONTEND_URL, // Environment variable for production
+].filter(Boolean); // Remove undefined values
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if the origin is in the allowed list
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else if (origin.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)\d+\.\d+:\d+$/)) {
+        // Allow any local network IP (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+        callback(null, true);
+      } else {
+        console.warn(`⚠️  Blocked by CORS: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -54,7 +76,20 @@ app.use("/notifications", notificationRoute);
 /* ================= SOCKET.IO ================= */
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow requests with no origin
+      if (!origin) return callback(null, true);
+      
+      // Check if the origin is in the allowed list
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else if (origin.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)\d+\.\d+:\d+$/)) {
+        // Allow any local network IP
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   },
   transports: ["websocket", "polling"],
@@ -192,6 +227,8 @@ app.use((req, res) => {
 });
 
 /* ================= START SERVER ================= */
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
   console.log(`🚀 Server running on http://localhost:${port}`);
+  console.log(`🌐 Network: http://192.168.1.17:${port}`);
+  console.log(`✅ CORS enabled for local network`);
 });
