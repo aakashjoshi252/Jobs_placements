@@ -14,8 +14,8 @@ const Chatpage = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-primary-50 to-secondary-50">
-      <div className="relative h-full lg:grid lg:grid-cols-12 max-w-7xl mx-auto">
+    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-primary-50 to-secondary-50">
+      <div className="flex-1 flex lg:grid lg:grid-cols-12 max-w-7xl mx-auto w-full overflow-hidden">
         {/* CHAT LIST */}
         <div
           className={`
@@ -24,6 +24,7 @@ const Chatpage = () => {
             ${selectedChat ? "-translate-x-full" : "translate-x-0"}
             lg:relative lg:translate-x-0 lg:col-span-4 xl:col-span-3
             lg:rounded-l-2xl lg:border-r lg:border-neutral-200
+            flex flex-col h-full
           `}
         >
           <ChatList onSelectChat={handleSelectChat} />
@@ -37,6 +38,7 @@ const Chatpage = () => {
             ${selectedChat ? "translate-x-0" : "translate-x-full"}
             lg:relative lg:translate-x-0 lg:col-span-8 xl:col-span-9
             lg:rounded-r-2xl
+            flex flex-col h-full
           `}
         >
           {selectedChat ? (
