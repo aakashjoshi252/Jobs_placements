@@ -228,7 +228,7 @@ app.use((req, res) => {
 
 /* ================= START SERVER ================= */
 server.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Server running on http://localhost:${port}`);
-  console.log(`🌐 Network: http://192.168.1.17:${port}`);
-  console.log(`✅ CORS enabled for local network`);
+  console.log(` Server running on http://localhost:${port}`);
+  console.log(` Network: http://192.168.1.17:${port}`);
+  console.log(` CORS enabled for local network`);
 });
