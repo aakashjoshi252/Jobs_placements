@@ -1,6 +1,7 @@
 import { useFormik } from "formik";
-import { regisSchema } from "../../schema/index";
+import { regisSchema } from "../../schema";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { userApi } from "../../../api/api";
 
 const initialValue = {
@@ -14,29 +15,29 @@ const initialValue = {
 
 export default function Register() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const submitHandler = async (values, { resetForm, setFieldError }) => {
+    setLoading(true);
     try {
       const payload = {
-        username: values.username, 
+        username: values.username,
         email: values.email,
         password: values.password,
         phone: values.phone,
         role: values.role,
-      };  
+      };
 
       await userApi.post("/register", payload);
 
-      alert("Registration Successful!");
       resetForm();
       navigate("/login");
-
     } catch (error) {
       const msg =
-        error.response?.data?.message ||
-        "Registration failed";
-
+        error.response?.data?.message || "Registration failed";
       setFieldError("email", msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,7 +48,6 @@ export default function Register() {
     handleChange,
     handleSubmit,
     handleBlur,
-    handleReset,
   } = useFormik({
     initialValues: initialValue,
     onSubmit: submitHandler,
@@ -56,122 +56,147 @@ export default function Register() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
-      <div className="w-full max-w-md bg-white mt-10 shadow-lg rounded-xl p-8">
+      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8">
+
         <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
-          Register
+          Create Account
         </h2>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+
           {/* Username */}
-          <label className="block font-medium mb-1">Username</label>
-          <input
-            type="text"
-            name="username"
-            value={values.username}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className="w-full p-2 border rounded-md mb-1"
-          />
-          {errors.username && touched.username && (
-            <p className="text-red-500 text-sm mb-3">{errors.username}</p>
-          )}
+          <div>
+            <label className="block font-medium mb-1">Username</label>
+            <input
+              type="text"
+              name="username"
+              autoComplete="username"
+              value={values.username}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full rounded-lg p-2.5 bg-gray-50 border
+                ${errors.username && touched.username ? "border-red-500" : "border-gray-300"}
+                focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            />
+            {errors.username && touched.username && (
+              <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+            )}
+          </div>
 
           {/* Email */}
-          <label className="block font-medium mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={values.email}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className="w-full p-2 border rounded-md mb-1"
-          />
-          {errors.email && touched.email && (
-            <p className="text-red-500 text-sm mb-3">{errors.email}</p>
-          )}
+          <div>
+            <label className="block font-medium mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              autoComplete="email"
+              value={values.email}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full rounded-lg p-2.5 bg-gray-50 border
+                ${errors.email && touched.email ? "border-red-500" : "border-gray-300"}
+                focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            />
+            {errors.email && touched.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
 
           {/* Password */}
-          <label className="block font-medium mb-1">Password</label>
-          <input
-            type="password"
-            name="password"
-            value={values.password}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className="w-full p-2 border rounded-md mb-1"
-          />
-          {errors.password && touched.password && (
-            <p className="text-red-500 text-sm mb-3">{errors.password}</p>
-          )}
+          <div>
+            <label className="block font-medium mb-1">Password</label>
+            <input
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              value={values.password}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full rounded-lg p-2.5 bg-gray-50 border
+                ${errors.password && touched.password ? "border-red-500" : "border-gray-300"}
+                focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            />
+            {errors.password && touched.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+            )}
+          </div>
 
           {/* Phone */}
-          <label className="block font-medium mb-1">Phone</label>
-          <input
-            type="text"
-            name="phone"
-            value={values.phone}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className="w-full p-2 border rounded-md mb-1"
-          />
-          {errors.phone && touched.phone && (
-            <p className="text-red-500 text-sm mb-3">{errors.phone}</p>
-          )}
+          <div>
+            <label className="block font-medium mb-1">Phone</label>
+            <input
+              type="text"
+              name="phone"
+              autoComplete="tel"
+              value={values.phone}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full rounded-lg p-2.5 bg-gray-50 border
+                ${errors.phone && touched.phone ? "border-red-500" : "border-gray-300"}
+                focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            />
+            {errors.phone && touched.phone && (
+              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+            )}
+          </div>
 
           {/* Role */}
-          <label className="block font-medium mb-1">Select Role</label>
-          <select
-            name="role"
-            value={values.role}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className="w-full p-2 border rounded-md mb-1"
-          >
-            <option value="">Select Role</option>
-            <option value="candidate">Candidate</option>
-            <option value="recruiter">Recruiter</option>
-          </select>
-          {errors.role && touched.role && (
-            <p className="text-red-500 text-sm mb-3">{errors.role}</p>
-          )}
+          <div>
+            <label className="block font-medium mb-1">Select Role</label>
+            <select
+              name="role"
+              value={values.role}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full rounded-lg p-2.5 bg-gray-50 border
+                ${errors.role && touched.role ? "border-red-500" : "border-gray-300"}
+                focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            >
+              <option value="">Select Role</option>
+              <option value="candidate">Candidate</option>
+              <option value="recruiter">Recruiter</option>
+            </select>
+            {errors.role && touched.role && (
+              <p className="text-red-500 text-sm mt-1">{errors.role}</p>
+            )}
+          </div>
 
-          {/* Terms (frontend only) */}
-          <div className="flex items-center gap-2 mt-3">
+          {/* Terms */}
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
               name="checkbox"
               checked={values.checkbox}
               onChange={handleChange}
+              className="accent-blue-600"
             />
-            <label className="font-medium">Accept Terms</label>
+            <label className="text-sm font-medium">
+              I accept the Terms & Conditions
+            </label>
           </div>
           {errors.checkbox && touched.checkbox && (
-            <p className="text-red-500 text-sm mb-3">{errors.checkbox}</p>
+            <p className="text-red-500 text-sm">{errors.checkbox}</p>
           )}
 
-          {/* Buttons */}
-          <div className="flex justify-between mt-5">
-            <button className="bg-blue-600 text-white px-5 py-2 rounded-md">
-              Submit
-            </button>
-            <button
-              type="reset"
-              onClick={handleReset}
-              className="bg-gray-500 text-white px-5 py-2 rounded-md"
-            >
-              Reset
-            </button>
-          </div>
-
-          <div className="text-center mt-6">
-            <p className="text-gray-600">
-              Already have an account?{" "}
-              <NavLink to="/login" className="text-blue-600 font-semibold">
-                Login here
-              </NavLink>
-            </p>
-          </div>
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading || !values.checkbox}
+            className={`w-full py-2.5 rounded-lg font-semibold text-white transition
+              ${loading || !values.checkbox
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"}`}
+          >
+            {loading ? "Creating account..." : "Register"}
+          </button>
         </form>
+
+        <p className="text-center text-sm mt-6 text-gray-600">
+          Already have an account?{" "}
+          <NavLink to="/login" className="text-blue-600 font-medium hover:underline">
+            Login here
+          </NavLink>
+        </p>
       </div>
     </div>
   );
