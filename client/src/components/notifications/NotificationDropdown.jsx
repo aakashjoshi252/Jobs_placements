@@ -12,17 +12,23 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
 
   useEffect(() => {
     fetchNotifications();
+  }, [filter]);
 
+  // ✅ FIX: Separate useEffect for click outside handler
+  useEffect(() => {
     // Click outside to close
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        onClose();
+        // ✅ Check if onClose is a function before calling
+        if (typeof onClose === 'function') {
+          onClose();
+        }
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [filter]);
+  }, [onClose]); // ✅ Add onClose to dependency array
 
   const fetchNotifications = async () => {
     try {
@@ -49,7 +55,9 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
           n._id === notificationId ? { ...n, isRead: true } : n
         )
       );
-      onCountUpdate();
+      if (typeof onCountUpdate === 'function') {
+        onCountUpdate();
+      }
     } catch (error) {
       console.error("Error marking as read:", error);
     }
@@ -59,7 +67,9 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
     try {
       await notificationApi.patch("/mark-all-read");
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      onCountUpdate();
+      if (typeof onCountUpdate === 'function') {
+        onCountUpdate();
+      }
     } catch (error) {
       console.error("Error marking all as read:", error);
     }
@@ -69,7 +79,9 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
     try {
       await notificationApi.delete(`/${notificationId}`);
       setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
-      onCountUpdate();
+      if (typeof onCountUpdate === 'function') {
+        onCountUpdate();
+      }
     } catch (error) {
       console.error("Error deleting notification:", error);
     }
@@ -93,6 +105,12 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
     return icons[type] || "🔔";
   };
 
+  const handleClose = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  };
+
   return (
     <div
       ref={dropdownRef}
@@ -105,7 +123,7 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
             Notifications
           </h3>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <BiX size={24} />
@@ -180,7 +198,7 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
                         if (!notification.isRead) {
                           markAsRead(notification._id);
                         }
-                        onClose();
+                        handleClose();
                       }}
                       className="block group"
                     >
@@ -255,7 +273,7 @@ const NotificationDropdown = ({ onClose, onCountUpdate }) => {
         <div className="p-3 border-t text-center bg-gray-50">
           <Link
             to="/notifications"
-            onClick={onClose}
+            onClick={handleClose}
             className="text-sm text-blue-600 hover:underline font-medium"
           >
             View all notifications
