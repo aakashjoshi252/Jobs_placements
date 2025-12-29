@@ -1,0 +1,72 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    
+    - name: Install dependencies
+      working-directory: ./server
+      run: npm ci --only=production
+    
+    - name: Run tests
+      working-directory: ./server
+      run: npm test --if-present
+      env:
+        NODE_ENV: test
+        MONGO_URI: ${{ secrets.TEST_MONGO_URI }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    
+    - name: Deploy to Railway/Render
+      run: |
+        echo "Backend deployment step"
+        echo "Configure this section with your deployment platform"
+        # Add your deployment commands here
+        # Example for Railway: railway up
+        # Example for Render: render deploy
+
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    
+    - name: Install dependencies
+      working-directory: ./client
+      run: npm ci
+    
+    - name: Build
+      working-directory: ./client
+      run: npm run build
+      env:
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL }}
+    
+    - name: Deploy to Vercel
+      run: |
+        echo "Frontend deployment step"
+        echo "Configure this section with Vercel deployment"
+        # Install Vercel CLI: npm i -g vercel
+        # Deploy: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
