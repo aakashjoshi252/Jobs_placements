@@ -15,6 +15,14 @@ const notificationController = {
   // Get all notifications for a user
   getUserNotifications: async (req, res) => {
     try {
+      // ✅ FIX: Check if user exists first
+      if (!req.user || !req.user._id) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required. User not found in request.",
+        });
+      }
+
       const userId = req.user._id;
       const { limit = 20, skip = 0, unreadOnly = false } = req.query;
 
@@ -55,6 +63,14 @@ const notificationController = {
   // Get unread count
   getUnreadCount: async (req, res) => {
     try {
+      // ✅ FIX: Check if user exists first
+      if (!req.user || !req.user._id) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required",
+        });
+      }
+
       const userId = req.user._id;
 
       const count = await Notification.countDocuments({
@@ -79,6 +95,14 @@ const notificationController = {
   // Mark notification as read
   markAsRead: async (req, res) => {
     try {
+      // ✅ FIX: Check if user exists first
+      if (!req.user || !req.user._id) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required",
+        });
+      }
+
       const { notificationId } = req.params;
       const userId = req.user._id;
 
@@ -112,6 +136,14 @@ const notificationController = {
   // Mark all notifications as read
   markAllAsRead: async (req, res) => {
     try {
+      // ✅ FIX: Check if user exists first
+      if (!req.user || !req.user._id) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required",
+        });
+      }
+
       const userId = req.user._id;
 
       const result = await Notification.updateMany(
@@ -137,6 +169,14 @@ const notificationController = {
   // Delete a notification
   deleteNotification: async (req, res) => {
     try {
+      // ✅ FIX: Check if user exists first
+      if (!req.user || !req.user._id) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required",
+        });
+      }
+
       const { notificationId } = req.params;
       const userId = req.user._id;
 
@@ -169,6 +209,14 @@ const notificationController = {
   // Delete all read notifications
   deleteAllRead: async (req, res) => {
     try {
+      // ✅ FIX: Check if user exists first
+      if (!req.user || !req.user._id) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required",
+        });
+      }
+
       const userId = req.user._id;
 
       const result = await Notification.deleteMany({
