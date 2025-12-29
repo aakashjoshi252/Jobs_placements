@@ -362,12 +362,9 @@ process.on('unhandledRejection', (reason, promise) => {
 
 /* ================= START SERVER ================= */
 server.listen(port, '0.0.0.0', () => {
-  logger.info(`🚀 Server running in ${nodeEnv} mode`);
-  logger.info(`📍 Local: http://localhost:${port}`);
-  logger.info(`📍 Network: http://192.168.1.17:${port}`);
-  logger.info(`✅ CORS enabled for: ${allowedOrigins.join(', ')}`);
-  logger.info(`🔌 Socket.IO ready`);
-  logger.info(`💾 Database: ${process.env.MONGO_URI ? 'Connected' : 'Pending'}`);
+  console.log(` Server running on http://localhost:${port}`);
+  console.log(` Network: http://192.168.1.17:${port}`);
+  console.log(` CORS enabled for local network`);
 });
 
 // Export for testing
