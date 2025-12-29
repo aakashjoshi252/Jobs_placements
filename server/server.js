@@ -36,7 +36,7 @@ const port = process.env.PORT || 5000;
 const nodeEnv = process.env.NODE_ENV || 'development';
 
 /* ================= DATABASE CONNECTION ================= */
-connectDb();
+connectDb;
 
 /* ================= SECURITY MIDDLEWARE ================= */
 // Helmet - Secure HTTP headers
