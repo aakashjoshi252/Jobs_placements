@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+dist/
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+server/.env
+client/.env
+
+# OS Files
+.DS_Store
+desktop.ini
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# Uploads
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Planning files
+*.xlsx
+*.xls
+*.docx
+*.pdf
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
