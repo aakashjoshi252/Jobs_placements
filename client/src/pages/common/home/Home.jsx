@@ -15,6 +15,7 @@ export default function Home() {
     candidates: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // ✅ CORRECT FILTER STATE
   const [filters, setFilters] = useState({
@@ -23,10 +24,27 @@ export default function Home() {
     location: "",
   });
 
+  // Helper function to safely extract number from response
+  const safeExtractNumber = (data) => {
+    // If it's already a number, return it
+    if (typeof data === 'number') return data;
+    
+    // If it's an object with a count property
+    if (data && typeof data === 'object') {
+      if (typeof data.count === 'number') return data.count;
+      if (typeof data.data === 'number') return data.data;
+      if (typeof data.total === 'number') return data.total;
+    }
+    
+    // Default to 0
+    return 0;
+  };
+
   // ================= FETCH HOME DATA =================
   const fetchHomeData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       const [
         jobsCountRes,
@@ -35,33 +53,40 @@ export default function Home() {
         featuredJobsRes,
         categoriesRes,
       ] = await Promise.all([
-        dashboardApi.get("/jobs/count"),
-        dashboardApi.get("/companies/count"),
-        dashboardApi.get("/candidates/count"),
-        jobsApi.get("/featured?limit=6"),
-        jobsApi.get("/categories"),
+        dashboardApi.get("/jobs/count").catch(err => ({ data: 0 })),
+        dashboardApi.get("/companies/count").catch(err => ({ data: 0 })),
+        dashboardApi.get("/candidates/count").catch(err => ({ data: 0 })),
+        jobsApi.get("/featured?limit=6").catch(err => ({ data: { success: false, data: [] } })),
+        jobsApi.get("/categories").catch(err => ({ data: { success: false, data: null } })),
       ]);
 
-      // Update stats
+      // Update stats with safe extraction
       setStats({
-        jobs: jobsCountRes.data,
-        companies: companiesCountRes.data,
-        candidates: candidatesCountRes.data,
+        jobs: safeExtractNumber(jobsCountRes.data),
+        companies: safeExtractNumber(companiesCountRes.data),
+        candidates: safeExtractNumber(candidatesCountRes.data),
       });
 
       // Update featured jobs - handle new API response structure
-      if (featuredJobsRes.data.success && featuredJobsRes.data.data) {
+      if (featuredJobsRes.data?.success && Array.isArray(featuredJobsRes.data?.data)) {
         setFeaturedJobs(featuredJobsRes.data.data);
+      } else if (Array.isArray(featuredJobsRes.data)) {
+        // Fallback for direct array response
+        setFeaturedJobs(featuredJobsRes.data);
       }
 
       // Update categories - handle new API response structure
-      if (categoriesRes.data.success && categoriesRes.data.data) {
+      if (categoriesRes.data?.success && categoriesRes.data?.data) {
         setCategories(categoriesRes.data.data);
+      } else if (categoriesRes.data && !categoriesRes.data.success) {
+        // Handle direct data response
+        setCategories(categoriesRes.data);
       }
 
     } catch (error) {
       console.error("Home data fetch error:", error);
       console.error("Error details:", error.response?.data);
+      setError("Failed to load some data. Please refresh the page.");
     } finally {
       setLoading(false);
     }
@@ -122,11 +147,20 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ================= ERROR MESSAGE ================= */}
+      {error && (
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        </div>
+      )}
+
       {/* ================= JOB LIST ================= */}
       <Jobs filters={filters} />
 
       {/* ================= POPULAR CATEGORIES BY EXPERIENCE ================= */}
-      {!loading && categories && categories.experience && categories.experience.length > 0 && (
+      {!loading && categories?.experience && Array.isArray(categories.experience) && categories.experience.length > 0 && (
         <section className="py-16 max-w-6xl mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-10 text-slate-800">
             Browse by Experience Level
@@ -139,10 +173,10 @@ export default function Home() {
                 className="border bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md hover:border-emerald-500 transition cursor-pointer"
               >
                 <div className="text-2xl font-bold text-emerald-600 mb-2">
-                  {cat.count}
+                  {cat.count || 0}
                 </div>
                 <div className="font-semibold text-slate-700">
-                  {cat.category}
+                  {cat.category || 'N/A'}
                 </div>
               </div>
             ))}
@@ -151,7 +185,7 @@ export default function Home() {
       )}
 
       {/* ================= POPULAR SKILLS ================= */}
-      {!loading && categories && categories.topSkills && categories.topSkills.length > 0 && (
+      {!loading && categories?.topSkills && Array.isArray(categories.topSkills) && categories.topSkills.length > 0 && (
         <section className="py-16 bg-gray-100">
           <div className="max-w-6xl mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-10 text-slate-800">
@@ -164,7 +198,7 @@ export default function Home() {
                   key={index}
                   className="px-6 py-3 bg-white rounded-full border-2 border-emerald-500 hover:bg-emerald-500 hover:text-white transition cursor-pointer font-medium"
                 >
-                  {skill.skill} ({skill.count})
+                  {skill.skill || 'N/A'} ({skill.count || 0})
                 </div>
               ))}
             </div>
@@ -173,7 +207,7 @@ export default function Home() {
       )}
 
       {/* ================= JOB TYPES ================= */}
-      {!loading && categories && categories.jobType && categories.jobType.length > 0 && (
+      {!loading && categories?.jobType && Array.isArray(categories.jobType) && categories.jobType.length > 0 && (
         <section className="py-16 max-w-6xl mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-10 text-slate-800">
             Job Types Available
@@ -186,10 +220,10 @@ export default function Home() {
                 className="border-2 bg-white rounded-xl p-8 text-center shadow-sm hover:shadow-lg hover:border-emerald-500 transition cursor-pointer"
               >
                 <div className="text-3xl font-bold text-emerald-600 mb-3">
-                  {type.count}
+                  {type.count || 0}
                 </div>
                 <div className="text-xl font-semibold text-slate-700">
-                  {type.category} Jobs
+                  {type.category || 'N/A'} Jobs
                 </div>
               </div>
             ))}
@@ -198,7 +232,7 @@ export default function Home() {
       )}
 
       {/* ================= FEATURED JOBS ================= */}
-      {!loading && featuredJobs.length > 0 && (
+      {!loading && Array.isArray(featuredJobs) && featuredJobs.length > 0 && (
         <section className="py-16 bg-emerald-50">
           <h2 className="text-3xl font-bold text-center mb-10 text-slate-800">
             Featured Jobs
@@ -214,7 +248,7 @@ export default function Home() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h3 className="text-xl font-bold text-slate-800 mb-1">
-                      {job.title}
+                      {job.title || 'Job Title'}
                     </h3>
                     <p className="text-slate-600 font-medium">{job.companyName || 'Company'}</p>
                   </div>
@@ -226,18 +260,24 @@ export default function Home() {
                 </div>
                 
                 <div className="space-y-2 text-sm text-slate-600">
-                  <p className="flex items-center gap-2">
-                    <span className="text-emerald-600">📍</span>
-                    {job.jobLocation}
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="text-emerald-600">💼</span>
-                    {job.jobType} • {job.empType}
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="text-emerald-600">🎓</span>
-                    {job.experience}
-                  </p>
+                  {job.jobLocation && (
+                    <p className="flex items-center gap-2">
+                      <span className="text-emerald-600">📍</span>
+                      {job.jobLocation}
+                    </p>
+                  )}
+                  {(job.jobType || job.empType) && (
+                    <p className="flex items-center gap-2">
+                      <span className="text-emerald-600">💼</span>
+                      {job.jobType || ''} {job.jobType && job.empType && '•'} {job.empType || ''}
+                    </p>
+                  )}
+                  {job.experience && (
+                    <p className="flex items-center gap-2">
+                      <span className="text-emerald-600">🎓</span>
+                      {job.experience}
+                    </p>
+                  )}
                   {job.salary && (
                     <p className="flex items-center gap-2">
                       <span className="text-emerald-600">💰</span>
@@ -246,7 +286,7 @@ export default function Home() {
                   )}
                 </div>
 
-                {job.skills && job.skills.length > 0 && (
+                {job.skills && Array.isArray(job.skills) && job.skills.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">
                     {job.skills.slice(0, 3).map((skill, idx) => (
                       <span
@@ -304,10 +344,13 @@ export default function Home() {
 
 // ================= STAT COMPONENT =================
 function StatBox({ label, value }) {
+  // Ensure value is a number
+  const displayValue = typeof value === 'number' ? value : 0;
+  
   return (
     <div className="text-center">
       <h3 className="text-4xl font-bold text-emerald-600">
-        {value}+
+        {displayValue}+
       </h3>
       <p className="text-slate-700 font-medium">{label}</p>
     </div>
