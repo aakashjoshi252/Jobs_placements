@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ChatList from "../../../components/chatbox/ChatList";
 import ChatBox from "../../../components/chatbox/Chatbox";
+import { HiChatAlt2 } from "react-icons/hi";
 
 const Chatpage = () => {
   const [selectedChat, setSelectedChat] = useState(null);
@@ -14,7 +15,7 @@ const Chatpage = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-primary-50 to-secondary-50">
+    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-blue-50 to-gray-50">
       <div className="flex-1 flex lg:grid lg:grid-cols-12 max-w-7xl mx-auto w-full overflow-hidden">
         {/* CHAT LIST */}
         <div
@@ -23,7 +24,7 @@ const Chatpage = () => {
             transform transition-transform duration-300 ease-in-out
             ${selectedChat ? "-translate-x-full" : "translate-x-0"}
             lg:relative lg:translate-x-0 lg:col-span-4 xl:col-span-3
-            lg:rounded-l-2xl lg:border-r lg:border-neutral-200
+            lg:rounded-l-2xl lg:border-r lg:border-gray-200
             flex flex-col h-full
           `}
         >
@@ -44,30 +45,24 @@ const Chatpage = () => {
           {selectedChat ? (
             <ChatBox chat={selectedChat} onBack={handleBack} />
           ) : (
-            <div className="hidden lg:flex h-full items-center justify-center bg-gradient-to-br from-neutral-50 to-primary-50">
-              <div className="text-center space-y-4 p-8">
-                <div className="w-32 h-32 mx-auto bg-gradient-primary rounded-full flex items-center justify-center shadow-lg">
-                  <svg
-                    className="w-16 h-16 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
+            <div className="hidden lg:flex h-full items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
+              <div className="text-center space-y-6 p-8 max-w-md">
+                <div className="w-32 h-32 mx-auto bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center shadow-2xl">
+                  <HiChatAlt2 className="text-6xl text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-neutral-800">
+                <h3 className="text-3xl font-bold text-gray-900">
                   Start a Conversation
                 </h3>
-                <p className="text-neutral-600 max-w-md mx-auto">
+                <p className="text-gray-600 text-lg leading-relaxed">
                   Select a contact from the list to begin messaging and
                   collaborate on your job search journey
                 </p>
+                <div className="pt-4">
+                  <div className="inline-flex items-center gap-2 px-6 py-3 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                    <HiChatAlt2 className="text-lg" />
+                    Choose a conversation to get started
+                  </div>
+                </div>
               </div>
             </div>
           )}
