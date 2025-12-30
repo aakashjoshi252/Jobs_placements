@@ -7,13 +7,14 @@ import { useNavigate } from "react-router-dom";
 export default function Home() {
   const navigate = useNavigate();
 
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(null);
   const [featuredJobs, setFeaturedJobs] = useState([]);
   const [stats, setStats] = useState({
     jobs: 0,
     companies: 0,
     candidates: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   // ✅ CORRECT FILTER STATE
   const [filters, setFilters] = useState({
@@ -25,6 +26,8 @@ export default function Home() {
   // ================= FETCH HOME DATA =================
   const fetchHomeData = async () => {
     try {
+      setLoading(true);
+      
       const [
         jobsCountRes,
         companiesCountRes,
@@ -35,20 +38,32 @@ export default function Home() {
         dashboardApi.get("/jobs/count"),
         dashboardApi.get("/companies/count"),
         dashboardApi.get("/candidates/count"),
-        jobsApi.get("/featured"),
+        jobsApi.get("/featured?limit=6"),
         jobsApi.get("/categories"),
       ]);
 
+      // Update stats
       setStats({
         jobs: jobsCountRes.data,
         companies: companiesCountRes.data,
         candidates: candidatesCountRes.data,
       });
 
-      setFeaturedJobs(featuredJobsRes.data.jobs || []);
-      setCategories(categoriesRes.data.categories || []);
+      // Update featured jobs - handle new API response structure
+      if (featuredJobsRes.data.success && featuredJobsRes.data.data) {
+        setFeaturedJobs(featuredJobsRes.data.data);
+      }
+
+      // Update categories - handle new API response structure
+      if (categoriesRes.data.success && categoriesRes.data.data) {
+        setCategories(categoriesRes.data.data);
+      }
+
     } catch (error) {
       console.error("Home data fetch error:", error);
+      console.error("Error details:", error.response?.data);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,21 +125,71 @@ export default function Home() {
       {/* ================= JOB LIST ================= */}
       <Jobs filters={filters} />
 
-      {/* ================= CATEGORIES ================= */}
-      {categories.length > 0 && (
+      {/* ================= POPULAR CATEGORIES BY EXPERIENCE ================= */}
+      {!loading && categories && categories.experience && categories.experience.length > 0 && (
         <section className="py-16 max-w-6xl mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-10 text-slate-800">
-            Popular Categories
+            Browse by Experience Level
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {categories.map((cat) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {categories.experience.map((cat, index) => (
               <div
-                key={cat._id}
-                className="border bg-white rounded-xl p-5 text-center shadow-sm hover:shadow-md hover:border-emerald-500 transition cursor-pointer"
+                key={index}
+                className="border bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md hover:border-emerald-500 transition cursor-pointer"
               >
+                <div className="text-2xl font-bold text-emerald-600 mb-2">
+                  {cat.count}
+                </div>
                 <div className="font-semibold text-slate-700">
-                  {cat.name}
+                  {cat.category}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ================= POPULAR SKILLS ================= */}
+      {!loading && categories && categories.topSkills && categories.topSkills.length > 0 && (
+        <section className="py-16 bg-gray-100">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-10 text-slate-800">
+              Top Skills in Demand
+            </h2>
+
+            <div className="flex flex-wrap justify-center gap-3">
+              {categories.topSkills.slice(0, 10).map((skill, index) => (
+                <div
+                  key={index}
+                  className="px-6 py-3 bg-white rounded-full border-2 border-emerald-500 hover:bg-emerald-500 hover:text-white transition cursor-pointer font-medium"
+                >
+                  {skill.skill} ({skill.count})
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ================= JOB TYPES ================= */}
+      {!loading && categories && categories.jobType && categories.jobType.length > 0 && (
+        <section className="py-16 max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-10 text-slate-800">
+            Job Types Available
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.jobType.map((type, index) => (
+              <div
+                key={index}
+                className="border-2 bg-white rounded-xl p-8 text-center shadow-sm hover:shadow-lg hover:border-emerald-500 transition cursor-pointer"
+              >
+                <div className="text-3xl font-bold text-emerald-600 mb-3">
+                  {type.count}
+                </div>
+                <div className="text-xl font-semibold text-slate-700">
+                  {type.category} Jobs
                 </div>
               </div>
             ))}
@@ -133,25 +198,71 @@ export default function Home() {
       )}
 
       {/* ================= FEATURED JOBS ================= */}
-      {featuredJobs.length > 0 && (
+      {!loading && featuredJobs.length > 0 && (
         <section className="py-16 bg-emerald-50">
           <h2 className="text-3xl font-bold text-center mb-10 text-slate-800">
             Featured Jobs
           </h2>
 
-          <div className="max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {featuredJobs.map((job) => (
               <div
                 key={job._id}
-                className="p-6 bg-white rounded-xl shadow hover:shadow-lg transition"
+                onClick={() => navigate(`/jobs/${job._id}`)}
+                className="p-6 bg-white rounded-xl shadow hover:shadow-xl transition cursor-pointer border-2 border-transparent hover:border-emerald-500"
               >
-                <h3 className="text-xl font-bold text-slate-800">
-                  {job.title}
-                </h3>
-                <p className="text-slate-600">{job.companyName}</p>
-                <p className="text-emerald-600 font-medium mt-1">
-                  {job.jobLocation}
-                </p>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-slate-800 mb-1">
+                      {job.title}
+                    </h3>
+                    <p className="text-slate-600 font-medium">{job.companyName || 'Company'}</p>
+                  </div>
+                  {job.openings > 1 && (
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
+                      {job.openings} openings
+                    </span>
+                  )}
+                </div>
+                
+                <div className="space-y-2 text-sm text-slate-600">
+                  <p className="flex items-center gap-2">
+                    <span className="text-emerald-600">📍</span>
+                    {job.jobLocation}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span className="text-emerald-600">💼</span>
+                    {job.jobType} • {job.empType}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span className="text-emerald-600">🎓</span>
+                    {job.experience}
+                  </p>
+                  {job.salary && (
+                    <p className="flex items-center gap-2">
+                      <span className="text-emerald-600">💰</span>
+                      {job.salary}
+                    </p>
+                  )}
+                </div>
+
+                {job.skills && job.skills.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {job.skills.slice(0, 3).map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                    {job.skills.length > 3 && (
+                      <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs">
+                        +{job.skills.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -177,6 +288,16 @@ export default function Home() {
           Get Started
         </button>
       </section>
+
+      {/* ================= LOADING STATE ================= */}
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-10 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-xl">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+            <p className="mt-4 text-slate-600 font-medium">Loading...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
