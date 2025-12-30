@@ -113,5 +113,8 @@ export const applicationApi = createApiInstance(`${BASE_URL}/application`);
 // ================= Notification =================
 export const notificationApi = createApiInstance(`${BASE_URL}/notifications`);
 
+// ================= BLOGS - NEW =================
+export const blogApi = createApiInstance(`${BASE_URL}/blogs`);
+
 // Export BASE_URL for Socket.IO
 export { BASE_URL };
