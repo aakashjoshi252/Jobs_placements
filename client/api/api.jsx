@@ -5,13 +5,21 @@ const getBaseURL = () => {
   // Check if running on network IP
   const hostname = window.location.hostname;
   
+  // Default port for backend (updated to 5000)
+  const port = import.meta.env.VITE_API_PORT || '5000';
+  
   // If accessing via network IP, use that IP for backend
   if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-    return `http://${hostname}:3000`;
+    return `http://${hostname}:${port}`;
   }
   
-  // Default to localhost
-  return "http://localhost:3000";
+  // Check for environment variable
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Default to localhost with port 5000
+  return `http://localhost:${port}`;
 };
 
 const BASE_URL = getBaseURL();
@@ -51,15 +59,29 @@ const createApiInstance = (baseURL) => {
   // Response interceptor
   instance.interceptors.response.use(
     (response) => {
+      if (import.meta.env.DEV) {
+        console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
+      }
       return response;
     },
     (error) => {
+      // Enhanced error logging
+      if (error.response) {
+        console.error(`❌ ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${error.response.status}`);
+        console.error('Error data:', error.response.data);
+      } else if (error.request) {
+        console.error('❌ No response received:', error.request);
+      } else {
+        console.error('❌ Error:', error.message);
+      }
+
       // Handle 401 Unauthorized
       if (error.response?.status === 401) {
         console.warn('⚠️  Unauthorized access - redirecting to login');
         // Optionally redirect to login
         // window.location.href = '/login';
       }
+      
       return Promise.reject(error);
     }
   );
