@@ -1,7 +1,7 @@
 const express = require('express');
 const blogRouter = express.Router();
 const Blog = require('../models/Blog');
-const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middlewares/auth.middleware');
 
 // @route   GET /api/blogs
 // @desc    Get all published blogs (public)

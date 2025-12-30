@@ -24,7 +24,7 @@ const getBaseURL = () => {
 
 const BASE_URL = getBaseURL();
 
-console.log(`🌐 API Base URL: ${BASE_URL}`);
+console.log(` API Base URL: ${BASE_URL}`);
 
 //  COMMON CONFIG (VERY IMPORTANT)
 const axiosConfig = {
@@ -51,7 +51,7 @@ const createApiInstance = (baseURL) => {
       return config;
     },
     (error) => {
-      console.error('❌ Request error:', error);
+      console.error(' Request error:', error);
       return Promise.reject(error);
     }
   );
@@ -60,24 +60,24 @@ const createApiInstance = (baseURL) => {
   instance.interceptors.response.use(
     (response) => {
       if (import.meta.env.DEV) {
-        console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
+        console.log(` ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
       }
       return response;
     },
     (error) => {
       // Enhanced error logging
       if (error.response) {
-        console.error(`❌ ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${error.response.status}`);
+        console.error(` ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${error.response.status}`);
         console.error('Error data:', error.response.data);
       } else if (error.request) {
-        console.error('❌ No response received:', error.request);
+        console.error(' No response received:', error.request);
       } else {
-        console.error('❌ Error:', error.message);
+        console.error(' Error:', error.message);
       }
 
       // Handle 401 Unauthorized
       if (error.response?.status === 401) {
-        console.warn('⚠️  Unauthorized access - redirecting to login');
+        console.warn('Unauthorized access - redirecting to login');
         // Optionally redirect to login
         // window.location.href = '/login';
       }
