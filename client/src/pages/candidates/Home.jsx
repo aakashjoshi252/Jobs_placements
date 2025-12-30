@@ -2,6 +2,23 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { dashboardApi, jobsApi, applicationApi } from "../../../api/api";
 import { useNavigate } from "react-router-dom";
+import { 
+  HiChatAlt2, 
+  HiBell, 
+  HiDocumentText,
+  HiClock,
+  HiStar,
+  HiCheckCircle,
+  HiXCircle,
+  HiSearch,
+  HiClipboardList,
+  HiCog,
+  HiLightBulb,
+  HiChevronRight,
+  HiLocationMarker,
+  HiCurrencyDollar,
+  HiPlus
+} from "react-icons/hi";
 
 export default function CandidateHome() {
   const navigate = useNavigate();
@@ -26,12 +43,10 @@ export default function CandidateHome() {
 
         setStats(statsRes.data.data);
         
-        // Get 6 random recommended jobs
         const jobs = jobsRes.data || [];
         const shuffled = jobs.sort(() => 0.5 - Math.random());
         setRecommendedJobs(shuffled.slice(0, 6));
 
-        // Get 5 most recent applications
         const apps = applicationsRes.data?.applications || applicationsRes.data?.data || [];
         setRecentApplications(apps.slice(0, 5));
 
@@ -47,7 +62,7 @@ export default function CandidateHome() {
 
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-600 mx-auto mb-4"></div>
           <p className="text-gray-600 font-medium">Loading your dashboard...</p>
@@ -62,35 +77,32 @@ export default function CandidateHome() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      {/* Hero Header */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 to-emerald-800 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">
-                Welcome back, {user?.username || 'Candidate'}! 👋
+                Welcome back, {user?.username || 'Candidate'}!
               </h1>
-              <p className="text-emerald-100">
-                Your job search journey continues
-              </p>
+              <p className="text-emerald-100">Your job search journey continues</p>
             </div>
 
-            {/* Quick Actions */}
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => navigate("/chat")}
-                className="px-5 py-2.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition font-medium flex items-center gap-2"
+                className="px-5 py-2.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition font-medium flex items-center gap-2"
               >
-                <span>💬</span>
+                <HiChatAlt2 className="text-xl" />
                 Chats
               </button>
 
               <button
                 onClick={() => navigate("/notification")}
-                className="px-5 py-2.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition font-medium flex items-center gap-2"
+                className="px-5 py-2.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition font-medium flex items-center gap-2"
               >
-                <span>🔔</span>
+                <HiBell className="text-xl" />
                 Notifications
               </button>
 
@@ -98,7 +110,7 @@ export default function CandidateHome() {
                 onClick={() => navigate("/candidate/resume")}
                 className="px-5 py-2.5 rounded-lg bg-white text-emerald-600 hover:bg-emerald-50 transition font-semibold flex items-center gap-2 shadow-lg"
               >
-                <span>📄</span>
+                <HiDocumentText className="text-xl" />
                 My Resume
               </button>
             </div>
@@ -106,59 +118,33 @@ export default function CandidateHome() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 -mt-8">
+      <div className="max-w-7xl mx-auto px-6 -mt-8 pb-12">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-          <StatCard
-            title="Applied Jobs"
-            value={totalApplications}
-            icon="📝"
-            color="blue"
-          />
-          <StatCard
-            title="Pending"
-            value={stats?.pending || 0}
-            icon="⏳"
-            color="yellow"
-          />
-          <StatCard
-            title="Shortlisted"
-            value={stats?.shortlisted || 0}
-            icon="⭐"
-            color="purple"
-          />
-          <StatCard
-            title="Selected"
-            value={stats?.selected || 0}
-            icon="✅"
-            color="green"
-          />
-          <StatCard
-            title="Rejected"
-            value={stats?.rejected || 0}
-            icon="❌"
-            color="red"
-          />
+          <StatCard title="Applied Jobs" value={totalApplications} icon={<HiClipboardList />} color="blue" />
+          <StatCard title="Pending" value={stats?.pending || 0} icon={<HiClock />} color="yellow" />
+          <StatCard title="Shortlisted" value={stats?.shortlisted || 0} icon={<HiStar />} color="purple" />
+          <StatCard title="Selected" value={stats?.selected || 0} icon={<HiCheckCircle />} color="green" />
+          <StatCard title="Rejected" value={stats?.rejected || 0} icon={<HiXCircle />} color="red" />
         </div>
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main Section - 2 columns */}
+          {/* Main Section */}
           <div className="lg:col-span-2 space-y-6">
             {/* Recent Applications */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="p-6 border-b border-gray-200 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Recent Applications</h2>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Track your latest job applications
-                  </p>
+                  <p className="text-sm text-gray-500 mt-1">Track your latest job applications</p>
                 </div>
                 <button
                   onClick={() => navigate("/candidate/appliedJobs")}
-                  className="text-emerald-600 hover:text-emerald-700 font-medium text-sm"
+                  className="text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center gap-1"
                 >
-                  View All →
+                  View All
+                  <HiChevronRight />
                 </button>
               </div>
 
@@ -169,17 +155,14 @@ export default function CandidateHome() {
                   ))
                 ) : (
                   <div className="p-12 text-center">
-                    <div className="text-6xl mb-4">📭</div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      No applications yet
-                    </h3>
-                    <p className="text-gray-500 mb-6">
-                      Start applying to jobs that match your skills
-                    </p>
+                    <HiClipboardList className="text-6xl text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No applications yet</h3>
+                    <p className="text-gray-500 mb-6">Start applying to jobs that match your skills</p>
                     <button
                       onClick={() => navigate("/candidate/jobs")}
-                      className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium"
+                      className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium inline-flex items-center gap-2"
                     >
+                      <HiSearch />
                       Browse Jobs
                     </button>
                   </div>
@@ -191,9 +174,7 @@ export default function CandidateHome() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="p-6 border-b border-gray-200">
                 <h2 className="text-xl font-bold text-gray-900">Recommended for You</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Jobs matching your profile
-                </p>
+                <p className="text-sm text-gray-500 mt-1">Jobs matching your profile</p>
               </div>
 
               <div className="p-6">
@@ -205,7 +186,7 @@ export default function CandidateHome() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <div className="text-4xl mb-3">🔍</div>
+                    <HiSearch className="text-4xl text-gray-300 mx-auto mb-3" />
                     <p className="text-gray-500">No job recommendations available</p>
                   </div>
                 )}
@@ -213,14 +194,12 @@ export default function CandidateHome() {
             </div>
           </div>
 
-          {/* Sidebar - 1 column */}
+          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Profile Completion */}
+            {/* Success Rate */}
             <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-xl shadow-lg p-6 text-white">
               <h3 className="text-lg font-bold mb-2">Success Rate</h3>
-              <p className="text-emerald-100 text-sm mb-6">
-                Your application success metrics
-              </p>
+              <p className="text-emerald-100 text-sm mb-6">Your application success metrics</p>
 
               <div className="space-y-4">
                 <div>
@@ -229,10 +208,7 @@ export default function CandidateHome() {
                     <span className="font-bold text-2xl">{successRate}%</span>
                   </div>
                   <div className="w-full bg-emerald-900/50 rounded-full h-3">
-                    <div
-                      className="bg-white h-3 rounded-full transition-all"
-                      style={{ width: `${successRate}%` }}
-                    ></div>
+                    <div className="bg-white h-3 rounded-full transition-all" style={{ width: `${successRate}%` }} />
                   </div>
                 </div>
 
@@ -253,38 +229,21 @@ export default function CandidateHome() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <QuickActionButton
-                  icon="🔍"
-                  label="Browse All Jobs"
-                  onClick={() => navigate("/candidate/jobs")}
-                />
-                <QuickActionButton
-                  icon="📋"
-                  label="My Applications"
-                  onClick={() => navigate("/candidate/appliedJobs")}
-                />
-                <QuickActionButton
-                  icon="📄"
-                  label="Update Resume"
-                  onClick={() => navigate("/candidate/resume")}
-                />
-                <QuickActionButton
-                  icon="⚙️"
-                  label="Profile Settings"
-                  onClick={() => navigate("/settings")}
-                />
+                <QuickActionButton icon={<HiSearch />} label="Browse All Jobs" onClick={() => navigate("/candidate/jobs")} />
+                <QuickActionButton icon={<HiClipboardList />} label="My Applications" onClick={() => navigate("/candidate/appliedJobs")} />
+                <QuickActionButton icon={<HiDocumentText />} label="Update Resume" onClick={() => navigate("/candidate/resume")} />
+                <QuickActionButton icon={<HiCog />} label="Profile Settings" onClick={() => navigate("/settings")} />
               </div>
             </div>
 
-            {/* Tips Card */}
+            {/* Tips */}
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
-                <span className="text-2xl">💡</span>
+                <HiLightBulb className="text-2xl text-blue-600 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-1">Pro Tip</h4>
                   <p className="text-sm text-gray-600">
-                    Complete your profile and upload an updated resume to increase your
-                    chances by 60%.
+                    Complete your profile and upload an updated resume to increase your chances by 60%.
                   </p>
                 </div>
               </div>
@@ -294,30 +253,10 @@ export default function CandidateHome() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Application Breakdown</h3>
               <div className="space-y-3">
-                <ProgressBar
-                  label="Pending"
-                  value={stats?.pending || 0}
-                  total={totalApplications}
-                  color="yellow"
-                />
-                <ProgressBar
-                  label="Shortlisted"
-                  value={stats?.shortlisted || 0}
-                  total={totalApplications}
-                  color="purple"
-                />
-                <ProgressBar
-                  label="Selected"
-                  value={stats?.selected || 0}
-                  total={totalApplications}
-                  color="green"
-                />
-                <ProgressBar
-                  label="Rejected"
-                  value={stats?.rejected || 0}
-                  total={totalApplications}
-                  color="red"
-                />
+                <ProgressBar label="Pending" value={stats?.pending || 0} total={totalApplications} color="yellow" />
+                <ProgressBar label="Shortlisted" value={stats?.shortlisted || 0} total={totalApplications} color="purple" />
+                <ProgressBar label="Selected" value={stats?.selected || 0} total={totalApplications} color="green" />
+                <ProgressBar label="Rejected" value={stats?.rejected || 0} total={totalApplications} color="red" />
               </div>
             </div>
           </div>
@@ -327,7 +266,6 @@ export default function CandidateHome() {
   );
 }
 
-// ================= STAT CARD =================
 function StatCard({ title, value, icon, color }) {
   const colorClasses = {
     blue: "from-blue-500 to-blue-600",
@@ -339,9 +277,7 @@ function StatCard({ title, value, icon, color }) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition">
-      <div
-        className={`w-12 h-12 rounded-lg bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center text-2xl mb-3 shadow-lg`}
-      >
+      <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center text-2xl text-white mb-3 shadow-lg`}>
         {icon}
       </div>
       <div className="text-3xl font-bold text-gray-900">{value}</div>
@@ -350,13 +286,10 @@ function StatCard({ title, value, icon, color }) {
   );
 }
 
-// ================= APPLICATION ROW =================
 function ApplicationRow({ application, navigate }) {
   const job = application.job || application.jobId;
   const company = application.company || application.companyId;
-  const daysAgo = Math.floor(
-    (Date.now() - new Date(application.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const daysAgo = Math.floor((Date.now() - new Date(application.createdAt).getTime()) / (1000 * 60 * 60 * 24));
 
   const statusColors = {
     PENDING: "bg-yellow-100 text-yellow-700",
@@ -370,21 +303,15 @@ function ApplicationRow({ application, navigate }) {
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="font-semibold text-gray-900 truncate">
-              {job?.title || "Job Title"}
-            </h3>
-            <span
-              className={`px-2 py-0.5 text-xs rounded-full font-medium ${statusColors[application.status] || "bg-gray-100 text-gray-700"}`}
-            >
+            <h3 className="font-semibold text-gray-900 truncate">{job?.title || "Job Title"}</h3>
+            <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${statusColors[application.status] || "bg-gray-100 text-gray-700"}`}>
               {application.status}
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
             <span>{company?.companyName || "Company"}</span>
-            <span className="text-gray-400">
-              {daysAgo === 0 ? "Today" : `${daysAgo}d ago`}
-            </span>
+            <span className="text-gray-400">{daysAgo === 0 ? "Today" : `${daysAgo}d ago`}</span>
           </div>
         </div>
 
@@ -399,7 +326,6 @@ function ApplicationRow({ application, navigate }) {
   );
 }
 
-// ================= JOB CARD =================
 function JobCard({ job, navigate }) {
   return (
     <div
@@ -411,11 +337,11 @@ function JobCard({ job, navigate }) {
       
       <div className="space-y-1 text-xs text-gray-500">
         <p className="flex items-center gap-1">
-          <span>📍</span>
+          <HiLocationMarker />
           {job.jobLocation}
         </p>
         <p className="flex items-center gap-1">
-          <span>💰</span>
+          <HiCurrencyDollar />
           {job.salary}
         </p>
       </div>
@@ -427,23 +353,19 @@ function JobCard({ job, navigate }) {
   );
 }
 
-// ================= QUICK ACTION BUTTON =================
 function QuickActionButton({ icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-left group"
     >
-      <span className="text-2xl">{icon}</span>
-      <span className="font-medium text-gray-700 group-hover:text-gray-900">
-        {label}
-      </span>
-      <span className="ml-auto text-gray-400 group-hover:text-gray-600">→</span>
+      <span className="text-2xl text-gray-600 group-hover:text-gray-900">{icon}</span>
+      <span className="font-medium text-gray-700 group-hover:text-gray-900">{label}</span>
+      <HiChevronRight className="ml-auto text-gray-400 group-hover:text-gray-600" />
     </button>
   );
 }
 
-// ================= PROGRESS BAR =================
 function ProgressBar({ label, value, total, color }) {
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
   
@@ -458,15 +380,10 @@ function ProgressBar({ label, value, total, color }) {
     <div>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-gray-600">{label}</span>
-        <span className="text-sm font-semibold text-gray-900">
-          {value} ({percentage}%)
-        </span>
+        <span className="text-sm font-semibold text-gray-900">{value} ({percentage}%)</span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2">
-        <div
-          className={`${colorClasses[color]} h-2 rounded-full transition-all`}
-          style={{ width: `${percentage}%` }}
-        ></div>
+        <div className={`${colorClasses[color]} h-2 rounded-full transition-all`} style={{ width: `${percentage}%` }} />
       </div>
     </div>
   );
