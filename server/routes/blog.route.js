@@ -1,12 +1,12 @@
 const express = require('express');
-const router = express.Router();
+const blogRouter = express.Router();
 const Blog = require('../models/Blog');
 const { protect } = require('../middleware/authMiddleware');
 
 // @route   GET /api/blogs
 // @desc    Get all published blogs (public)
 // @access  Public
-router.get('/', async (req, res) => {
+blogRouter.get('/', async (req, res) => {
   try {
     const { category, search, limit = 20, page = 1 } = req.query;
     
@@ -55,7 +55,7 @@ router.get('/', async (req, res) => {
 // @route   GET /api/blogs/company/:companyId
 // @desc    Get all blogs for a specific company
 // @access  Private (Recruiter only)
-router.get('/company/:companyId', protect, async (req, res) => {
+blogRouter.get('/company/:companyId', protect, async (req, res) => {
   try {
     const blogs = await Blog.find({ companyId: req.params.companyId })
       .populate('authorId', 'name email')
@@ -77,7 +77,7 @@ router.get('/company/:companyId', protect, async (req, res) => {
 // @route   GET /api/blogs/:id
 // @desc    Get single blog by ID
 // @access  Public
-router.get('/:id', async (req, res) => {
+blogRouter.get('/:id', async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id)
       .populate('companyId', 'name logo website location')
@@ -110,7 +110,7 @@ router.get('/:id', async (req, res) => {
 // @route   POST /api/blogs
 // @desc    Create new blog
 // @access  Private (Recruiter only)
-router.post('/', protect, async (req, res) => {
+blogRouter.post('/', protect, async (req, res) => {
   try {
     const { title, description, content, category, image, status, companyId } = req.body;
     
@@ -142,7 +142,7 @@ router.post('/', protect, async (req, res) => {
 // @route   PUT /api/blogs/:id
 // @desc    Update blog
 // @access  Private (Recruiter only)
-router.put('/:id', protect, async (req, res) => {
+blogRouter.put('/:id', protect, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     
@@ -184,7 +184,7 @@ router.put('/:id', protect, async (req, res) => {
 // @route   DELETE /api/blogs/:id
 // @desc    Delete blog
 // @access  Private (Recruiter only)
-router.delete('/:id', protect, async (req, res) => {
+blogRouter.delete('/:id', protect, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     
@@ -221,7 +221,7 @@ router.delete('/:id', protect, async (req, res) => {
 // @route   POST /api/blogs/:id/like
 // @desc    Like/Unlike a blog
 // @access  Private
-router.post('/:id/like', protect, async (req, res) => {
+blogRouter.post('/:id/like', protect, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     
@@ -262,4 +262,4 @@ router.post('/:id/like', protect, async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = blogRouter;

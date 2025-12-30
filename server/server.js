@@ -24,6 +24,7 @@ const applicationsRoute = require('./routes/applications.route.js');
 const dashboardRoutes = require('./routes/dashboard.route.js');
 const chatRoute = require('./routes/chat.route.js');
 const notificationRoute = require('./routes/notification.route.js');
+const blogRouter = require('./routes/blog.route.js')
 
 // Socket.IO
 const { Server } = require('socket.io');
@@ -144,6 +145,7 @@ app.use('/application', applicationsRoute);
 app.use('/dashboard', dashboardRoutes);
 app.use('/chat', chatRoute);
 app.use('/notifications', notificationRoute);
+app.use('/blogs',blogRouter)
 
 /* ================= SOCKET.IO CONFIGURATION ================= */
 const io = new Server(server, {
