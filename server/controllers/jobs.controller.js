@@ -1,6 +1,6 @@
 const Job = require("../models/jobs.model")
-// const Users = require("../models/user.model")
 const mongoose = require("mongoose");
+
 const jobsController = ({
   createJob: async (req, res) => {
     try {
@@ -65,6 +65,7 @@ const jobsController = ({
       });
     }
   },
+
   fetchJobs: async (req, res) => {
     try {
       const allJobs = await Job.find({})
@@ -75,10 +76,13 @@ const jobsController = ({
       res.status(500).json({ message: "Error fetching jobs", error });
     }
   },
+
   fetchJobById: async (req, res) => {
     try {
       const { id } = req.params;
-      const job = await Job.findById(id).populate("companyId", "companyName location").populate("recruiterId", "username email");
+      const job = await Job.findById(id)
+        .populate("companyId", "companyName location")
+        .populate("recruiterId", "username email");
 
       if (!job) return res.status(404).json({ message: "Job not found" });
 
@@ -87,6 +91,125 @@ const jobsController = ({
       res.status(500).json({ message: "Error fetching job", error });
     }
   },
+
+  // NEW: Fetch featured jobs (most recent or most openings)
+  fetchFeaturedJobs: async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit) || 6;
+      
+      // Fetch jobs with most openings and recent postings
+      const featuredJobs = await Job.find({})
+        .populate("companyId", "companyName location logo")
+        .populate("recruiterId", "username email")
+        .sort({ openings: -1, createdAt: -1 }) // Sort by openings descending, then recent
+        .limit(limit);
+
+      res.status(200).json({
+        success: true,
+        count: featuredJobs.length,
+        data: featuredJobs,
+      });
+    } catch (error) {
+      console.error("Fetch Featured Jobs Error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Error fetching featured jobs", 
+        error: error.message 
+      });
+    }
+  },
+
+  // NEW: Get job categories with counts
+  fetchJobCategories: async (req, res) => {
+    try {
+      // Aggregate jobs by different categories
+      const categoriesByExperience = await Job.aggregate([
+        {
+          $group: {
+            _id: "$experience",
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            category: "$_id",
+            count: 1,
+          },
+        },
+      ]);
+
+      const categoriesByJobType = await Job.aggregate([
+        {
+          $group: {
+            _id: "$jobType",
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            category: "$_id",
+            count: 1,
+          },
+        },
+      ]);
+
+      const categoriesByEmpType = await Job.aggregate([
+        {
+          $group: {
+            _id: "$empType",
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            category: "$_id",
+            count: 1,
+          },
+        },
+      ]);
+
+      // Get top skills
+      const topSkills = await Job.aggregate([
+        { $unwind: "$skills" },
+        {
+          $group: {
+            _id: "$skills",
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+        {
+          $project: {
+            _id: 0,
+            skill: "$_id",
+            count: 1,
+          },
+        },
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          experience: categoriesByExperience,
+          jobType: categoriesByJobType,
+          employmentType: categoriesByEmpType,
+          topSkills: topSkills,
+        },
+      });
+    } catch (error) {
+      console.error("Fetch Categories Error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Error fetching job categories", 
+        error: error.message 
+      });
+    }
+  },
+
   fetchJobsByRecruiter: async (req, res) => {
     try {
       const { recruiterId } = req.params;
@@ -104,16 +227,17 @@ const jobsController = ({
       res.status(500).json({ message: "Server error", error });
     }
   },
+
   fetchJobsByCompany: async (req, res) => {
     try {
       const { companyId } = req.params;
       if (!companyId) {
-        return res.status(400).json({ message: "Recruiter ID required!" });
+        return res.status(400).json({ message: "Company ID required!" });
       }
       const jobs = await Job.find({ companyId:companyId});
       // Proper empty check
       if (jobs.length === 0) {
-        return res.status(404).json({ message: "No jobs found for this recruiter!" });
+        return res.status(404).json({ message: "No jobs found for this company!" });
       }
       res.status(200).json({ data: jobs });
     } catch (error) {
@@ -121,6 +245,7 @@ const jobsController = ({
       res.status(500).json({ message: "Server error", error });
     }
   },
+
   updateJobId: async (req, res) => {
     try {
      const { id } = req.params;
@@ -136,6 +261,7 @@ const jobsController = ({
     }
     
   },
+
   deleteJobId: async (req, res) => {
     try {
       const { id } = req.params;
