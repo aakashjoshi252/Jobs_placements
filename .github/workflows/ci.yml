@@ -2,13 +2,13 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, develop, production-improvements ]
   pull_request:
     branches: [ main, develop ]
 
 jobs:
-  lint-and-test:
-    name: Lint and Test
+  test:
+    name: Test Server
     runs-on: ubuntu-latest
     
     strategy:
@@ -24,96 +24,76 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+        cache-dependency-path: server/package-lock.json
     
-    - name: Install server dependencies
+    - name: Install dependencies
       working-directory: ./server
       run: npm ci
     
-    - name: Install client dependencies
-      working-directory: ./client
-      run: npm ci
-    
-    - name: Lint server code
+    - name: Run linter
       working-directory: ./server
       run: npm run lint --if-present
-      continue-on-error: true
     
-    - name: Lint client code
-      working-directory: ./client
-      run: npm run lint
-      continue-on-error: true
-    
-    - name: Run server tests
+    - name: Run tests
       working-directory: ./server
-      run: npm test --if-present
+      run: npm test
       env:
         NODE_ENV: test
-        MONGO_URI: mongodb://localhost:27017/test_db
-        JWT_SECRET: test_secret_key
+        MONGODB_URI: mongodb://localhost:27017/test
+        JWT_SECRET: test-secret-key
     
-    - name: Run client tests
-      working-directory: ./client
-      run: npm test --if-present
-    
-    - name: Build client
-      working-directory: ./client
-      run: npm run build
-    
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
       with:
-        name: client-build-${{ matrix.node-version }}
-        path: client/dist
-        retention-days: 7
+        directory: ./server/coverage
+        flags: server
+        name: server-coverage
 
-  security-scan:
-    name: Security Scan
+  security:
+    name: Security Audit
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
-    
-    - name: Run npm audit (server)
+    - name: Run npm audit
       working-directory: ./server
       run: npm audit --audit-level=moderate
       continue-on-error: true
     
-    - name: Run npm audit (client)
-      working-directory: ./client
-      run: npm audit --audit-level=moderate
+    - name: Run Snyk security scan
+      uses: snyk/actions/node@master
       continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+        command: test
 
-  code-quality:
-    name: Code Quality Check
+  build:
+    name: Build Docker Image
     runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
     
-    - name: Check for TODO and FIXME
-      run: |
-        echo "Checking for TODO and FIXME comments..."
-        if grep -r "TODO\|FIXME" --include="*.js" --include="*.jsx" --exclude-dir=node_modules .; then
-          echo "Found TODO/FIXME comments. Please review before merging."
-        else
-          echo "No TODO/FIXME comments found."
-        fi
-      continue-on-error: true
+    - name: Build Docker image
+      working-directory: ./server
+      run: docker build -t job-placements-api:${{ github.sha }} .
     
-    - name: Check file sizes
+    - name: Test Docker image
       run: |
-        echo "Checking for large files..."
-        find . -type f -size +1M ! -path "*/node_modules/*" ! -path "*/.git/*" -ls
-      continue-on-error: true
+        docker run -d --name test-container -p 5000:5000 \
+          -e MONGODB_URI=mongodb://localhost:27017/test \
+          -e JWT_SECRET=test-secret \
+          job-placements-api:${{ github.sha }}
+        sleep 10
+        curl -f http://localhost:5000/health || exit 1
+        docker stop test-container

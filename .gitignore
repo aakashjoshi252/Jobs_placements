@@ -5,6 +5,7 @@ node_modules/
 
 # Testing
 /coverage
+.nyc_output
 
 # Production
 /build
@@ -17,6 +18,8 @@ logs/
 .env.local
 .env.development
 .env.production
+.env.test
+.env.staging
 server/.env
 client/.env
 
@@ -31,12 +34,15 @@ Thumbs.db
 *.swp
 *.swo
 *.swn
+.project
+.classpath
+.settings/
 
 # Uploads
 server/uploads/*
 !server/uploads/.gitkeep
 
-# Planning files
+# Planning files (optional - remove if you want to track these)
 *.xlsx
 *.xls
 *.docx
@@ -46,3 +52,42 @@ server/uploads/*
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+.pnpm-store/
+
+# Build artifacts
+*.tgz
+*.gz
+*.zip
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Misc
+.cache/
+.temp/
+.tmp/
+*.seed
+*.pid
+*.pid.lock
+
+# MongoDB
+*.db
+*.sqlite
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Sensitive files that should NEVER be committed
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# GitHub Actions
+.github/workflows/secrets.yml
