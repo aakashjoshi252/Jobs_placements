@@ -1,0 +1,320 @@
+/* ============================================
+   REUSABLE COMPONENT STYLES
+   Specific component patterns for the job portal
+   ============================================ */
+
+/* Job Listing Card */
+.job-listing {
+  @apply card p-6;
+  @apply flex flex-col md:flex-row md:items-center md:justify-between;
+  @apply gap-6;
+  @apply hover:border-primary-300 dark:hover:border-primary-700;
+  @apply transition-all duration-300;
+}
+
+.job-listing-header {
+  @apply flex-1 space-y-3;
+}
+
+.job-company-logo {
+  @apply w-14 h-14 rounded-xl object-cover;
+  @apply border-2 border-gray-200 dark:border-gray-700;
+}
+
+.job-title {
+  @apply text-xl font-bold;
+  @apply text-gray-900 dark:text-gray-50;
+  @apply hover:text-primary-600 dark:hover:text-primary-400;
+  @apply transition-colors;
+}
+
+.job-company {
+  @apply text-base font-medium text-gray-700 dark:text-gray-300;
+}
+
+.job-meta {
+  @apply flex flex-wrap items-center gap-4 text-sm;
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.job-meta-item {
+  @apply flex items-center gap-1.5;
+}
+
+.job-tags {
+  @apply flex flex-wrap gap-2;
+}
+
+.job-tag {
+  @apply badge badge-primary;
+}
+
+.job-actions {
+  @apply flex items-center gap-3;
+}
+
+/* Application Card */
+.application-card {
+  @apply card p-6 space-y-4;
+}
+
+.application-status {
+  @apply inline-flex items-center gap-2 px-3 py-1.5;
+  @apply text-sm font-semibold rounded-full;
+}
+
+.application-status.pending {
+  @apply bg-warning-100 text-warning-800;
+  @apply dark:bg-warning-900/30 dark:text-warning-300;
+}
+
+.application-status.reviewing {
+  @apply bg-primary-100 text-primary-800;
+  @apply dark:bg-primary-900/30 dark:text-primary-300;
+}
+
+.application-status.accepted {
+  @apply bg-secondary-100 text-secondary-800;
+  @apply dark:bg-secondary-900/30 dark:text-secondary-300;
+}
+
+.application-status.rejected {
+  @apply bg-danger-100 text-danger-800;
+  @apply dark:bg-danger-900/30 dark:text-danger-300;
+}
+
+/* Profile Card */
+.profile-card {
+  @apply card p-8 text-center space-y-6;
+}
+
+.profile-avatar {
+  @apply w-32 h-32 mx-auto rounded-full;
+  @apply object-cover;
+  @apply border-4 border-primary-500 dark:border-primary-600;
+  @apply shadow-xl;
+}
+
+.profile-name {
+  @apply text-2xl font-bold;
+  @apply text-gray-900 dark:text-gray-50;
+}
+
+.profile-role {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.profile-stats {
+  @apply grid grid-cols-3 gap-6 pt-6;
+  @apply border-t border-gray-200 dark:border-gray-800;
+}
+
+.profile-stat {
+  @apply text-center;
+}
+
+.profile-stat-value {
+  @apply text-3xl font-bold;
+  @apply bg-gradient-to-r from-primary-600 to-accent-600;
+  @apply bg-clip-text text-transparent;
+}
+
+.profile-stat-label {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+/* Search Bar */
+.search-bar {
+  @apply relative flex items-center gap-4;
+  @apply bg-white dark:bg-gray-900;
+  @apply rounded-2xl shadow-soft;
+  @apply p-2;
+}
+
+.search-input {
+  @apply flex-1 px-4 py-3;
+  @apply bg-transparent border-none;
+  @apply text-gray-900 dark:text-gray-100;
+  @apply placeholder:text-gray-400;
+  @apply focus:outline-none;
+}
+
+.search-button {
+  @apply btn btn-primary;
+  @apply px-8;
+}
+
+/* Filter Pills */
+.filter-pills {
+  @apply flex flex-wrap gap-2;
+}
+
+.filter-pill {
+  @apply px-4 py-2 rounded-full;
+  @apply text-sm font-medium;
+  @apply bg-gray-100 text-gray-700;
+  @apply dark:bg-gray-800 dark:text-gray-300;
+  @apply hover:bg-primary-100 hover:text-primary-700;
+  @apply dark:hover:bg-primary-950 dark:hover:text-primary-400;
+  @apply transition-all duration-200;
+  @apply cursor-pointer;
+}
+
+.filter-pill.active {
+  @apply bg-primary-600 text-white;
+  @apply dark:bg-primary-500;
+}
+
+/* Timeline */
+.timeline {
+  @apply relative pl-8 space-y-8;
+}
+
+.timeline::before {
+  content: '';
+  @apply absolute left-0 top-0 bottom-0 w-0.5;
+  @apply bg-gray-200 dark:bg-gray-800;
+}
+
+.timeline-item {
+  @apply relative;
+}
+
+.timeline-dot {
+  @apply absolute -left-8 w-4 h-4 rounded-full;
+  @apply bg-primary-600 dark:bg-primary-500;
+  @apply border-4 border-white dark:border-gray-950;
+}
+
+.timeline-content {
+  @apply card p-4;
+}
+
+/* Empty State */
+.empty-state {
+  @apply flex flex-col items-center justify-center;
+  @apply py-16 px-6 text-center;
+}
+
+.empty-state-icon {
+  @apply w-24 h-24 mb-6;
+  @apply text-gray-300 dark:text-gray-700;
+}
+
+.empty-state-title {
+  @apply text-2xl font-bold mb-3;
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.empty-state-description {
+  @apply text-gray-600 dark:text-gray-400 mb-8;
+  @apply max-w-md;
+}
+
+/* Notification Toast */
+.toast {
+  @apply fixed bottom-6 right-6 z-50;
+  @apply min-w-[320px] max-w-md;
+  @apply card-glass p-4;
+  @apply flex items-start gap-4;
+  @apply shadow-xl;
+  @apply animate-slide-in-right;
+}
+
+.toast-icon {
+  @apply flex-shrink-0 w-6 h-6;
+}
+
+.toast-content {
+  @apply flex-1;
+}
+
+.toast-title {
+  @apply font-semibold text-gray-900 dark:text-gray-100;
+}
+
+.toast-message {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+.toast-close {
+  @apply flex-shrink-0 text-gray-400;
+  @apply hover:text-gray-600 dark:hover:text-gray-300;
+  @apply transition-colors;
+}
+
+/* Stats Grid */
+.stats-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+}
+
+.stat-item {
+  @apply card p-6;
+  @apply bg-gradient-to-br;
+}
+
+.stat-item.primary {
+  @apply from-primary-50 to-primary-100;
+  @apply dark:from-primary-950 dark:to-primary-900;
+}
+
+.stat-item.success {
+  @apply from-secondary-50 to-secondary-100;
+  @apply dark:from-secondary-950 dark:to-secondary-900;
+}
+
+.stat-item.warning {
+  @apply from-warning-50 to-warning-100;
+  @apply dark:from-warning-950 dark:to-warning-900;
+}
+
+.stat-item.danger {
+  @apply from-danger-50 to-danger-100;
+  @apply dark:from-danger-950 dark:to-danger-900;
+}
+
+.stat-icon {
+  @apply w-12 h-12 rounded-xl;
+  @apply flex items-center justify-center;
+  @apply text-2xl;
+  @apply mb-4;
+}
+
+.stat-value {
+  @apply text-4xl font-bold mb-1;
+}
+
+.stat-label {
+  @apply text-sm font-medium;
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+/* Chat Message */
+.chat-message {
+  @apply flex gap-3 mb-4;
+}
+
+.chat-message.sent {
+  @apply flex-row-reverse;
+}
+
+.chat-avatar {
+  @apply w-10 h-10 rounded-full flex-shrink-0;
+}
+
+.chat-bubble {
+  @apply max-w-[70%] px-4 py-3 rounded-2xl;
+}
+
+.chat-message.received .chat-bubble {
+  @apply bg-gray-100 text-gray-900;
+  @apply dark:bg-gray-800 dark:text-gray-100;
+}
+
+.chat-message.sent .chat-bubble {
+  @apply bg-primary-600 text-white;
+}
+
+.chat-timestamp {
+  @apply text-xs text-gray-500 dark:text-gray-500 mt-1;
+}

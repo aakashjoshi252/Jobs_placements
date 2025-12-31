@@ -1,83 +1,134 @@
+/**
+ * Enhanced Error Middleware
+ * Centralized error handling with proper logging and response formatting
+ */
+
 const logger = require('../utils/logger');
-const { HTTP_STATUS } = require('../constants');
+const { AppError } = require('../utils/errors');
+
+/**
+ * Handle Mongoose CastError (Invalid ObjectId)
+ */
+const handleCastErrorDB = (err) => {
+  const message = `Invalid ${err.path}: ${err.value}`;
+  return new AppError(message, 400);
+};
+
+/**
+ * Handle Mongoose Duplicate Key Error
+ */
+const handleDuplicateFieldsDB = (err) => {
+  const field = Object.keys(err.keyValue)[0];
+  const value = err.keyValue[field];
+  const message = `Duplicate field value: ${field}='${value}'. Please use another value.`;
+  return new AppError(message, 409);
+};
+
+/**
+ * Handle Mongoose Validation Error
+ */
+const handleValidationErrorDB = (err) => {
+  const errors = Object.values(err.errors).map((el) => el.message);
+  const message = `Invalid input data. ${errors.join('. ')}`;
+  return new AppError(message, 400);
+};
+
+/**
+ * Handle JWT Errors
+ */
+const handleJWTError = () => new AppError('Invalid token. Please log in again.', 401);
+
+const handleJWTExpiredError = () => new AppError('Your token has expired. Please log in again.', 401);
+
+/**
+ * Send Error Response in Development
+ */
+const sendErrorDev = (err, req, res) => {
+  logger.error('Error 💥', {
+    error: err,
+    stack: err.stack,
+    url: req.originalUrl,
+    method: req.method,
+    body: req.body,
+    params: req.params,
+    query: req.query,
+  });
+
+  res.status(err.statusCode).json({
+    success: false,
+    status: err.status,
+    error: err,
+    message: err.message,
+    stack: err.stack,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+/**
+ * Send Error Response in Production
+ */
+const sendErrorProd = (err, req, res) => {
+  // Operational, trusted error: send message to client
+  if (err.isOperational) {
+    res.status(err.statusCode).json({
+      success: false,
+      status: err.status,
+      message: err.message,
+      ...(err.errors && { errors: err.errors }),
+      timestamp: new Date().toISOString(),
+    });
+  } else {
+    // Programming or unknown error: don't leak error details
+    logger.error('ERROR 💥', {
+      error: err,
+      stack: err.stack,
+      url: req.originalUrl,
+      method: req.method,
+    });
+
+    res.status(500).json({
+      success: false,
+      status: 'error',
+      message: 'Something went wrong. Please try again later.',
+      timestamp: new Date().toISOString(),
+    });
+  }
+};
 
 /**
  * Global Error Handler Middleware
- * Catches all errors and sends appropriate responses
  */
 const errorHandler = (err, req, res, next) => {
-  let error = { ...err };
-  error.message = err.message;
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'error';
 
-  // Log error details
-  logger.error(`Error: ${err.message}`, {
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    ip: req.ip
-  });
+  if (process.env.NODE_ENV === 'development') {
+    sendErrorDev(err, req, res);
+  } else if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+    let error = { ...err };
+    error.message = err.message;
+    error.name = err.name;
 
-  // Mongoose bad ObjectId
-  if (err.name === 'CastError') {
-    const message = `Resource not found with id: ${err.value}`;
-    error.message = message;
-    error.statusCode = HTTP_STATUS.NOT_FOUND;
+    // Handle specific error types
+    if (error.name === 'CastError') error = handleCastErrorDB(error);
+    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
+    if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
+    if (error.name === 'JsonWebTokenError') error = handleJWTError();
+    if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+
+    sendErrorProd(error, req, res);
   }
-
-  // Mongoose duplicate key error
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyValue)[0];
-    const message = `${field} already exists`;
-    error.message = message;
-    error.statusCode = HTTP_STATUS.CONFLICT;
-  }
-
-  // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors).map(val => val.message).join(', ');
-    error.message = message;
-    error.statusCode = HTTP_STATUS.BAD_REQUEST;
-  }
-
-  // JWT errors
-  if (err.name === 'JsonWebTokenError') {
-    error.message = 'Invalid token. Please login again';
-    error.statusCode = HTTP_STATUS.UNAUTHORIZED;
-  }
-
-  if (err.name === 'TokenExpiredError') {
-    error.message = 'Token expired. Please login again';
-    error.statusCode = HTTP_STATUS.UNAUTHORIZED;
-  }
-
-  // Multer file upload errors
-  if (err.name === 'MulterError') {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      error.message = 'File size too large. Maximum size is 5MB';
-    } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-      error.message = 'Unexpected file field';
-    } else {
-      error.message = 'File upload error';
-    }
-    error.statusCode = HTTP_STATUS.BAD_REQUEST;
-  }
-
-  res.status(error.statusCode || HTTP_STATUS.INTERNAL_ERROR).json({
-    success: false,
-    error: error.message || 'Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
 };
 
 /**
- * Not Found Handler
- * Catches all undefined routes
+ * 404 Not Found Handler
  */
 const notFound = (req, res, next) => {
-  res.status(HTTP_STATUS.NOT_FOUND).json({
-    success: false,
-    message: `Route ${req.originalUrl} not found`
-  });
+  const error = new AppError(`Route ${req.originalUrl} not found`, 404);
+  next(error);
 };
 
-module.exports = { errorHandler, notFound };
+module.exports = {
+  errorHandler,
+  notFound,
+};

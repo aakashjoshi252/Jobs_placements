@@ -1,0 +1,87 @@
+/* ============================================
+   THEME CONFIGURATION & DARK MODE
+   ============================================ */
+
+/* Dark Mode Toggle */
+.theme-toggle {
+  @apply relative inline-flex items-center;
+  @apply w-14 h-7 rounded-full;
+  @apply bg-gray-300 dark:bg-gray-700;
+  @apply transition-colors duration-300;
+  @apply cursor-pointer;
+}
+
+.theme-toggle-slider {
+  @apply absolute left-1;
+  @apply w-5 h-5 rounded-full;
+  @apply bg-white shadow-md;
+  @apply transform transition-transform duration-300;
+  @apply dark:translate-x-7;
+}
+
+.theme-toggle-icon {
+  @apply absolute inset-0;
+  @apply flex items-center justify-center;
+  @apply text-sm;
+  @apply transition-opacity duration-300;
+}
+
+.theme-toggle-icon.sun {
+  @apply left-2 text-yellow-500;
+  @apply dark:opacity-0;
+}
+
+.theme-toggle-icon.moon {
+  @apply right-2 text-gray-400;
+  @apply opacity-0 dark:opacity-100;
+}
+
+/* Theme Transitions */
+.theme-transition {
+  @apply transition-colors duration-300 ease-in-out;
+}
+
+/* Custom Scrollbar for Dark Mode */
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-gray-700 hover:bg-gray-600;
+}
+
+/* Theme-aware Shadows */
+.theme-shadow {
+  box-shadow: var(--shadow-md);
+}
+
+.theme-shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Theme-aware Borders */
+.theme-border {
+  border-color: rgb(var(--color-border));
+}
+
+.theme-border-hover:hover {
+  border-color: rgb(var(--color-border-hover));
+}
+
+/* Theme-aware Backgrounds */
+.theme-bg {
+  background-color: rgb(var(--color-background));
+}
+
+.theme-surface {
+  background-color: rgb(var(--color-surface));
+}
+
+/* Theme-aware Text Colors */
+.theme-text-primary {
+  color: rgb(var(--color-text-primary));
+}
+
+.theme-text-secondary {
+  color: rgb(var(--color-text-secondary));
+}
+
+.theme-text-tertiary {
+  color: rgb(var(--color-text-tertiary));
+}

@@ -1,402 +1,251 @@
-# 🚀 Job Placements Portal
+# Job Placements Portal
 
-A full-stack MERN application for managing job postings, applications, and recruitment workflows with role-based access control.
+ A comprehensive MERN stack application for job placements, recruitment, and candidate management.
 
-![Project Status](https://img.shields.io/badge/status-in%20development-yellow)
-![Node Version](https://img.shields.io/badge/node-%3E%3D18.x-brightgreen)
-![License](https://img.shields.io/badge/license-ISC-blue)
+## 🚀 Features
 
-## 📸 Screenshots
-
-> 📝 **Note:** Screenshots will be added after deployment
-
-## ✨ Features
-
-### For Candidates
-- ✅ User registration and authentication with JWT
-- ✅ Browse and search job listings with filters
-- ✅ Apply to jobs with resume upload (PDF/DOC supported)
-- ✅ Track application status in real-time
-- ✅ Update profile and resume
-- ✅ Real-time notifications for application updates
-- ✅ Dashboard with applied jobs overview
-
-### For Recruiters
-- ✅ Post and manage job openings
-- ✅ Review and manage applications
-- ✅ Shortlist, accept, or reject candidates
-- ✅ Analytics dashboard with hiring metrics
-- ✅ Application status management
-- ✅ Search and filter candidates
-
-### Admin Features
-- ✅ User management (view, edit, delete users)
-- ✅ System analytics and reports
-- ✅ Content moderation
-- ✅ Platform-wide settings
-
-### Technical Features
-- ✅ Secure authentication with HTTP-only cookies
-- ✅ File upload with validation
-- ✅ Real-time updates using Socket.IO
-- ✅ Rate limiting to prevent abuse
-- ✅ Comprehensive error handling
-- ✅ Request validation
-- ✅ Logging system
-- ✅ CORS protection
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React** 19.2.0 - UI library
-- **Redux Toolkit** 2.11.0 - State management
-- **React Router** 7.9.5 - Client-side routing
-- **Tailwind CSS** 4.1.17 - Utility-first CSS framework
-- **Formik** 2.4.9 & **Yup** 1.7.1 - Form handling and validation
-- **Axios** 1.13.2 - HTTP client
-- **Socket.IO Client** 4.8.1 - Real-time bidirectional communication
-- **React Icons** 5.5.0 - Icon library
-- **Vite** 7.2.2 - Next generation build tool
-
-### Backend
-- **Node.js** - JavaScript runtime
-- **Express** 5.1.0 - Web application framework
-- **MongoDB** - NoSQL database
-- **Mongoose** 8.19.3 - MongoDB object modeling
-- **JWT** 9.0.3 - JSON Web Tokens for authentication
-- **Bcrypt.js** 3.0.3 - Password hashing
-- **Multer** 2.0.2 - File upload handling
-- **Socket.IO** 4.8.1 - Real-time communication
-- **Winston** - Logging library
-- **Helmet** - Security headers
-- **Express Rate Limit** - API rate limiting
-- **Express Validator** - Request validation
+- **User Management**: Separate roles for candidates and recruiters
+- **Job Listings**: Create, update, and manage job postings
+- **Application Tracking**: Apply to jobs and track application status
+- **Real-time Chat**: Socket.io powered messaging between recruiters and candidates
+- **Resume Management**: Upload and manage resumes
+- **Dashboard**: Analytics and insights for recruiters
+- **Blog System**: Company blog and content management
+- **Notifications**: Real-time notifications for important events
 
 ## 📋 Prerequisites
 
-Before you begin, ensure you have the following installed:
-- **Node.js** >= 18.x ([Download](https://nodejs.org/))
-- **MongoDB** >= 6.x ([Download](https://www.mongodb.com/try/download/community)) or MongoDB Atlas account
-- **npm** or **yarn** package manager
-- **Git** for version control
+- Node.js >= 18.0.0
+- MongoDB >= 6.0
+- npm >= 9.0.0
 
-## 🚀 Installation & Setup
+## 🛠️ Installation
 
-### 1. Clone the Repository
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/aakashjoshi252/Jobs_placements.git
 cd Jobs_placements
 ```
 
-### 2. Backend Setup
+### 2. Setup Server
+
 ```bash
-# Navigate to server directory
 cd server
-
-# Install dependencies
 npm install
-
-# Create environment file from template
 cp .env.example .env
-
-# Edit .env file with your configurations
-# Required variables: MONGO_URI, JWT_SECRET, CLIENT_URL
-nano .env  # or use any text editor
+# Edit .env with your configuration
 ```
 
-**Important Environment Variables:**
-- `MONGO_URI`: Your MongoDB connection string
-- `JWT_SECRET`: Secret key for JWT (use a strong random string)
-- `CLIENT_URL`: Frontend URL (default: http://localhost:5173)
+### 3. Setup Client (if applicable)
 
-### 3. Frontend Setup
 ```bash
-# Navigate to client directory
-cd ../client
-
-# Install dependencies
+cd client
 npm install
-
-# Create environment file from template
 cp .env.example .env
-
-# Edit .env with your backend API URL
-nano .env  # or use any text editor
+# Edit .env with your configuration
 ```
 
-### 4. Run the Application
+## 🔧 Configuration
 
-**Development Mode (Recommended):**
+### Environment Variables
+
+Create a `.env` file in the server directory:
+
+```env
+NODE_ENV=development
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/jobplacements
+JWT_SECRET=your-super-secure-jwt-secret-at-least-32-characters
+JWT_EXPIRE=7d
+CLIENT_URL=http://localhost:5173
+```
+
+See `.env.example` for all configuration options.
+
+## 🚀 Running the Application
+
+### Development Mode
 
 ```bash
-# Terminal 1 - Start Backend Server
+# Server
 cd server
 npm run dev
-# Server will run on http://localhost:5000
 
-# Terminal 2 - Start Frontend Development Server
+# Client (in another terminal)
 cd client
 npm run dev
-# Client will run on http://localhost:5173
 ```
 
-**Production Mode:**
+### Production Mode
+
 ```bash
-# Backend
 cd server
 npm start
-
-# Frontend (build first)
-cd client
-npm run build
-npm run preview
 ```
 
-### 5. Access the Application
+### Using Docker
 
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:5000/api/v1
-- **Health Check:** http://localhost:5000/health
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
 
-## 📁 Project Structure
+# View logs
+docker-compose logs -f
 
+# Stop services
+docker-compose down
 ```
-Jobs_placements/
-├── client/                     # React frontend
-│   ├── src/
-│   │   ├── api/               # API service functions
-│   │   ├── components/        # Reusable React components
-│   │   ├── pages/             # Page components (routes)
-│   │   ├── redux/             # Redux store, slices, actions
-│   │   ├── utils/             # Helper functions
-│   │   ├── App.jsx            # Main App component
-│   │   └── main.jsx           # Entry point
-│   ├── public/                # Static assets
-│   ├── .env.example           # Environment template
-│   ├── package.json           # Dependencies
-│   ├── vite.config.js         # Vite configuration
-│   └── tailwind.config.js     # Tailwind CSS config
-│
-├── server/                     # Express backend
-│   ├── config/                # Configuration files
-│   │   └── db.js              # Database connection
-│   ├── controllers/           # Route controllers
-│   │   ├── authController.js
-│   │   ├── jobController.js
-│   │   └── applicationController.js
-│   ├── middlewares/           # Custom middleware
-│   │   ├── auth.js            # Authentication middleware
-│   │   ├── errorMiddleware.js # Error handling
-│   │   ├── security.js        # Rate limiting
-│   │   └── validator.js       # Request validation
-│   ├── models/                # Mongoose schemas
-│   │   ├── User.js
-│   │   ├── Job.js
-│   │   └── Application.js
-│   ├── routes/                # API routes
-│   │   ├── authRoutes.js
-│   │   ├── jobRoutes.js
-│   │   └── applicationRoutes.js
-│   ├── utils/                 # Utility functions
-│   │   ├── logger.js          # Winston logger
-│   │   └── errorHandler.js    # Custom error class
-│   ├── constants/             # Application constants
-│   │   └── index.js
-│   ├── uploads/               # File upload directory
-│   ├── logs/                  # Application logs
-│   ├── .env.example           # Environment template
-│   ├── server.js              # Entry point
-│   └── package.json           # Dependencies
-│
-├── .gitignore                 # Git ignore rules
-├── README.md                  # Project documentation
-└── CONTRIBUTING.md            # Contribution guidelines
-```
-
-## 🔐 Environment Variables
-
-### Server Environment (.env)
-
-```env
-# Server
-PORT=5000
-NODE_ENV=development
-
-# Database
-MONGO_URI=mongodb://localhost:27017/jobs_placements
-
-# JWT
-JWT_SECRET=your_jwt_secret_key_here
-JWT_EXPIRE=7d
-COOKIE_EXPIRE=7
-
-# File Upload
-MAX_FILE_SIZE=5242880
-UPLOAD_PATH=./uploads
-
-# Frontend
-CLIENT_URL=http://localhost:5173
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=600000
-RATE_LIMIT_MAX_REQUESTS=100
-```
-
-### Client Environment (.env)
-
-```env
-# API Configuration
-VITE_API_URL=http://localhost:5000/api/v1
-VITE_SOCKET_URL=http://localhost:5000
-
-# App Settings
-VITE_APP_NAME=Job Placements Portal
-VITE_MAX_FILE_SIZE=5242880
-```
-
-## 📡 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/v1/auth/register` | Register new user | No |
-| POST | `/api/v1/auth/login` | Login user | No |
-| GET | `/api/v1/auth/logout` | Logout user | Yes |
-| GET | `/api/v1/auth/me` | Get current user | Yes |
-| PUT | `/api/v1/auth/updateprofile` | Update profile | Yes |
-| PUT | `/api/v1/auth/updatepassword` | Update password | Yes |
-
-### Jobs
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/v1/jobs` | Get all jobs | No |
-| GET | `/api/v1/jobs/:id` | Get single job | No |
-| POST | `/api/v1/jobs` | Create job | Yes (Recruiter) |
-| PUT | `/api/v1/jobs/:id` | Update job | Yes (Recruiter) |
-| DELETE | `/api/v1/jobs/:id` | Delete job | Yes (Recruiter) |
-| GET | `/api/v1/jobs/recruiter/me` | Get my jobs | Yes (Recruiter) |
-
-### Applications
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/v1/applications` | Get user applications | Yes |
-| GET | `/api/v1/applications/:id` | Get single application | Yes |
-| POST | `/api/v1/applications` | Apply to job | Yes (Candidate) |
-| PUT | `/api/v1/applications/:id/status` | Update status | Yes (Recruiter) |
-| DELETE | `/api/v1/applications/:id` | Withdraw application | Yes (Candidate) |
-| GET | `/api/v1/applications/job/:jobId` | Get job applications | Yes (Recruiter) |
-
-### Health Check
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Server health status |
 
 ## 🧪 Testing
 
 ```bash
-# Run backend tests
 cd server
+
+# Run all tests
 npm test
 
-# Run frontend tests
-cd client
-npm test
+# Run tests in watch mode
+npm run test:watch
 
-# Run tests with coverage
+# Run unit tests only
+npm run test:unit
+
+# Run integration tests only
+npm run test:integration
+
+# Generate coverage report
 npm test -- --coverage
 ```
 
-## 🚢 Deployment
+## 📊 Database Setup
 
-### Frontend Deployment (Vercel)
+### Create Indexes (Important for Performance)
 
-1. Push your code to GitHub
-2. Import project in [Vercel](https://vercel.com)
-3. Set root directory to `client`
-4. Configure environment variables
-5. Deploy
+```bash
+cd server
+node scripts/create-indexes.js
+```
 
-### Backend Deployment (Railway/Render)
+## 🔍 Code Quality
 
-1. Create account on [Railway](https://railway.app) or [Render](https://render.com)
-2. Connect GitHub repository
-3. Set root directory to `server`
-4. Configure environment variables
-5. Set start command: `npm start`
-6. Deploy
+```bash
+# Lint code
+npm run lint
 
-### Environment Variables for Production
+# Fix linting issues
+npm run lint:fix
 
-Ensure you set these in your deployment platform:
-- `MONGO_URI` (Use MongoDB Atlas)
-- `JWT_SECRET` (Strong random string)
-- `NODE_ENV=production`
-- `CLIENT_URL` (Your deployed frontend URL)
+# Format code
+npm run format
+
+# Check formatting
+npm run format:check
+```
+
+## 📚 API Documentation
+
+API documentation is available at `/api/v1/docs` when the server is running.
+
+### Main Endpoints
+
+#### Authentication
+- `POST /user/register` - Register new user
+- `POST /user/login` - Login user
+- `POST /user/logout` - Logout user
+- `GET /user/me` - Get current user
+
+#### Jobs
+- `GET /jobs` - Get all jobs
+- `GET /jobs/:id` - Get single job
+- `POST /jobs` - Create job (Recruiter only)
+- `PUT /jobs/:id` - Update job (Recruiter only)
+- `DELETE /jobs/:id` - Delete job (Recruiter only)
+
+#### Applications
+- `GET /application` - Get user applications
+- `POST /application` - Apply to job
+- `PUT /application/:id/status` - Update status (Recruiter only)
+
+#### Health Checks
+- `GET /health` - Basic health check
+- `GET /health/detailed` - Detailed health with dependencies
+- `GET /health/ready` - Kubernetes readiness probe
+- `GET /health/live` - Kubernetes liveness probe
+
+## 🏗️ Project Structure
+
+```
+server/
+├── config/          # Configuration files
+├── controllers/     # Route controllers
+├── middlewares/     # Express middlewares
+├── models/          # Mongoose models
+├── routes/          # API routes
+├── utils/           # Utility functions
+├── scripts/         # Utility scripts
+├── tests/           # Test files
+│   ├── unit/        # Unit tests
+│   └── integration/ # Integration tests
+└── server.js        # Entry point
+```
+
+## 🐳 Docker Deployment
+
+### Build Docker Image
+
+```bash
+cd server
+docker build -t job-placements-api .
+```
+
+### Run with Docker
+
+```bash
+docker run -p 5000:5000 --env-file .env job-placements-api
+```
+
+## 🔐 Security
+
+- **Authentication**: JWT-based authentication
+- **Password Hashing**: bcrypt with configurable salt rounds
+- **Rate Limiting**: Express rate limit middleware
+- **Helmet**: Security headers
+- **CORS**: Configurable CORS policy
+- **Input Validation**: Express-validator and Joi
+- **XSS Protection**: Input sanitization
+
+## 📈 Performance
+
+- **Compression**: Response compression middleware
+- **Database Indexing**: Optimized indexes for common queries
+- **Connection Pooling**: MongoDB connection pooling
+- **Caching**: Ready for Redis integration
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-### Quick Contributing Steps:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## 📝 License
 
-This project is licensed under the ISC License.
+ISC License - See LICENSE file for details
 
 ## 👨‍💻 Author
 
-**Aakash Joshi**
+Aakash Joshi
 - GitHub: [@aakashjoshi252](https://github.com/aakashjoshi252)
-- Repository: [Jobs_placements](https://github.com/aakashjoshi252/Jobs_placements)
 
-## 🐛 Known Issues
+## 🆘 Support
 
-- [ ] Email notifications not yet implemented
-- [ ] Advanced search filters need improvement
-- [ ] Mobile responsiveness can be enhanced
-- [ ] Add pagination for large job listings
+For support, please open an issue in the GitHub repository.
 
-## 🗺️ Roadmap
+## 📌 Roadmap
 
-### Phase 1 (Current)
-- [x] Basic authentication system
-- [x] Job posting and application flow
-- [x] Real-time notifications
-- [x] Dashboard for both roles
-
-### Phase 2 (Upcoming)
-- [ ] Email verification for new users
-- [ ] Password reset functionality
-- [ ] Advanced search with filters
-- [ ] Export applications to CSV/PDF
-- [ ] Admin dashboard with analytics
-
-### Phase 3 (Future)
-- [ ] Real-time chat between recruiters and candidates
-- [ ] Video interview integration
-- [ ] AI-powered job recommendations
-- [ ] Resume parser using ML
-- [ ] Mobile app (React Native)
-- [ ] Payment integration for premium features
-
-## 📞 Support
-
-For support, open an issue in the repository or contact the maintainer.
-
-## 🙏 Acknowledgments
-
-- Icons from [React Icons](https://react-icons.github.io/react-icons/)
-- UI inspiration from modern job portals
-- Community support from Stack Overflow and GitHub
-
----
-
-⭐ **Star this repository if you find it helpful!**
-
-💼 **Perfect for portfolio projects and learning MERN stack development**
+- [ ] Add unit and integration tests
+- [ ] Implement Redis caching
+- [ ] Add email notifications
+- [ ] Implement advanced search and filters
+- [ ] Add analytics dashboard
+- [ ] Mobile app development
+- [ ] CI/CD pipeline setup
+- [ ] Performance monitoring integration
