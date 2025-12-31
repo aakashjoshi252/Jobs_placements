@@ -4,8 +4,10 @@ const userController= require("../controllers/user.controller.js")
 const { protect } = require(`../middlewares/auth.middleware.js`);
 
 
-userRoute.post("/register",userController.createUser),          // for registration
+userRoute.post("/register",userController.createUser)          // for registration
 userRoute.post("/login",userController.loginUser)                // for user Login
+userRoute.post("/lougout",protect,userController.logoutUser)
+
 userRoute.put("/:id",protect,userController.updateUsersById) 
 userRoute.get("/me", protect, userController.getLoggedInUser)   // to get logged in user details;
 userRoute.get("/data",protect,userController.getUsers)
