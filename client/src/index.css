@@ -1,8 +1,8 @@
+/* Import Google Fonts FIRST - must precede all other statements */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
 /* Import Tailwind CSS 4.x */
 @import "tailwindcss";
-
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap');
 
 /* ============================================
    THEME CONFIGURATION
