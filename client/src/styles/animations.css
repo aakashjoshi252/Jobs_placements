@@ -140,25 +140,6 @@
 .stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
 .stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
 
-/* Typewriter Effect */
-@keyframes typewriter {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes blink {
-  50% { border-color: transparent; }
-}
-
-.typewriter {
-  overflow: hidden;
-  border-right: 2px solid;
-  white-space: nowrap;
-  animation: 
-    typewriter 3s steps(40) 1s 1 normal both,
-    blink 1s steps(1) infinite;
-}
-
 /* Success Checkmark */
 @keyframes checkmark {
   0% {
@@ -173,22 +154,6 @@
   stroke-dasharray: 50;
   stroke-dashoffset: 50;
   animation: checkmark 0.5s ease-out forwards;
-}
-
-/* Confetti on Success */
-@keyframes confetti-fall {
-  0% {
-    transform: translateY(-100%) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(100vh) rotate(360deg);
-    opacity: 0;
-  }
-}
-
-.confetti {
-  animation: confetti-fall 3s ease-out forwards;
 }
 
 /* Ripple Effect */
@@ -221,28 +186,4 @@
 
 .ripple-effect:active::after {
   animation: ripple 0.6s ease-out;
-}
-
-/* Text Reveal */
-@keyframes text-reveal {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-.text-reveal {
-  animation: text-reveal 1s ease-out;
-}
-
-/* Counter Animation */
-@keyframes counter {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.counter-animation {
-  animation: counter 0.5s ease-out;
 }
