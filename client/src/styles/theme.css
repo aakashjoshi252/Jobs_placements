@@ -1,37 +1,66 @@
 /* ============================================
    THEME CONFIGURATION & DARK MODE
+   Pure CSS - No @apply directives
    ============================================ */
 
 /* Dark Mode Toggle */
 .theme-toggle {
-  @apply relative inline-flex items-center;
-  @apply w-14 h-7 rounded-full;
-  @apply bg-gray-300 dark:bg-gray-700;
-  @apply transition-colors duration-300;
-  @apply cursor-pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 3.5rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background-color: rgb(209 213 219);
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+.dark .theme-toggle {
+  background-color: rgb(55 65 81);
 }
 
 .theme-toggle-slider {
-  @apply absolute left-1;
-  @apply w-5 h-5 rounded-full;
-  @apply bg-white shadow-md;
-  @apply transform transition-transform duration-300;
-  @apply dark:translate-x-7;
+  position: absolute;
+  left: 0.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background-color: white;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  transform: translateX(0);
+  transition: transform 0.3s;
+}
+
+.dark .theme-toggle-slider {
+  transform: translateX(1.75rem);
 }
 
 .theme-toggle-icon {
-  @apply absolute inset-0;
-  @apply flex items-center justify-center;
-  @apply text-sm;
-  @apply transition-opacity duration-300;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  transition: opacity 0.3s;
 }
 
 .theme-toggle-icon.sun {
-  @apply left-2 text-yellow-500;
-  @apply dark:opacity-0;
+  left: 0.5rem;
+  color: rgb(234 179 8);
+}
+
+.dark .theme-toggle-icon.sun {
+  opacity: 0;
 }
 
 .theme-toggle-icon.moon {
-  @apply right-2 text-gray-400;
-  @apply opacity-0 dark:opacity-100;
+  right: 0.5rem;
+  color: rgb(156 163 175);
+  opacity: 0;
+}
+
+.dark .theme-toggle-icon.moon {
+  opacity: 1;
 }
