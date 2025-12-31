@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../redux/slices/authSlice";
-import { companyApi, resumeApi } from "../../../api/api";
+import { companyApi, resumeApi } from "../../api/api";
 import { setResume } from "../../redux/slices/resumeSlice";
 import { setCompany } from "../../redux/slices/companySlice";
 

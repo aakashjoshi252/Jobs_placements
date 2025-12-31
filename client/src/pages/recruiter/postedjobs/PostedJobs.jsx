@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { jobsApi } from "../../../../api/api";
+import { jobsApi } from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 import { 
   HiPlus, 

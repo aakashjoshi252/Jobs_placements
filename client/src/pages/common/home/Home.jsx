@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Carousel from "../../../components/carousel/Carousel";
 import Jobs from "../../candidates/jobs/Jobs";
-import { jobsApi, dashboardApi } from "../../../../api/api";
+import { jobsApi, dashboardApi } from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {

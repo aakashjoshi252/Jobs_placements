@@ -24,7 +24,7 @@ const getBaseURL = () => {
 
 const BASE_URL = getBaseURL();
 
-console.log(`🚀 API Base URL: ${BASE_URL}`);
+console.log(` API Base URL: ${BASE_URL}`);
 
 // COMMON CONFIG (VERY IMPORTANT)
 const axiosConfig = {
@@ -46,12 +46,12 @@ const createApiInstance = (baseURL) => {
     (config) => {
       // Log API calls in development
       if (import.meta.env.DEV) {
-        console.log(`📤 ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+        console.log(` ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
       }
       return config;
     },
     (error) => {
-      console.error('❌ Request error:', error);
+      console.error(' Request error:', error);
       return Promise.reject(error);
     }
   );
@@ -60,19 +60,19 @@ const createApiInstance = (baseURL) => {
   instance.interceptors.response.use(
     (response) => {
       if (import.meta.env.DEV) {
-        console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
+        console.log(` ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
       }
       return response;
     },
     (error) => {
       // Enhanced error logging
       if (error.response) {
-        console.error(`❌ ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${error.response.status}`);
+        console.error(` ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${error.response.status}`);
         console.error('Error data:', error.response.data);
       } else if (error.request) {
-        console.error('❌ No response received:', error.request);
+        console.error(' No response received:', error.request);
       } else {
-        console.error('❌ Error:', error.message);
+        console.error(' Error:', error.message);
       }
 
       // Handle 401 Unauthorized
@@ -90,31 +90,31 @@ const createApiInstance = (baseURL) => {
 };
 
 // ================= DASHBOARD =================
-export const dashboardApi = createApiInstance(`${BASE_URL}/api/dashboard`);
+export const dashboardApi = createApiInstance(`${BASE_URL}/dashboard`);
 
 // ================= Chat-Box ===================
-export const chatApi = createApiInstance(`${BASE_URL}/api/chat`);
+export const chatApi = createApiInstance(`${BASE_URL}/chat`);
 
 // ================= USER =================
-export const userApi = createApiInstance(`${BASE_URL}/api/user`);
+export const userApi = createApiInstance(`${BASE_URL}/user`);
 
 // ================= COMPANY =================
-export const companyApi = createApiInstance(`${BASE_URL}/api/company`);
+export const companyApi = createApiInstance(`${BASE_URL}/company`);
 
 // ================= JOBS =================
-export const jobsApi = createApiInstance(`${BASE_URL}/api/jobs`);
+export const jobsApi = createApiInstance(`${BASE_URL}/jobs`);
 
 // ================= RESUME =================
-export const resumeApi = createApiInstance(`${BASE_URL}/api/resume`);
+export const resumeApi = createApiInstance(`${BASE_URL}/resume`);
 
 // ================= APPLICATION =================
-export const applicationApi = createApiInstance(`${BASE_URL}/api/application`);
+export const applicationApi = createApiInstance(`${BASE_URL}/application`);
 
 // ================= Notification =================
-export const notificationApi = createApiInstance(`${BASE_URL}/api/notifications`);
+export const notificationApi = createApiInstance(`${BASE_URL}/notifications`);
 
 // ================= BLOGS =================
-export const blogApi = createApiInstance(`${BASE_URL}/api/blogs`);
+export const blogApi = createApiInstance(`${BASE_URL}/blogs`);
 
 // Export BASE_URL for Socket.IO
 export { BASE_URL };

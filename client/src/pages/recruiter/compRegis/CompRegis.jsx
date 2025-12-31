@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { useSelector } from "react-redux";
-import { companyApi } from "../../../../api/api";
+import { companyApi } from "../../../api/api";
 import { companyValidation } from "../../../schema/index";
 
 const companyInitialValues = {

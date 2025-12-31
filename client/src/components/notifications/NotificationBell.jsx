@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { BiBell } from "react-icons/bi";
-import { notificationApi } from "../../../api/api";
+import { notificationApi } from "../../api/api";
 import NotificationDropdown from "./NotificationDropdown";
 import { useSocket } from "../../context/SocketContext";
 

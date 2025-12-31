@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useState } from "react";
 import { loginSuccess } from "../../redux/slices/authSlice";
-import { userApi, companyApi } from "../../../api/api";
+import { userApi, companyApi } from "../../api/api";
 
 const initialValue = {
   email: "",

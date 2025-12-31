@@ -1,4 +1,4 @@
-import { resumeApi } from "../../../../../api/api";
+import { resumeApi } from "../../../../api/api";
 import { useFormik } from "formik";
 import { useSelector } from "react-redux";
 

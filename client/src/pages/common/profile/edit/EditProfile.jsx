@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { userApi } from "../../../../../api/api";
+import { userApi } from "../../../../api/api";
 import { useNavigate } from "react-router-dom";
 
 export default function EditProfile() {

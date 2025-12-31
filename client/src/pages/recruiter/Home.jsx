@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { dashboardApi, jobsApi } from "../../../api/api";
+import { dashboardApi, jobsApi } from "../../api/api";
 import { useNavigate } from "react-router-dom";
 import { 
   HiChatAlt2, 

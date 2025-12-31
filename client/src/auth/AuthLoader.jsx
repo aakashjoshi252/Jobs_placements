@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { loginSuccess, logout } from "../redux/slices/authSlice";
-import { userApi } from "../../api/api";
+import { userApi } from "../api/api";
 
 export default function AuthLoader({ children }) {
   const dispatch = useDispatch();

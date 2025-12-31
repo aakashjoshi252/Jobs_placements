@@ -1,21 +1,21 @@
 node_modules
 npm-debug.log
 .env
-.env.*
-!.env.example
+// .env.*
+// !.env.example
 .git
 .gitignore
 README.md
 .vscode
 .idea
-*.log
+// *.log
 logs
 coverage
 .nyc_output
 tests
-*.test.js
-*.spec.js
+// *.test.js
+// *.spec.js
 desktop.ini
 .DS_Store
-uploads/*
-!uploads/.gitkeep
+// uploads/*
+// !uploads/.gitkeep */

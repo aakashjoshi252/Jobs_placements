@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { notificationApi } from "../../../api/api";
+import { notificationApi } from "../../api/api";
 import { Link } from "react-router-dom";
 import { BiCheck, BiCheckDouble, BiTrash, BiX } from "react-icons/bi";
 import { formatDistanceToNow } from "date-fns";

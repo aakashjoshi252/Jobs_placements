@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { notificationApi } from "../../../../api/api";
+import { notificationApi } from "../../../api/api";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import {

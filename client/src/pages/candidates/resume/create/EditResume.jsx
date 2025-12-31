@@ -1,7 +1,7 @@
 import { useFormik } from "formik";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { resumeApi } from "../../../../../api/api";
+import { resumeApi } from "../../../../api/api";
 
 export default function EditResume() {
   const navigate = useNavigate();

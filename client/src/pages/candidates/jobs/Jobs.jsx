@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate} from "react-router-dom";
-import { jobsApi } from "../../../../api/api";
+import { jobsApi } from "../../../api/api";
 import Pagination from "../../../components/pagination/Pagination";
 
 const ITEMS_PER_PAGE = 6;

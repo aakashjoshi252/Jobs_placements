@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
-import { jobsApi } from "../../../../api/api";
+import { jobsApi } from "../../../api/api";
 import { useSelector } from "react-redux";
 
 const initialValues = {

@@ -2,7 +2,7 @@ import { useFormik } from "formik";
 import { regisSchema } from "../../schema";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { userApi } from "../../../api/api";
+import { userApi } from "../../api/api";
 
 const initialValue = {
   username: "",

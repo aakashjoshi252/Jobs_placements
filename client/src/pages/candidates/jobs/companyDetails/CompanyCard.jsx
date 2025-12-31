@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { companyApi, jobsApi } from "../../../../../api/api";
+import { companyApi, jobsApi } from "../../../../api/api";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {

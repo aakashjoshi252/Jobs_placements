@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { applicationApi } from "../../../../../api/api";
+import { applicationApi } from "../../../../api/api";
 
 export default function CandidateProfile() {
   const { applicationId } = useParams();

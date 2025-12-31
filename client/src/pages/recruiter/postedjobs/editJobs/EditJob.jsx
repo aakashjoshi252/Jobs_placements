@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useFormik } from "formik";
-import { jobsApi } from "../../../../../api/api"
+import { jobsApi } from "../../../../api/api"
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
