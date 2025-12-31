@@ -2,25 +2,6 @@
    RESPONSIVE DESIGN UTILITIES
    ============================================ */
 
-/* Mobile-First Container Queries */
-@container (min-width: 640px) {
-  .container-sm-up .card {
-    @apply p-8;
-  }
-}
-
-@container (min-width: 768px) {
-  .container-md-up .grid-responsive {
-    @apply grid-cols-2;
-  }
-}
-
-@container (min-width: 1024px) {
-  .container-lg-up .grid-responsive {
-    @apply grid-cols-3;
-  }
-}
-
 /* Mobile Menu */
 @media (max-width: 768px) {
   .mobile-menu {
@@ -53,17 +34,6 @@
 
   .text-responsive-md {
     @apply text-xl;
-  }
-}
-
-/* Tablet Optimizations */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .tablet-grid {
-    @apply grid-cols-2;
-  }
-
-  .tablet-hidden {
-    @apply hidden;
   }
 }
 

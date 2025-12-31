@@ -211,38 +211,6 @@
   @apply max-w-md;
 }
 
-/* Notification Toast */
-.toast {
-  @apply fixed bottom-6 right-6 z-50;
-  @apply min-w-[320px] max-w-md;
-  @apply card-glass p-4;
-  @apply flex items-start gap-4;
-  @apply shadow-xl;
-  @apply animate-slide-in-right;
-}
-
-.toast-icon {
-  @apply flex-shrink-0 w-6 h-6;
-}
-
-.toast-content {
-  @apply flex-1;
-}
-
-.toast-title {
-  @apply font-semibold text-gray-900 dark:text-gray-100;
-}
-
-.toast-message {
-  @apply text-sm text-gray-600 dark:text-gray-400;
-}
-
-.toast-close {
-  @apply flex-shrink-0 text-gray-400;
-  @apply hover:text-gray-600 dark:hover:text-gray-300;
-  @apply transition-colors;
-}
-
 /* Stats Grid */
 .stats-grid {
   @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
@@ -287,34 +255,4 @@
 .stat-label {
   @apply text-sm font-medium;
   @apply text-gray-600 dark:text-gray-400;
-}
-
-/* Chat Message */
-.chat-message {
-  @apply flex gap-3 mb-4;
-}
-
-.chat-message.sent {
-  @apply flex-row-reverse;
-}
-
-.chat-avatar {
-  @apply w-10 h-10 rounded-full flex-shrink-0;
-}
-
-.chat-bubble {
-  @apply max-w-[70%] px-4 py-3 rounded-2xl;
-}
-
-.chat-message.received .chat-bubble {
-  @apply bg-gray-100 text-gray-900;
-  @apply dark:bg-gray-800 dark:text-gray-100;
-}
-
-.chat-message.sent .chat-bubble {
-  @apply bg-primary-600 text-white;
-}
-
-.chat-timestamp {
-  @apply text-xs text-gray-500 dark:text-gray-500 mt-1;
 }
