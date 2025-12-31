@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import './styles/components.css'
 import './styles/animations.css'
+import './styles/chat.css' // Chat system styles
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { Provider } from "react-redux";
