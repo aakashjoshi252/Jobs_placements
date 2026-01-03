@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import { blogApi, companyApi } from '../../../api/api';
 import { FaBlog, FaEdit, FaTrash, FaEye, FaHeart, FaPlus, FaImage, FaSave } from 'react-icons/fa';
 import { GiJewelCrown } from 'react-icons/gi';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const BLOG_CATEGORIES = [
   { value: 'event', label: '🎉 Company Event', color: 'blue' },
@@ -40,13 +38,16 @@ export default function BlogManager() {
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const response = await axios.get(
-          `${API_URL}/api/company/recruiter/${loggedUser._id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const response = await companyApi.get(`/recruiter/${loggedUser._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log('Company fetched:', response.data);
         setCompanyId(response.data._id);
       } catch (error) {
         console.error('Error fetching company:', error);
+        if (error.response?.status === 404) {
+          alert('⚠️ Please register your company first before creating blogs!');
+        }
       }
     };
     
@@ -62,13 +63,18 @@ export default function BlogManager() {
       
       try {
         setLoading(true);
-        const response = await axios.get(
-          `${API_URL}/api/blogs/company/${companyId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        console.log('Fetching blogs for company:', companyId);
+        const response = await blogApi.get(`/company/${companyId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log('Blogs fetched:', response.data);
         setBlogs(response.data.blogs || []);
       } catch (error) {
         console.error('Error fetching blogs:', error);
+        if (error.response?.status === 404) {
+          // No blogs yet - this is normal
+          setBlogs([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -120,6 +126,11 @@ export default function BlogManager() {
       return;
     }
 
+    if (!companyId) {
+      alert('⚠️ Please register your company first!');
+      return;
+    }
+
     setSubmitLoading(true);
     
     try {
@@ -128,29 +139,26 @@ export default function BlogManager() {
         companyId
       };
 
+      console.log('Submitting blog:', blogData);
+
       if (editingBlog) {
         // Update existing blog
-        await axios.put(
-          `${API_URL}/api/blogs/${editingBlog._id}`,
-          blogData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await blogApi.put(`/${editingBlog._id}`, blogData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         alert('✅ Blog updated successfully!');
       } else {
         // Create new blog
-        await axios.post(
-          `${API_URL}/api/blogs`,
-          blogData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await blogApi.post('/', blogData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         alert('✅ Blog created successfully!');
       }
 
       // Refresh blogs list
-      const response = await axios.get(
-        `${API_URL}/api/blogs/company/${companyId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await blogApi.get(`/company/${companyId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setBlogs(response.data.blogs || []);
 
       // Reset form
@@ -183,15 +191,14 @@ export default function BlogManager() {
     }
 
     try {
-      await axios.delete(
-        `${API_URL}/api/blogs/${blogId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await blogApi.delete(`/${blogId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       alert('✅ Blog deleted successfully!');
       setBlogs(blogs.filter(b => b._id !== blogId));
     } catch (error) {
       console.error('Error deleting blog:', error);
-      alert('❌ Error deleting blog');
+      alert('❌ Error deleting blog: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -218,6 +225,26 @@ export default function BlogManager() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!companyId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-6">
+        <div className="bg-white rounded-xl shadow-xl p-12 text-center max-w-md">
+          <GiJewelCrown className="text-6xl text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Company Registration Required</h2>
+          <p className="text-gray-600 mb-6">
+            You need to register your company before you can create blogs.
+          </p>
+          <a
+            href="/recruiter/company/registration"
+            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+          >
+            Register Company
+          </a>
+        </div>
       </div>
     );
   }
