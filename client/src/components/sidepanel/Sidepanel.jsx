@@ -124,6 +124,12 @@ export default function SidePanel({ role }) {
                   >
                     Candidates
                   </li>
+                  <li
+                    className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
+                    onClick={() => navigate("recruiter/blogs")}
+                  >
+                    Blogs
+                  </li>
                 </>
               )}
             </>

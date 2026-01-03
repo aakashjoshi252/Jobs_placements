@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import {blogApi} from "../../../api/api"
 import {
   HiArrowLeft,
   HiSave,
@@ -54,7 +54,7 @@ export default function CreateBlog() {
       const dataToSubmit = { ...formData, status };
       
       // Replace with your actual API endpoint
-      await axios.post("/api/blogs", dataToSubmit);
+      await blogApi.post("/", dataToSubmit);
       
       alert(`Blog ${status === 'published' ? 'published' : 'saved as draft'} successfully!`);
       navigate("/recruiter/blogs");

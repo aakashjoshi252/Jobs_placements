@@ -54,7 +54,6 @@ const CompanyEdit = lazy(() => import('./pages/recruiter/company/edit/EditCompna
 const CandidateProfile = lazy(() => import('./pages/recruiter/candidates-list/cadidatedata/CadidatesData.jsx'));
 const ChatPage = lazy(() => import('./pages/common/chatpage/Chatpage.jsx'));
 
-// Company Blog Components - NEW
 const CompanyBlogList = lazy(() => import('./pages/recruiter/blogs/CompanyBlogList.jsx'));
 const CreateBlog = lazy(() => import('./pages/recruiter/blogs/CreateBlog.jsx'));
 const EditBlog = lazy(() => import('./pages/recruiter/blogs/EditBlog.jsx'));
