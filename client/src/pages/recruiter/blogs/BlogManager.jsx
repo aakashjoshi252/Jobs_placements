@@ -38,15 +38,27 @@ export default function BlogManager() {
   useEffect(() => {
     const fetchCompany = async () => {
       try {
+        console.log('Fetching company for user:', loggedUser._id);
         const response = await companyApi.get(`/recruiter/${loggedUser._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log('Company fetched:', response.data);
-        setCompanyId(response.data._id);
+        console.log('Company API response:', response.data);
+        
+        // Extract company ID correctly from response structure
+        // Response is: { data: { _id: '...', ... } }
+        const company = response.data.data || response.data;
+        console.log('Company data:', company);
+        
+        if (company && company._id) {
+          setCompanyId(company._id);
+          console.log('Company ID set:', company._id);
+        } else {
+          console.error('No company ID found in response');
+        }
       } catch (error) {
         console.error('Error fetching company:', error);
         if (error.response?.status === 404) {
-          alert('⚠️ Please register your company first before creating blogs!');
+          console.log('Company not found - user needs to register');
         }
       }
     };
@@ -59,7 +71,11 @@ export default function BlogManager() {
   // Fetch blogs
   useEffect(() => {
     const fetchBlogs = async () => {
-      if (!companyId) return;
+      if (!companyId) {
+        console.log('No companyId yet, skipping blog fetch');
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
@@ -67,12 +83,13 @@ export default function BlogManager() {
         const response = await blogApi.get(`/company/${companyId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log('Blogs fetched:', response.data);
+        console.log('Blogs API response:', response.data);
         setBlogs(response.data.blogs || []);
       } catch (error) {
         console.error('Error fetching blogs:', error);
         if (error.response?.status === 404) {
-          // No blogs yet - this is normal
+          // No blogs yet - this is normal for new companies
+          console.log('No blogs found (404) - starting fresh');
           setBlogs([]);
         }
       } finally {
@@ -123,6 +140,7 @@ export default function BlogManager() {
     e.preventDefault();
     
     if (!validateForm()) {
+      console.log('Form validation failed:', errors);
       return;
     }
 
@@ -136,42 +154,48 @@ export default function BlogManager() {
     try {
       const blogData = {
         ...formData,
-        companyId
+        companyId  // This is now a valid MongoDB ObjectId
       };
 
-      console.log('Submitting blog:', blogData);
+      console.log('Submitting blog data:', blogData);
 
+      let response;
       if (editingBlog) {
         // Update existing blog
-        await blogApi.put(`/${editingBlog._id}`, blogData, {
+        response = await blogApi.put(`/${editingBlog._id}`, blogData, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        console.log('Blog updated:', response.data);
         alert('✅ Blog updated successfully!');
       } else {
         // Create new blog
-        await blogApi.post('/', blogData, {
+        response = await blogApi.post('/', blogData, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        console.log('Blog created:', response.data);
         alert('✅ Blog created successfully!');
       }
 
       // Refresh blogs list
-      const response = await blogApi.get(`/company/${companyId}`, {
+      const blogsResponse = await blogApi.get(`/company/${companyId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setBlogs(response.data.blogs || []);
+      setBlogs(blogsResponse.data.blogs || []);
 
       // Reset form
       resetForm();
     } catch (error) {
       console.error('Error saving blog:', error);
-      alert('❌ Error saving blog: ' + (error.response?.data?.message || error.message));
+      console.error('Error response:', error.response?.data);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message;
+      alert('❌ Error saving blog: ' + errorMsg);
     } finally {
       setSubmitLoading(false);
     }
   };
 
   const handleEdit = (blog) => {
+    console.log('Editing blog:', blog);
     setEditingBlog(blog);
     setFormData({
       title: blog.title,
@@ -194,6 +218,7 @@ export default function BlogManager() {
       await blogApi.delete(`/${blogId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('Blog deleted:', blogId);
       alert('✅ Blog deleted successfully!');
       setBlogs(blogs.filter(b => b._id !== blogId));
     } catch (error) {
