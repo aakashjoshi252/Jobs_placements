@@ -112,6 +112,17 @@ export default function CompanyRegistration() {
         return;
       }
 
+      // Client-side validation
+      if (!values.companyName || !values.companyType || !values.size || 
+          !values.establishedYear || !values.location || !values.description ||
+          !values.contactEmail || !values.contactNumber) {
+        alert("Please fill all required fields!");
+        return;
+      }
+
+      console.log("Submitting values:", values);
+      console.log("Branches:", branches);
+
       const formData = new FormData();
 
       // File field
@@ -119,35 +130,59 @@ export default function CompanyRegistration() {
         formData.append("uploadLogo", values.uploadLogo);
       }
 
-      // Handle arrays and objects properly
+      // Basic fields (strings/numbers)
       formData.append("companyName", values.companyName);
       formData.append("industry", values.industry);
-      formData.append("companyType", values.companyType);
-      formData.append("specializations", JSON.stringify(values.specializations));
-      formData.append("certifications", JSON.stringify(values.certifications));
-      formData.append("workshopFacilities", JSON.stringify(values.workshopFacilities));
-      formData.append("branches", JSON.stringify(branches));
-      formData.append("socialMedia", JSON.stringify(values.socialMedia));
+      formData.append("companyType", values.companyType); // CRITICAL FIELD
       formData.append("size", values.size);
       formData.append("establishedYear", values.establishedYear);
-      formData.append("website", values.website);
+      formData.append("website", values.website || "");
       formData.append("location", values.location);
       formData.append("description", values.description);
       formData.append("contactEmail", values.contactEmail);
       formData.append("contactNumber", values.contactNumber);
       formData.append("recruiterId", recruiterId);
 
-      await companyApi.post("/register", formData, {
+      // Arrays and objects as JSON strings
+      formData.append("specializations", JSON.stringify(values.specializations));
+      formData.append("certifications", JSON.stringify(values.certifications));
+      formData.append("workshopFacilities", JSON.stringify(values.workshopFacilities));
+      formData.append("branches", JSON.stringify(branches));
+      formData.append("socialMedia", JSON.stringify(values.socialMedia));
+
+      // Debug: Log what's being sent
+      console.log("FormData contents:");
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+
+      const response = await companyApi.post("/register", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert("💎 Company registration successful!");
+      console.log("Response:", response.data);
+
+      alert("💎 " + response.data.message);
       localStorage.setItem("companyRegistered", "true");
       navigate("/recruiter/home/");
 
     } catch (error) {
       console.error("Registration error:", error);
-      setApiError(error.response?.data?.message || "Something went wrong, please try again.");
+      const errorMsg = error.response?.data?.message || "Something went wrong, please try again.";
+      const missingFields = error.response?.data?.missing;
+      
+      if (missingFields) {
+        console.log("Missing fields:", missingFields);
+        const missing = Object.entries(missingFields)
+          .filter(([key, value]) => value === true)
+          .map(([key]) => key);
+        
+        if (missing.length > 0) {
+          alert(`Missing required fields: ${missing.join(", ")}`);
+        }
+      }
+      
+      setApiError(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -156,6 +191,7 @@ export default function CompanyRegistration() {
   const formik = useFormik({
     initialValues: companyInitialValues,
     onSubmit: submithandler,
+    // NO validation schema - we handle validation manually
   });
 
   const handleMultiSelect = (field, value) => {
@@ -223,6 +259,9 @@ export default function CompanyRegistration() {
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
+              {formik.touched.companyType && !formik.values.companyType && (
+                <p className="text-red-500 text-sm mt-1">Business type is required</p>
+              )}
             </div>
 
             {/* Specializations */}
@@ -342,6 +381,8 @@ export default function CompanyRegistration() {
                   onChange={formik.handleChange}
                   required
                   placeholder="e.g., 1994"
+                  min="1800"
+                  max="2026"
                   className="mt-2 w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -422,7 +463,7 @@ export default function CompanyRegistration() {
                   Contact Number <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
+                  type="tel"
                   name="contactNumber"
                   value={formik.values.contactNumber}
                   onChange={formik.handleChange}
@@ -565,14 +606,17 @@ export default function CompanyRegistration() {
             <button
               type="submit"
               disabled={formik.isSubmitting}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition shadow-lg hover:shadow-xl"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {formik.isSubmitting ? "Registering..." : "💎 Register Jewelry Business"}
             </button>
 
             <button
               type="button"
-              onClick={formik.handleReset}
+              onClick={() => {
+                formik.resetForm();
+                setBranches([]);
+              }}
               className="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-400 transition font-semibold"
             >
               Reset Form
