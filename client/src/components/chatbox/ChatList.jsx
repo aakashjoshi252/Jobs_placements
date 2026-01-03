@@ -108,7 +108,7 @@ const ChatList = ({ onSelectChat }) => {
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* HEADER - Fixed */}
-      <div className="flex-shrink-0 px-6 py-5 bg-gradient-to-r from-blue-600 to-blue-800 shadow-lg">
+      <div className="flex-shrink-0 px-6 py-5 bg-[#1A3D63]  shadow-lg">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
             <HiChatAlt2 className="text-white text-2xl" />

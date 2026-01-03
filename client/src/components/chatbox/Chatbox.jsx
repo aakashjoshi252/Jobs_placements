@@ -164,7 +164,7 @@ const ChatBox = ({ chat, onBack }) => {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-blue-50/30">
       {/* HEADER - Sticky at top */}
-      <div className="sticky top-0 z-20 flex-shrink-0 flex items-center gap-4 px-4 sm:px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-800 shadow-lg">
+      <div className="sticky top-0 z-20 flex-shrink-0 flex items-center gap-4 px-4 sm:px-6 py-4 bg-[#1A3D63] from-blue-600 to-blue-800 shadow-lg">
         <button
           onClick={onBack}
           className="lg:hidden p-2 hover:bg-white/20 rounded-lg transition-colors"

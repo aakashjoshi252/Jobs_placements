@@ -19,7 +19,12 @@
     "docker:build": "docker build -t job-placements-api .",
     "docker:run": "docker run -p 5000:5000 --env-file .env job-placements-api"
   },
-  "keywords": ["jobs", "placements", "recruitment", "api"],
+  "keywords": [
+    "jobs",
+    "placements",
+    "recruitment",
+    "api"
+  ],
   "author": "Aakash Joshi",
   "license": "ISC",
   "dependencies": {
@@ -38,6 +43,7 @@
     "mongoose": "^8.19.3",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
+    "nodemailer": "^7.0.12",
     "socket.io": "^4.8.1",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
