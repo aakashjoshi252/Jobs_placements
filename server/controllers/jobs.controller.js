@@ -4,9 +4,21 @@ const mongoose = require("mongoose");
 const jobsController = ({
   createJob: async (req, res) => {
     try {
+      console.log("Creating job with data:", req.body);
+      
       const {
         title,
         description,
+        
+        // JEWELRY SPECIFIC FIELDS
+        jewelryCategory,
+        jewelrySpecialization = [],
+        materialsExperience = [],
+        techniquesProficiency = [],
+        certifications = [],
+        portfolioRequired = false,
+        
+        // GENERAL FIELDS
         jobLocation,
         jobType = "On-site",
         empType = "Full-time",
@@ -25,15 +37,39 @@ const jobsController = ({
 
       // Required Field Validation
       if (!title || !description || !jobLocation || !companyId || !recruiterId) {
-        return res.status(401).json({ success: false, message: "Required fields are missing" });
+        return res.status(400).json({ 
+          success: false, 
+          message: "Required fields are missing",
+          missing: {
+            title: !title,
+            description: !description,
+            jobLocation: !jobLocation,
+            companyId: !companyId,
+            recruiterId: !recruiterId
+          }
+        });
       }
 
-      // Ensure skills is always an array
-      const skillsArray = Array.isArray(skills) ? skills : skills.split(",").map(s => s.trim());
+      // Ensure arrays are properly formatted
+      const skillsArray = Array.isArray(skills) ? skills : (skills ? skills.split(",").map(s => s.trim()) : []);
+      const jewelrySpecArray = Array.isArray(jewelrySpecialization) ? jewelrySpecialization : [];
+      const materialsArray = Array.isArray(materialsExperience) ? materialsExperience : [];
+      const techniquesArray = Array.isArray(techniquesProficiency) ? techniquesProficiency : [];
+      const certificationsArray = Array.isArray(certifications) ? certifications : [];
 
       const newJob = await Job.create({
         title,
         description,
+        
+        // JEWELRY FIELDS
+        jewelryCategory,
+        jewelrySpecialization: jewelrySpecArray,
+        materialsExperience: materialsArray,
+        techniquesProficiency: techniquesArray,
+        certifications: certificationsArray,
+        portfolioRequired,
+        
+        // GENERAL FIELDS
         jobLocation,
         jobType,
         empType,
@@ -45,14 +81,16 @@ const jobsController = ({
         additionalRequirement,
         companyId,
         recruiterId,
-        companyName: companyName,
-        companyEmail: companyEmail,
-        companyAddress: companyAddress,
+        companyName,
+        companyEmail,
+        companyAddress,
       });
+
+      console.log("Job created successfully:", newJob._id);
 
       return res.status(201).json({
         success: true,
-        message: "Job created successfully",
+        message: "💎 Jewelry job posted successfully!",
         job: newJob,
       });
 
@@ -119,10 +157,27 @@ const jobsController = ({
     }
   },
 
-  // NEW: Get job categories with counts
+  // NEW: Get jewelry-specific job categories with counts
   fetchJobCategories: async (req, res) => {
     try {
-      // Aggregate jobs by different categories
+      // Jewelry categories
+      const categoriesByJewelryType = await Job.aggregate([
+        {
+          $group: {
+            _id: "$jewelryCategory",
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            category: "$_id",
+            count: 1,
+          },
+        },
+      ]);
+
+      // Experience levels
       const categoriesByExperience = await Job.aggregate([
         {
           $group: {
@@ -171,7 +226,7 @@ const jobsController = ({
         },
       ]);
 
-      // Get top skills
+      // Top skills
       const topSkills = await Job.aggregate([
         { $unwind: "$skills" },
         {
@@ -191,13 +246,56 @@ const jobsController = ({
         },
       ]);
 
+      // Top jewelry specializations
+      const topSpecializations = await Job.aggregate([
+        { $unwind: "$jewelrySpecialization" },
+        {
+          $group: {
+            _id: "$jewelrySpecialization",
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+        {
+          $project: {
+            _id: 0,
+            specialization: "$_id",
+            count: 1,
+          },
+        },
+      ]);
+
+      // Top materials
+      const topMaterials = await Job.aggregate([
+        { $unwind: "$materialsExperience" },
+        {
+          $group: {
+            _id: "$materialsExperience",
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+        {
+          $project: {
+            _id: 0,
+            material: "$_id",
+            count: 1,
+          },
+        },
+      ]);
+
       res.status(200).json({
         success: true,
         data: {
+          jewelryCategories: categoriesByJewelryType,
           experience: categoriesByExperience,
           jobType: categoriesByJobType,
           employmentType: categoriesByEmpType,
           topSkills: topSkills,
+          topSpecializations: topSpecializations,
+          topMaterials: topMaterials,
         },
       });
     } catch (error) {
@@ -250,7 +348,22 @@ const jobsController = ({
     try {
      const { id } = req.params;
      const updates = req.body;
-     const updatedJob = await Job.findByIdAndUpdate(id, updates, { new: true });
+     
+     // Handle array fields if they're sent as strings
+     if (updates.jewelrySpecialization && typeof updates.jewelrySpecialization === 'string') {
+       updates.jewelrySpecialization = JSON.parse(updates.jewelrySpecialization);
+     }
+     if (updates.materialsExperience && typeof updates.materialsExperience === 'string') {
+       updates.materialsExperience = JSON.parse(updates.materialsExperience);
+     }
+     if (updates.techniquesProficiency && typeof updates.techniquesProficiency === 'string') {
+       updates.techniquesProficiency = JSON.parse(updates.techniquesProficiency);
+     }
+     if (updates.certifications && typeof updates.certifications === 'string') {
+       updates.certifications = JSON.parse(updates.certifications);
+     }
+     
+     const updatedJob = await Job.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
      if (!updatedJob) {
        return res.status(404).json({ message: "Job not found" });
      }
