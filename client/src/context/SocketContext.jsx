@@ -29,9 +29,9 @@ export const SocketProvider = ({ children }) => {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
-          console.log("✅ Notification permission granted");
+          console.log(" Notification permission granted");
         } else {
-          console.log("⚠️  Notification permission denied");
+          console.log("  Notification permission denied");
         }
       });
     }
@@ -52,7 +52,7 @@ export const SocketProvider = ({ children }) => {
       });
 
       newSocket.on("connect", () => {
-        console.log("🟢 Connected to socket server");
+        console.log(" Connected to socket server");
         newSocket.emit("userOnline", user._id);
       });
 
@@ -61,7 +61,7 @@ export const SocketProvider = ({ children }) => {
       });
 
       newSocket.on("disconnect", (reason) => {
-        console.log("🔴 Socket disconnected:", reason);
+        console.log(" Socket disconnected:", reason);
       });
 
       newSocket.on("userStatusChange", ({ userId, status }) => {
@@ -77,7 +77,7 @@ export const SocketProvider = ({ children }) => {
       setSocket(newSocket);
 
       return () => {
-        console.log("👋 Closing socket connection");
+        console.log(" Closing socket connection");
         newSocket.close();
       };
     }

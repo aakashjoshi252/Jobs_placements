@@ -3,6 +3,7 @@ import Carousel from "../../../components/carousel/Carousel";
 import Jobs from "../../candidates/jobs/Jobs";
 import { jobsApi, dashboardApi } from "../../../api/api";
 import { useNavigate } from "react-router-dom";
+import Settings from "../../../components/setting/Setting";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -205,7 +206,7 @@ export default function Home() {
           </div>
         </section>
       )}
-
+        <Settings/>
       {/* ================= JOB TYPES ================= */}
       {!loading && categories?.jobType && Array.isArray(categories.jobType) && categories.jobType.length > 0 && (
         <section className="py-16 max-w-6xl mx-auto px-4">

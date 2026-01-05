@@ -53,7 +53,7 @@ const CandidatesView = lazy(() => import('./pages/recruiter/candidates-list/cadi
 const CompanyEdit = lazy(() => import('./pages/recruiter/company/edit/EditCompnay.jsx'));
 const CandidateProfile = lazy(() => import('./pages/recruiter/candidates-list/cadidatedata/CadidatesData.jsx'));
 const ChatPage = lazy(() => import('./pages/common/chatpage/Chatpage.jsx'));
-
+const Settings= lazy(()=>import('./components/setting/Setting.jsx'))
 const CompanyBlogList = lazy(() => import('./pages/recruiter/blogs/CompanyBlogList.jsx'));
 const CreateBlog = lazy(() => import('./pages/recruiter/blogs/CreateBlog.jsx'));
 const EditBlog = lazy(() => import('./pages/recruiter/blogs/EditBlog.jsx'));
@@ -109,6 +109,11 @@ const routes = createBrowserRouter([
         path: "profile",
         element: <Suspense fallback={<LoadingFallback />}><Profile /></Suspense>
       },
+      {
+        path:"/settings",
+        element: <Suspense fallback={ <LoadingFallback/> }> <Settings/> </Suspense>
+      }
+      ,
       {
         path: "profile/edit/:userId",
         element: <Suspense fallback={<LoadingFallback />}><EditProfile /></Suspense>
