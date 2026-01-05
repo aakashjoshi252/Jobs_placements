@@ -168,6 +168,7 @@ export default function SidePanel({ role }) {
         </ul>
 
         {/* Logout Button */}
+        <h3 className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition" onClick={()=>navigate("/settings")} > settings</h3>
         <button
           className="mt-6 mx-3 w-[calc(100%-1.5rem)] py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
           onClick={logoutHandler}
