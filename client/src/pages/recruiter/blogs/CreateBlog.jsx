@@ -18,7 +18,9 @@ import {
 export default function CreateBlog() {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const company = useSelector((state) => state.company.data);
   const [loading, setLoading] = useState(false);
+  console.log(company._id)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -26,7 +28,7 @@ export default function CreateBlog() {
     category: "news",
     image: "",
     status: "draft",
-    companyId: user?.companyId || "",
+    companyId:company?._id || "",
     authorId: user?._id || ""
   });
 
@@ -54,7 +56,7 @@ export default function CreateBlog() {
       const dataToSubmit = { ...formData, status };
       
       // Replace with your actual API endpoint
-      await blogApi.post("/", dataToSubmit);
+      await blogApi.post(`/`, dataToSubmit);
       
       alert(`Blog ${status === 'published' ? 'published' : 'saved as draft'} successfully!`);
       navigate("/recruiter/blogs");

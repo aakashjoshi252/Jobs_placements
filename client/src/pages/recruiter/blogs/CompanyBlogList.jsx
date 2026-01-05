@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import {blogApi} from "../../../api/api"
 import { formatDistanceToNow } from "date-fns";
 import {
   HiPlus,
@@ -25,6 +25,10 @@ export default function CompanyBlogList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+    const company = useSelector((state) => state.company.data);
+
+  console.log(blogs)
+  console.log(company?._id)
 
   useEffect(() => {
     fetchCompanyBlogs();
@@ -34,7 +38,7 @@ export default function CompanyBlogList() {
     try {
       setLoading(true);
       // Replace with your actual API endpoint
-      const response = await axios.get(`/api/blogs/company/${user?.companyId}`);
+      const response = await blogApi.get(`/company/${company?._id}`);
       setBlogs(response.data.blogs || []);
     } catch (error) {
       console.error("Error fetching blogs:", error);
@@ -49,7 +53,7 @@ export default function CompanyBlogList() {
     if (!window.confirm("Are you sure you want to delete this blog post?")) return;
 
     try {
-      await axios.delete(`/api/blogs/${blogId}`);
+      await blogApi.delete(`/api/blogs/${blogId}`);
       setBlogs(blogs.filter(blog => blog._id !== blogId));
     } catch (error) {
       console.error("Error deleting blog:", error);

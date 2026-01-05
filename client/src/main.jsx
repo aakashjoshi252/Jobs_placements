@@ -301,7 +301,7 @@ const routes = createBrowserRouter([
         element: <Suspense fallback={<LoadingFallback />}><EnhancedBlogList /></Suspense>
       },
       {
-        path: "blogs/:id",
+        path: "blogs/:blogId",
         element: <Suspense fallback={<LoadingFallback />}><BlogDetails /></Suspense>
       },
       {

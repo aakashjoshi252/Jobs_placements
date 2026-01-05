@@ -2,10 +2,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./blogs.css";
 
 export default function BlogDetails({ blogs }) {
-  const { id } = useParams();
+  const { blogId } = useParams();
   const navigate = useNavigate();
+  console.log(blogId)
   
-  const blog = blogs.find((b) => b._id === id);
+  const blog = blogs.find((b) => b._id === blogId);
 
   if (!blog) return <h2>Blog not found!</h2>;
 
