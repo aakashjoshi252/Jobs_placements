@@ -183,7 +183,7 @@ app.use('/application', applicationsRoute);
 app.use('/dashboard', dashboardRoutes);
 app.use('/chat', chatRoute);
 app.use('/notifications', notificationRoute);
-app.use('/blogs', blogRouter); // Legacy endpoint
+app.use('/blog', blogRouter); // Legacy endpoint
 
 /* ================= SOCKET.IO CONFIGURATION ================= */
 const io = new Server(server, {

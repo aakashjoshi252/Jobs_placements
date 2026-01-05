@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {blogApi} from "../../../api/api"
+import { blogApi } from "../../../api/api"; // ✅ Clean API import
 import { formatDistanceToNow } from "date-fns";
 import {
   HiPlus,
@@ -15,58 +15,74 @@ import {
   HiUserGroup,
   HiStar,
   HiSearch,
-  HiFilter
+  HiFilter,
 } from "react-icons/hi";
 
 export default function CompanyBlogList() {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const company = useSelector((state) => state.company.data);
+  
+  // Safe companyId extraction
+  const companyId = useMemo(() => company?._id || null, [company?._id]);
+  
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
-    const company = useSelector((state) => state.company.data);
 
-  console.log(blogs)
-  console.log(company?._id)
-
+  // Fetch blogs when companyId available
   useEffect(() => {
-    fetchCompanyBlogs();
-  }, []);
+    if (companyId) {
+      fetchCompanyBlogs();
+    }
+  }, [companyId]);
 
-  const fetchCompanyBlogs = async () => {
+  const fetchCompanyBlogs = useCallback(async () => {
+    if (!companyId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      // Replace with your actual API endpoint
-      const response = await blogApi.get(`/company/${company?._id}`);
-      setBlogs(response.data.blogs || []);
+      // ✅ Clean API endpoint (v1/blog/company/:id)
+      const response = await blogApi.get(`/company/${companyId}`);
+      setBlogs(response.data.blogs || response.data || []);
     } catch (error) {
       console.error("Error fetching blogs:", error);
-      // Fallback to demo data
       setBlogs([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
   const handleDelete = async (blogId) => {
     if (!window.confirm("Are you sure you want to delete this blog post?")) return;
+    if (!companyId) return;
 
     try {
-      await blogApi.delete(`/api/blogs/${blogId}`);
-      setBlogs(blogs.filter(blog => blog._id !== blogId));
+      // ✅ Clean API endpoint
+      await blogApi.delete(`/company/${companyId}/blogs/${blogId}`);
+      setBlogs((prev) => prev.filter((blog) => blog._id !== blogId));
     } catch (error) {
       console.error("Error deleting blog:", error);
       alert("Failed to delete blog. Please try again.");
     }
   };
 
-  const filteredBlogs = blogs.filter(blog => {
-    const matchesSearch = blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         blog.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === "all" || blog.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Safe filtering
+  const filteredBlogs = useMemo(() => {
+    return blogs.filter((blog) => {
+      if (!blog?.title || !blog?.description) return false;
+      
+      const matchesSearch =
+        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        blog.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = filterCategory === "all" || blog.category === filterCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [blogs, searchTerm, filterCategory]);
 
   const categories = [
     { value: "all", label: "All Posts", icon: <HiNewspaper /> },
@@ -74,8 +90,27 @@ export default function CompanyBlogList() {
     { value: "achievement", label: "Achievements", icon: <HiStar /> },
     { value: "growth", label: "Growth Stories", icon: <HiTrendingUp /> },
     { value: "culture", label: "Company Culture", icon: <HiUserGroup /> },
-    { value: "news", label: "Company News", icon: <HiOfficeBuilding /> }
+    { value: "news", label: "Company News", icon: <HiOfficeBuilding /> },
   ];
+
+  // Early return if no company
+  if (!companyId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
+        <div className="max-w-md text-center">
+          <HiOfficeBuilding className="text-7xl text-gray-300 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Company Profile</h2>
+          <p className="text-gray-600 mb-8">Complete your company setup to manage blog posts.</p>
+          <button
+            onClick={() => navigate("/recruiter/company-profile")}
+            className="px-8 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-semibold shadow-lg"
+          >
+            Setup Company Profile
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -88,10 +123,8 @@ export default function CompanyBlogList() {
                 <HiNewspaper className="text-3xl" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Company Blog Posts</h1>
-                <p className="text-emerald-100 mt-1">
-                  Share your company's journey, achievements, and culture
-                </p>
+                <h1 className="text-3xl font-bold">{company?.name || "Company"} Blog Posts</h1>
+                <p className="text-emerald-100 mt-1">Share your company's journey, achievements, and culture</p>
               </div>
             </div>
 
@@ -108,39 +141,35 @@ export default function CompanyBlogList() {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Search */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search Blog Posts
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search Blog Posts</label>
               <div className="relative">
-                <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+                <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
                 <input
                   type="text"
                   placeholder="Search by title or description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 />
               </div>
             </div>
 
-            {/* Category Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
               <div className="relative">
-                <HiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl pointer-events-none" />
+                <HiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl pointer-events-none" />
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none appearance-none"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none"
                 >
-                  {categories.map(cat => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  {categories.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -151,9 +180,26 @@ export default function CompanyBlogList() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <StatCard title="Total Posts" value={blogs.length} icon={<HiNewspaper />} color="blue" />
-          <StatCard title="Published" value={blogs.filter(b => b.status === 'published').length} icon={<HiEye />} color="green" />
-          <StatCard title="Drafts" value={blogs.filter(b => b.status === 'draft').length} icon={<HiPencil />} color="yellow" />
-          <StatCard title="This Month" value={blogs.filter(b => new Date(b.createdAt).getMonth() === new Date().getMonth()).length} icon={<HiCalendar />} color="purple" />
+          <StatCard
+            title="Published"
+            value={blogs.filter((b) => b?.status === "published").length}
+            icon={<HiEye />}
+            color="green"
+          />
+          <StatCard
+            title="Drafts"
+            value={blogs.filter((b) => b?.status === "draft").length}
+            icon={<HiPencil />}
+            color="yellow"
+          />
+          <StatCard
+            title="This Month"
+            value={blogs.filter((b) =>
+              b?.createdAt ? new Date(b.createdAt).getMonth() === new Date().getMonth() : false
+            ).length}
+            icon={<HiCalendar />}
+            color="purple"
+          />
         </div>
 
         {/* Results Count */}
@@ -164,10 +210,10 @@ export default function CompanyBlogList() {
           </p>
         </div>
 
-        {/* Loading */}
+        {/* Content */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4" />
             <p className="text-gray-600">Loading blog posts...</p>
           </div>
         ) : filteredBlogs.length === 0 ? (
@@ -184,7 +230,7 @@ export default function CompanyBlogList() {
             {blogs.length === 0 && (
               <button
                 onClick={() => navigate("/recruiter/blogs/create")}
-                className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold inline-flex items-center gap-2"
+                className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold flex items-center gap-2"
               >
                 <HiPlus />
                 Create Your First Blog Post
@@ -193,7 +239,7 @@ export default function CompanyBlogList() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredBlogs.map(blog => (
+            {filteredBlogs.map((blog) => (
               <BlogCard
                 key={blog._id}
                 blog={blog}
@@ -209,12 +255,13 @@ export default function CompanyBlogList() {
   );
 }
 
+// StatCard
 function StatCard({ title, value, icon, color }) {
   const colorClasses = {
     blue: "from-blue-500 to-blue-600",
     green: "from-green-500 to-green-600",
     yellow: "from-yellow-500 to-yellow-600",
-    purple: "from-purple-500 to-purple-600"
+    purple: "from-purple-500 to-purple-600",
   };
 
   return (
@@ -228,6 +275,7 @@ function StatCard({ title, value, icon, color }) {
   );
 }
 
+// BlogCard
 function BlogCard({ blog, onEdit, onDelete, onView }) {
   const getCategoryColor = (category) => {
     const colors = {
@@ -235,7 +283,7 @@ function BlogCard({ blog, onEdit, onDelete, onView }) {
       achievement: "bg-yellow-100 text-yellow-700",
       growth: "bg-green-100 text-green-700",
       culture: "bg-purple-100 text-purple-700",
-      news: "bg-pink-100 text-pink-700"
+      news: "bg-pink-100 text-pink-700",
     };
     return colors[category] || "bg-gray-100 text-gray-700";
   };
@@ -246,33 +294,35 @@ function BlogCard({ blog, onEdit, onDelete, onView }) {
       achievement: <HiStar />,
       growth: <HiTrendingUp />,
       culture: <HiUserGroup />,
-      news: <HiOfficeBuilding />
+      news: <HiOfficeBuilding />,
     };
     return icons[category] || <HiNewspaper />;
   };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition group overflow-hidden">
-      {/* Image */}
       <div className="relative h-48 bg-gray-200 overflow-hidden">
         <img
-          src={blog.image || "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d"}
-          alt={blog.title}
+          src={blog.image || "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=500&h=300&fit=crop"}
+          alt={blog.title || "Blog post"}
           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
         />
         <div className="absolute top-3 right-3">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${blog.status === 'published' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}`}>
-            {blog.status === 'published' ? 'Published' : 'Draft'}
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              blog.status === "published" ? "bg-green-500 text-white" : "bg-yellow-500 text-white"
+            }`}
+          >
+            {blog.status === "published" ? "Published" : "Draft"}
           </span>
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-5">
         <div className="flex items-center gap-2 mb-3">
           <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getCategoryColor(blog.category)}`}>
             {getCategoryIcon(blog.category)}
-            {blog.category}
+            {blog.category || "Uncategorized"}
           </span>
           <span className="text-xs text-gray-500 flex items-center gap-1">
             <HiCalendar />
@@ -281,13 +331,10 @@ function BlogCard({ blog, onEdit, onDelete, onView }) {
         </div>
 
         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-emerald-600 transition">
-          {blog.title}
+          {blog.title || "Untitled"}
         </h3>
-        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-          {blog.description}
-        </p>
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{blog.description || ""}</p>
 
-        {/* Actions */}
         <div className="flex gap-2 pt-4 border-t border-gray-100">
           <button
             onClick={onView}
