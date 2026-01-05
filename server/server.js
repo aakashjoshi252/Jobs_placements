@@ -34,12 +34,12 @@ const messageController = require('./controllers/message.controller.js');
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 const nodeEnv = process.env.NODE_ENV || 'development';
 
 /* ================= DATABASE CONNECTION ================= */
 // CRITICAL FIX: Call the database connection function
-connectDb();
+connectDb;
 
 /* ================= SECURITY MIDDLEWARE ================= */
 // Helmet - Secure HTTP headers
@@ -437,12 +437,12 @@ process.on('unhandledRejection', (reason, promise) => {
 
 /* ================= START SERVER ================= */
 server.listen(port, '0.0.0.0', () => {
-  console.log(`✅ Server running on http://localhost:${port}`);
-  console.log(`🌐 Network: http://192.168.1.17:${port}`);
-  console.log(`🔒 CORS enabled for local network`);
-  console.log(`📚 API Documentation: http://localhost:${port}/api/v1/docs`);
-  console.log(`💚 Health Check: http://localhost:${port}/health`);
-  console.log(`🚀 Environment: ${nodeEnv}`);
+  console.log(` Server running on http://localhost:${port}`);
+  console.log(` Network: http://192.168.1.17:${port}`);
+  console.log(` CORS enabled for local network`);
+  console.log(` API Documentation: http://localhost:${port}/api/v1/docs`);
+  console.log(` Health Check: http://localhost:${port}/health`);
+  console.log(` Environment: ${nodeEnv}`);
 });
 
 // Export for testing

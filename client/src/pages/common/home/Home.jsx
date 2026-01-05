@@ -101,60 +101,6 @@ export default function Home() {
       {/* ================= CAROUSEL ================= */}
       <Carousel />
 
-      {/* ================= HERO ================= */}
-      <section className="mt-10 py-20 text-center bg-gradient-to-r from-emerald-900 to-emerald-800 text-white">
-        <div className="max-w-4xl mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-3">
-            Find Your Dream Job
-          </h1>
-          <p className="text-lg opacity-90 mb-8">
-            Search thousands of verified job opportunities
-          </p>
-
-          {/* 🔍 FILTER INPUTS */}
-          <div className="flex flex-col md:flex-row gap-4 justify-center">
-            <input
-              className="px-4 py-3 rounded-md text-gray-800 w-full md:w-72 bg-white focus:ring-2 focus:ring-emerald-400 outline-none"
-              type="text"
-              placeholder="Job title"
-              value={filters.title}
-              onChange={(e) =>
-                setFilters({ ...filters, title: e.target.value })
-              }
-            />
-
-            <input
-              className="px-4 py-3 rounded-md text-gray-800 w-full md:w-64 bg-white focus:ring-2 focus:ring-emerald-400 outline-none"
-              type="text"
-              placeholder="Company"
-              value={filters.company}
-              onChange={(e) =>
-                setFilters({ ...filters, company: e.target.value })
-              }
-            />
-
-            <input
-              className="px-4 py-3 rounded-md text-gray-800 w-full md:w-56 bg-white focus:ring-2 focus:ring-emerald-400 outline-none"
-              type="text"
-              placeholder="Location"
-              value={filters.location}
-              onChange={(e) =>
-                setFilters({ ...filters, location: e.target.value })
-              }
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ================= ERROR MESSAGE ================= */}
-      {error && (
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        </div>
-      )}
-
       {/* ================= JOB LIST ================= */}
       <Jobs filters={filters} />
 

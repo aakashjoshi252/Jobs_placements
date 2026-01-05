@@ -10,7 +10,7 @@ const getBaseURL = () => {
   const hostname = window.location.hostname;
   
   // Default port for backend
-  const port = import.meta.env.VITE_API_PORT || '5000';
+  const port = import.meta.env.VITE_API_PORT || '3000';
   
   // If accessing via network IP, use that IP for backend
   if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
