@@ -24,7 +24,8 @@ const applicationsRoute = require('./routes/applications.route.js');
 const dashboardRoutes = require('./routes/dashboard.route.js');
 const chatRoute = require('./routes/chat.route.js');
 const notificationRoute = require('./routes/notification.route.js');
-const blogRouter = require('./routes/blog.route.js')
+const blogRouter = require('./routes/blog.route.js');
+const healthRouter = require('./routes/health.route.js');
 
 // Socket.IO
 const { Server } = require('socket.io');
@@ -37,7 +38,8 @@ const port = process.env.PORT || 5000;
 const nodeEnv = process.env.NODE_ENV || 'development';
 
 /* ================= DATABASE CONNECTION ================= */
-connectDb;
+// CRITICAL FIX: Call the database connection function
+connectDb();
 
 /* ================= SECURITY MIDDLEWARE ================= */
 // Helmet - Secure HTTP headers
@@ -113,30 +115,66 @@ app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
 /* ================= RATE LIMITING ================= */
-// Apply general rate limiting to all routes
-app.use('/user', limiter);
+// Apply general rate limiting to API routes
+app.use('/api', limiter);
 
-/* ================= HEALTH CHECK ================= */
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: nodeEnv,
-  });
-});
-
+/* ================= ROOT & HEALTH CHECKS ================= */
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Job Placements Portal API',
     version: '1.0.0',
     documentation: '/api/v1/docs',
+    endpoints: {
+      health: '/health',
+      api: '/api/v1',
+      users: '/api/v1/user',
+      companies: '/api/v1/company',
+      jobs: '/api/v1/jobs',
+      applications: '/api/v1/application',
+      resume: '/api/v1/resume',
+      chat: '/api/v1/chat',
+      notifications: '/api/v1/notifications',
+      blog: '/api/v1/blog',
+      dashboard: '/api/v1/dashboard',
+    },
   });
 });
 
-/* ================= API ROUTES ================= */
+// Health check routes
+app.use('/health', healthRouter);
+
+/* ================= API v1 ROUTES ================= */
+const API_VERSION = '/api/v1';
+
+// Authentication & Users
+app.use(`${API_VERSION}/user`, userRoute);
+
+// Company Management
+app.use(`${API_VERSION}/company`, companyRoute);
+
+// Job Listings
+app.use(`${API_VERSION}/jobs`, jobsRoute);
+
+// Resume Management
+app.use(`${API_VERSION}/resume`, resumeRoute);
+
+// Applications
+app.use(`${API_VERSION}/application`, applicationsRoute);
+
+// Dashboard & Analytics
+app.use(`${API_VERSION}/dashboard`, dashboardRoutes);
+
+// Chat & Messaging
+app.use(`${API_VERSION}/chat`, chatRoute);
+
+// Notifications
+app.use(`${API_VERSION}/notifications`, notificationRoute);
+
+// Blog (Fixed: was /blogs, now standardized to /blog)
+app.use(`${API_VERSION}/blog`, blogRouter);
+
+// Legacy routes for backward compatibility (optional - can be removed after frontend update)
 app.use('/user', userRoute);
 app.use('/company', companyRoute);
 app.use('/jobs', jobsRoute);
@@ -145,7 +183,7 @@ app.use('/application', applicationsRoute);
 app.use('/dashboard', dashboardRoutes);
 app.use('/chat', chatRoute);
 app.use('/notifications', notificationRoute);
-app.use('/blogs',blogRouter)
+app.use('/blogs', blogRouter); // Legacy endpoint
 
 /* ================= SOCKET.IO CONFIGURATION ================= */
 const io = new Server(server, {
@@ -182,6 +220,11 @@ io.on('connection', (socket) => {
   // User joins their personal room
   socket.on('userOnline', (userId) => {
     try {
+      if (!userId) {
+        logger.warn('userOnline called without userId');
+        return;
+      }
+
       socket.userId = userId;
       socket.join(`user_${userId}`);
       connectedUsers.set(userId, socket.id);
@@ -194,24 +237,38 @@ io.on('connection', (socket) => {
       });
     } catch (error) {
       logger.error(`Error in userOnline: ${error.message}`);
+      socket.emit('error', { message: 'Failed to set user online status' });
     }
   });
 
   // Join a specific chat room
   socket.on('joinChat', (chatId) => {
     try {
+      if (!chatId) {
+        logger.warn('joinChat called without chatId');
+        return;
+      }
+
       socket.join(`chat_${chatId}`);
       logger.info(`Socket ${socket.id} joined chat ${chatId}`);
+      socket.emit('joinedChat', { chatId });
     } catch (error) {
       logger.error(`Error in joinChat: ${error.message}`);
+      socket.emit('error', { message: 'Failed to join chat' });
     }
   });
 
   // Leave a chat room
   socket.on('leaveChat', (chatId) => {
     try {
+      if (!chatId) {
+        logger.warn('leaveChat called without chatId');
+        return;
+      }
+
       socket.leave(`chat_${chatId}`);
       logger.info(`Socket ${socket.id} left chat ${chatId}`);
+      socket.emit('leftChat', { chatId });
     } catch (error) {
       logger.error(`Error in leaveChat: ${error.message}`);
     }
@@ -271,6 +328,12 @@ io.on('connection', (socket) => {
           logger.info(`Notification sent to user ${otherUserId}`);
         }
       }
+
+      // Send confirmation to sender
+      socket.emit('messageSent', {
+        success: true,
+        messageId: message._id,
+      });
     } catch (error) {
       logger.error(`Socket sendMessage error: ${error.message}`, { stack: error.stack });
       socket.emit('messageError', {
@@ -283,8 +346,13 @@ io.on('connection', (socket) => {
   // Typing indicators
   socket.on('typing', ({ chatId, userName }) => {
     try {
+      if (!chatId || !userName) {
+        logger.warn('typing called with missing parameters');
+        return;
+      }
+
       socket.to(`chat_${chatId}`).emit('userTyping', { chatId, userName });
-      logger.debug(`User typing in chat ${chatId}`);
+      logger.debug(`User ${userName} typing in chat ${chatId}`);
     } catch (error) {
       logger.error(`Error in typing event: ${error.message}`);
     }
@@ -292,6 +360,11 @@ io.on('connection', (socket) => {
 
   socket.on('stopTyping', ({ chatId }) => {
     try {
+      if (!chatId) {
+        logger.warn('stopTyping called without chatId');
+        return;
+      }
+
       socket.to(`chat_${chatId}`).emit('userStoppedTyping', { chatId });
     } catch (error) {
       logger.error(`Error in stopTyping event: ${error.message}`);
@@ -364,9 +437,12 @@ process.on('unhandledRejection', (reason, promise) => {
 
 /* ================= START SERVER ================= */
 server.listen(port, '0.0.0.0', () => {
-  console.log(` Server running on http://localhost:${port}`);
-  console.log(` Network: http://192.168.1.17:${port}`);
-  console.log(` CORS enabled for local network`);
+  console.log(`✅ Server running on http://localhost:${port}`);
+  console.log(`🌐 Network: http://192.168.1.17:${port}`);
+  console.log(`🔒 CORS enabled for local network`);
+  console.log(`📚 API Documentation: http://localhost:${port}/api/v1/docs`);
+  console.log(`💚 Health Check: http://localhost:${port}/health`);
+  console.log(`🚀 Environment: ${nodeEnv}`);
 });
 
 // Export for testing
