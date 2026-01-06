@@ -39,7 +39,7 @@ const nodeEnv = process.env.NODE_ENV || 'development';
 
 /* ================= DATABASE CONNECTION ================= */
 // FIXED: Properly call the database connection function
-connectDb()
+connectDb
   .then(() => {
     logger.info('Database initialization complete');
   })
