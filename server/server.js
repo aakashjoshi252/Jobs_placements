@@ -38,15 +38,25 @@ const port = process.env.PORT || 3000;
 const nodeEnv = process.env.NODE_ENV || 'development';
 
 /* ================= DATABASE CONNECTION ================= */
-// CRITICAL FIX: Call the database connection function
-connectDb;
+// FIXED: Properly call the database connection function
+connectDb()
+  .then(() => {
+    logger.info('Database initialization complete');
+  })
+  .catch((err) => {
+    logger.error(`Database connection failed: ${err.message}`);
+    if (nodeEnv !== 'production') {
+      process.exit(1);
+    }
+  });
 
 /* ================= SECURITY MIDDLEWARE ================= */
 // Helmet - Secure HTTP headers
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Disable for Socket.IO compatibility
+    contentSecurityPolicy: nodeEnv === 'production' ? undefined : false,
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
 
@@ -60,6 +70,7 @@ const allowedOrigins = [
   'http://192.168.1.17:5173',
   process.env.CLIENT_URL,
   process.env.FRONTEND_URL,
+  process.env.PRODUCTION_URL,
 ].filter(Boolean);
 
 const corsOptions = {
@@ -71,23 +82,21 @@ const corsOptions = {
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else if (
-      origin.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)\d+\.\d+:\d+$/)
+      nodeEnv === 'development' &&
+      origin.match(/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.).*:\d+$/)
     ) {
-      // Allow local network IPs in development
-      if (nodeEnv === 'development') {
-        callback(null, true);
-      } else {
-        logger.warn(`CORS blocked in production: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
-      }
+      // Allow local network IPs only in development
+      callback(null, true);
     } else {
-      logger.warn(`CORS blocked: ${origin}`);
+      logger.warn(`CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
+  maxAge: 86400, // 24 hours
 };
 
 app.use(cors(corsOptions));
@@ -102,6 +111,7 @@ if (nodeEnv === 'development') {
       stream: {
         write: (message) => logger.info(message.trim()),
       },
+      skip: (req) => req.url === '/health' || req.url === '/health/ready',
     })
   );
 }
@@ -118,12 +128,19 @@ app.use('/uploads', express.static('uploads'));
 // Apply general rate limiting to API routes
 app.use('/api', limiter);
 
+/* ================= TRUST PROXY (for production behind reverse proxy) ================= */
+if (nodeEnv === 'production') {
+  app.set('trust proxy', 1);
+}
+
 /* ================= ROOT & HEALTH CHECKS ================= */
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Job Placements Portal API',
     version: '1.0.0',
+    environment: nodeEnv,
+    timestamp: new Date().toISOString(),
     documentation: '/api/v1/docs',
     endpoints: {
       health: '/health',
@@ -148,7 +165,7 @@ app.use('/health', healthRouter);
 const API_VERSION = '/api/v1';
 
 // Authentication & Users
-app.use(`${API_VERSION}/user`, userRoute);
+app.use(`${API_VERSION}/user`, authLimiter, userRoute);
 
 // Company Management
 app.use(`${API_VERSION}/company`, companyRoute);
@@ -171,19 +188,8 @@ app.use(`${API_VERSION}/chat`, chatRoute);
 // Notifications
 app.use(`${API_VERSION}/notifications`, notificationRoute);
 
-// Blog (Fixed: was /blogs, now standardized to /blog)
+// Blog
 app.use(`${API_VERSION}/blog`, blogRouter);
-
-// Legacy routes for backward compatibility (optional - can be removed after frontend update)
-app.use('/user', userRoute);
-app.use('/company', companyRoute);
-app.use('/jobs', jobsRoute);
-app.use('/resume', resumeRoute);
-app.use('/application', applicationsRoute);
-app.use('/dashboard', dashboardRoutes);
-app.use('/chat', chatRoute);
-app.use('/notifications', notificationRoute);
-app.use('/blog', blogRouter); // Legacy endpoint
 
 /* ================= SOCKET.IO CONFIGURATION ================= */
 const io = new Server(server, {
@@ -194,8 +200,8 @@ const io = new Server(server, {
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else if (
-        origin.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)\d+\.\d+:\d+$/) &&
-        nodeEnv === 'development'
+        nodeEnv === 'development' &&
+        origin.match(/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.).*:\d+$/)
       ) {
         callback(null, true);
       } else {
@@ -208,6 +214,8 @@ const io = new Server(server, {
   transports: ['websocket', 'polling'],
   pingTimeout: 60000,
   pingInterval: 25000,
+  connectTimeout: 45000,
+  maxHttpBufferSize: 1e6, // 1MB
 });
 
 // Store connected users
@@ -222,6 +230,7 @@ io.on('connection', (socket) => {
     try {
       if (!userId) {
         logger.warn('userOnline called without userId');
+        socket.emit('error', { message: 'User ID required' });
         return;
       }
 
@@ -234,6 +243,7 @@ io.on('connection', (socket) => {
       io.emit('userStatusChange', {
         userId,
         status: 'online',
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       logger.error(`Error in userOnline: ${error.message}`);
@@ -246,12 +256,13 @@ io.on('connection', (socket) => {
     try {
       if (!chatId) {
         logger.warn('joinChat called without chatId');
+        socket.emit('error', { message: 'Chat ID required' });
         return;
       }
 
       socket.join(`chat_${chatId}`);
       logger.info(`Socket ${socket.id} joined chat ${chatId}`);
-      socket.emit('joinedChat', { chatId });
+      socket.emit('joinedChat', { chatId, success: true });
     } catch (error) {
       logger.error(`Error in joinChat: ${error.message}`);
       socket.emit('error', { message: 'Failed to join chat' });
@@ -268,7 +279,7 @@ io.on('connection', (socket) => {
 
       socket.leave(`chat_${chatId}`);
       logger.info(`Socket ${socket.id} left chat ${chatId}`);
-      socket.emit('leftChat', { chatId });
+      socket.emit('leftChat', { chatId, success: true });
     } catch (error) {
       logger.error(`Error in leaveChat: ${error.message}`);
     }
@@ -288,26 +299,41 @@ io.on('connection', (socket) => {
         return;
       }
 
+      if (text.trim().length === 0) {
+        socket.emit('messageError', {
+          error: 'Empty message',
+          details: 'Message text cannot be empty',
+        });
+        return;
+      }
+
       logger.info(`Message from ${senderId} in chat ${chatId}`);
 
       // Save to database
       const message = await messageController.createMessage({
         chatId,
         senderId,
-        text,
+        text: text.trim(),
       });
+
+      if (!message) {
+        throw new Error('Failed to create message');
+      }
 
       logger.info(`Message saved: ${message._id}`);
 
       // Broadcast to chat room
-      io.to(`chat_${chatId}`).emit('receiveMessage', {
+      const messageData = {
         _id: message._id,
         chatId: message.chatId,
-        senderId: message.senderId,
+        senderId: message.senderId?._id || message.senderId,
+        senderName: message.senderId?.fullName || 'Unknown',
         text: message.text,
         createdAt: message.createdAt,
         isRead: message.isRead,
-      });
+      };
+
+      io.to(`chat_${chatId}`).emit('receiveMessage', messageData);
 
       // Notify other participant
       const Chat = require('./models/chatbox.model.js');
@@ -322,7 +348,8 @@ io.on('connection', (socket) => {
           io.to(`user_${otherUserId}`).emit('newMessageNotification', {
             chatId,
             message: text,
-            senderId: message.senderId,
+            senderId: message.senderId?._id || senderId,
+            senderName: messageData.senderName,
             timestamp: message.createdAt,
           });
           logger.info(`Notification sent to user ${otherUserId}`);
@@ -333,6 +360,7 @@ io.on('connection', (socket) => {
       socket.emit('messageSent', {
         success: true,
         messageId: message._id,
+        timestamp: message.createdAt,
       });
     } catch (error) {
       logger.error(`Socket sendMessage error: ${error.message}`, { stack: error.stack });
@@ -380,6 +408,7 @@ io.on('connection', (socket) => {
       io.emit('userStatusChange', {
         userId: socket.userId,
         status: 'offline',
+        timestamp: new Date().toISOString(),
       });
     }
   });
@@ -398,12 +427,12 @@ app.use(notFound);
 app.use(errorHandler);
 
 /* ================= GRACEFUL SHUTDOWN ================= */
-const gracefulShutdown = () => {
-  logger.info('Received shutdown signal, closing server gracefully...');
-  
+const gracefulShutdown = (signal) => {
+  logger.info(`${signal} received: Closing server gracefully...`);
+
   server.close(() => {
     logger.info('HTTP server closed');
-    
+
     // Close database connection
     const mongoose = require('mongoose');
     mongoose.connection.close(false, () => {
@@ -420,29 +449,50 @@ const gracefulShutdown = () => {
 };
 
 // Handle shutdown signals
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   logger.error(`Uncaught Exception: ${error.message}`, { stack: error.stack });
-  gracefulShutdown();
+  gracefulShutdown('UNCAUGHT_EXCEPTION');
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection at:', { promise, reason });
-  gracefulShutdown();
+  logger.error('Unhandled Rejection:', { promise, reason });
+  gracefulShutdown('UNHANDLED_REJECTION');
 });
 
 /* ================= START SERVER ================= */
 server.listen(port, '0.0.0.0', () => {
-  console.log(` Server running on http://localhost:${port}`);
-  console.log(` Network: http://192.168.1.17:${port}`);
-  console.log(` CORS enabled for local network`);
-  console.log(` API Documentation: http://localhost:${port}/api/v1/docs`);
-  console.log(` Health Check: http://localhost:${port}/health`);
-  console.log(` Environment: ${nodeEnv}`);
+  const startupMessage = `
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║   🚀 Job Placements Portal API Server Started               ║
+║                                                               ║
+╠═══════════════════════════════════════════════════════════════╣
+║                                                               ║
+║   📍 Local:      http://localhost:${port}${' '.repeat(Math.max(0, 24 - port.toString().length))}║
+║   🌐 Network:    http://192.168.1.17:${port}${' '.repeat(Math.max(0, 18 - port.toString().length))}║
+║   🔧 Environment: ${nodeEnv.toUpperCase()}${' '.repeat(Math.max(0, 39 - nodeEnv.length))}║
+║                                                               ║
+╠═══════════════════════════════════════════════════════════════╣
+║                                                               ║
+║   📚 API Endpoints:                                           ║
+║   • Documentation:  /api/v1/docs                             ║
+║   • Health Check:   /health                                   ║
+║   • Root:           /                                         ║
+║                                                               ║
+║   🔌 Socket.IO:     Enabled                                   ║
+║   🛡️  CORS:          Configured                                ║
+║   📊 Database:      ${mongoose.connection.readyState === 1 ? 'Connected' : 'Connecting...'}${' '.repeat(Math.max(0, 33 - (mongoose.connection.readyState === 1 ? 9 : 14)))}║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+  `;
+
+  console.log(startupMessage);
+  logger.info(`Server started on port ${port}`);
 });
 
 // Export for testing
