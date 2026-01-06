@@ -1,5 +1,4 @@
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 const logger = require('../utils/logger');
 
@@ -20,67 +19,12 @@ if (
   logger.warn('   Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in .env');
 }
 
-// Cloudinary storage for profile pictures
-const profilePictureStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'jobs_portal/profile_pictures',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    transformation: [
-      {
-        width: 500,
-        height: 500,
-        crop: 'fill',
-        gravity: 'face',
-        quality: 'auto:good',
-      },
-    ],
-    public_id: (req, file) => {
-      // Generate unique filename with user ID
-      const userId = req.user?._id || 'unknown';
-      return `user_${userId}_${Date.now()}`;
-    },
-  },
-});
-
-// Cloudinary storage for company logos
-const companyLogoStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'jobs_portal/company_logos',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'svg'],
-    transformation: [
-      {
-        width: 400,
-        height: 400,
-        crop: 'limit',
-        quality: 'auto:good',
-      },
-    ],
-    public_id: (req, file) => {
-      const companyId = req.params.id || req.body.companyId || 'temp';
-      return `company_${companyId}_${Date.now()}`;
-    },
-  },
-});
-
-// Cloudinary storage for resumes
-const resumeStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'jobs_portal/resumes',
-    allowed_formats: ['pdf', 'doc', 'docx'],
-    resource_type: 'raw', // For non-image files
-    public_id: (req, file) => {
-      const userId = req.user?._id || 'unknown';
-      return `resume_${userId}_${Date.now()}`;
-    },
-  },
-});
+// Use memory storage (no multer-storage-cloudinary needed)
+const storage = multer.memoryStorage();
 
 // Multer upload configuration for profile pictures
 const uploadProfilePicture = multer({
-  storage: profilePictureStorage,
+  storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
@@ -97,12 +41,10 @@ const uploadProfilePicture = multer({
   },
 });
 
-// Multer upload configuration for company logos
+// Multer configuration for company logos
 const uploadCompanyLogo = multer({
-  storage: companyLogoStorage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
       'image/jpeg',
@@ -114,20 +56,15 @@ const uploadCompanyLogo = multer({
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(
-        new Error('Invalid file type. Only JPEG, PNG, WebP, and SVG images are allowed.'),
-        false
-      );
+      cb(new Error('Invalid file type for logo.'), false);
     }
   },
 });
 
-// Multer upload configuration for resumes
+// Multer configuration for resumes
 const uploadResume = multer({
-  storage: resumeStorage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  },
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
       'application/pdf',
@@ -137,10 +74,37 @@ const uploadResume = multer({
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only PDF, DOC, and DOCX files are allowed.'), false);
+      cb(new Error('Invalid file type. Only PDF, DOC, and DOCX allowed.'), false);
     }
   },
 });
+
+// Helper: Upload buffer to Cloudinary
+const uploadToCloudinary = (buffer, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: options.folder || 'jobs_portal',
+        resource_type: options.resource_type || 'auto',
+        transformation: options.transformation || [],
+        public_id: options.public_id,
+      },
+      (error, result) => {
+        if (error) {
+          logger.error(`Cloudinary upload error: ${error.message}`);
+          reject(error);
+        } else {
+          logger.info(`File uploaded to Cloudinary: ${result.public_id}`);
+          resolve(result);
+        }
+      }
+    );
+
+    const { Readable } = require('stream');
+    const bufferStream = Readable.from(buffer);
+    bufferStream.pipe(uploadStream);
+  });
+};
 
 // Delete image from Cloudinary
 const deleteFromCloudinary = async (publicId) => {
@@ -154,33 +118,11 @@ const deleteFromCloudinary = async (publicId) => {
   }
 };
 
-// Upload buffer to Cloudinary (for direct uploads without multer)
-const uploadBufferToCloudinary = (buffer, folder = 'jobs_portal/misc') => {
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader
-      .upload_stream(
-        {
-          folder: folder,
-          resource_type: 'auto',
-        },
-        (error, result) => {
-          if (error) {
-            logger.error(`Cloudinary upload error: ${error.message}`);
-            reject(error);
-          } else {
-            resolve(result);
-          }
-        }
-      )
-      .end(buffer);
-  });
-};
-
 module.exports = {
   cloudinary,
   uploadProfilePicture,
   uploadCompanyLogo,
   uploadResume,
+  uploadToCloudinary,
   deleteFromCloudinary,
-  uploadBufferToCloudinary,
 };

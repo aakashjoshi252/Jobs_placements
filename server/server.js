@@ -39,16 +39,7 @@ const nodeEnv = process.env.NODE_ENV || 'development';
 
 /* ================= DATABASE CONNECTION ================= */
 // FIXED: Properly call the database connection function
-connectDb
-  .then(() => {
-    logger.info('Database initialization complete');
-  })
-  .catch((err) => {
-    logger.error(`Database connection failed: ${err.message}`);
-    if (nodeEnv !== 'production') {
-      process.exit(1);
-    }
-  });
+connectDb;
 
 /* ================= SECURITY MIDDLEWARE ================= */
 // Helmet - Secure HTTP headers
