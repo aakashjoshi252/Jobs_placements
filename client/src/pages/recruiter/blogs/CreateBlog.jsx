@@ -20,7 +20,7 @@ export default function CreateBlog() {
   const { user } = useSelector((state) => state.auth);
   const company = useSelector((state) => state.company.data);
   const [loading, setLoading] = useState(false);
-  console.log(company._id)
+  console.log(company?._id)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
