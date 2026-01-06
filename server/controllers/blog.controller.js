@@ -1,5 +1,6 @@
 const Blog = require('../models/Blog');
 const logger = require('../utils/logger');
+const mongoose = require('mongoose');
 
 // @desc    Get all published blogs (public)
 // @route   GET /api/v1/blog
@@ -63,16 +64,30 @@ exports.getCompanyBlogs = async (req, res) => {
     const { companyId } = req.params;
     const { status } = req.query;
     
-    const query = { companyId };
+    // Validate companyId format
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid company ID format'
+      });
+    }
+    
+    const query = { companyId: mongoose.Types.ObjectId(companyId) };
     
     // Filter by status if provided
-    if (status) {
+    if (status && status !== 'all') {
       query.status = status;
     }
     
+    logger.info(`Fetching blogs for company: ${companyId} with query: ${JSON.stringify(query)}`);
+    
     const blogs = await Blog.find(query)
       .populate('authorId', 'name email')
-      .sort({ createdAt: -1 });
+      .populate('companyId', 'name logo')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    logger.info(`Found ${blogs.length} blogs for company ${companyId}`);
     
     res.status(200).json({
       success: true,
@@ -81,6 +96,7 @@ exports.getCompanyBlogs = async (req, res) => {
     });
   } catch (error) {
     logger.error(`Error in getCompanyBlogs: ${error.message}`);
+    logger.error(`Stack trace: ${error.stack}`);
     res.status(500).json({
       success: false,
       message: 'Error fetching company blogs',
@@ -95,6 +111,14 @@ exports.getCompanyBlogs = async (req, res) => {
 exports.getBlogById = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Validate blog ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid blog ID format'
+      });
+    }
     
     const blog = await Blog.findById(id)
       .populate('companyId', 'name logo website location')
@@ -146,6 +170,14 @@ exports.createBlog = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields: title, description, content, category, companyId'
+      });
+    }
+    
+    // Validate companyId format
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid company ID format'
       });
     }
     
@@ -217,6 +249,14 @@ exports.updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Validate blog ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid blog ID format'
+      });
+    }
+    
     const blog = await Blog.findById(id);
     
     if (!blog) {
@@ -277,6 +317,14 @@ exports.deleteBlog = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Validate blog ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid blog ID format'
+      });
+    }
+    
     const blog = await Blog.findById(id);
     
     if (!blog) {
@@ -318,6 +366,14 @@ exports.deleteBlog = async (req, res) => {
 exports.toggleBlogLike = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Validate blog ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid blog ID format'
+      });
+    }
     
     const blog = await Blog.findById(id);
     
@@ -367,10 +423,24 @@ exports.toggleBlogLike = async (req, res) => {
 exports.getBlogStats = async (req, res) => {
   try {
     const { companyId } = req.params;
-    const mongoose = require('mongoose');
+    
+    // Validate companyId format
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid company ID format'
+      });
+    }
+    
+    logger.info(`Fetching stats for company: ${companyId}`);
+    
+    // Use new mongoose.Types.ObjectId() syntax for newer versions
+    const objectId = mongoose.Types.ObjectId.isValid(companyId) 
+      ? new mongoose.Types.ObjectId(companyId)
+      : companyId;
     
     const stats = await Blog.aggregate([
-      { $match: { companyId: mongoose.Types.ObjectId(companyId) } },
+      { $match: { companyId: objectId } },
       {
         $group: {
           _id: null,
@@ -389,20 +459,25 @@ exports.getBlogStats = async (req, res) => {
       }
     ]);
     
+    const result = stats[0] || {
+      totalBlogs: 0,
+      publishedBlogs: 0,
+      draftBlogs: 0,
+      totalViews: 0,
+      totalLikes: 0,
+      avgViews: 0,
+      avgLikes: 0
+    };
+    
+    logger.info(`Stats result for company ${companyId}: ${JSON.stringify(result)}`);
+    
     res.status(200).json({
       success: true,
-      stats: stats[0] || {
-        totalBlogs: 0,
-        publishedBlogs: 0,
-        draftBlogs: 0,
-        totalViews: 0,
-        totalLikes: 0,
-        avgViews: 0,
-        avgLikes: 0
-      }
+      stats: result
     });
   } catch (error) {
     logger.error(`Error in getBlogStats: ${error.message}`);
+    logger.error(`Stack trace: ${error.stack}`);
     res.status(500).json({
       success: false,
       message: 'Error fetching blog statistics',
