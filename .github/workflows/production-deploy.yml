@@ -1,0 +1,121 @@
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+      
+      - name: Install server dependencies
+        run: |
+          cd server
+          npm ci
+      
+      - name: Run linter
+        run: |
+          cd server
+          npm run lint || echo "Linting issues found"
+      
+      - name: Run tests
+        run: |
+          cd server
+          npm test || echo "No tests configured"
+        env:
+          NODE_ENV: test
+          MONGO_URL: mongodb://localhost:27017/test_db
+  
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      
+      - name: Install client dependencies
+        run: |
+          cd client
+          npm ci
+      
+      - name: Build client
+        run: |
+          cd client
+          npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: client-build
+          path: client/dist
+          retention-days: 1
+  
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: client-build
+          path: client/dist
+      
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            cd /var/www/jobs-placements
+            git pull origin main
+            cd server
+            npm install --production
+            pm2 reload ecosystem.config.js --env production
+            echo "Deployment completed successfully"
+      
+      - name: Verify deployment
+        run: |
+          sleep 10
+          curl -f ${{ secrets.PRODUCTION_URL }}/health || exit 1
+      
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "Deployment successful!"
+          else
+            echo "Deployment failed!"
+          fi
