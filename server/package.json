@@ -15,18 +15,43 @@
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
     "validate-env": "node scripts/validate-env.js",
+    "production-check": "node scripts/production-checks.js",
     "prestart": "npm run validate-env",
+    "predeploy": "npm run production-check && npm run lint && npm test",
+    "deploy:prepare": "npm install --production && npm run production-check",
+    "db:seed": "node scripts/seed.js",
+    "db:backup": "node scripts/backup.js",
+    "db:restore": "node scripts/restore.js",
+    "logs:view": "tail -f logs/combined.log",
+    "logs:errors": "tail -f logs/error.log",
+    "security:audit": "npm audit --production",
+    "security:fix": "npm audit fix",
     "docker:build": "docker build -t job-placements-api .",
-    "docker:run": "docker run -p 5000:5000 --env-file .env job-placements-api"
+    "docker:run": "docker run -p 5000:5000 --env-file .env job-placements-api",
+    "docker:compose:up": "docker-compose up -d",
+    "docker:compose:down": "docker-compose down",
+    "pm2:start": "pm2 start server.js --name jobs-api --max-memory-restart 500M",
+    "pm2:stop": "pm2 stop jobs-api",
+    "pm2:restart": "pm2 restart jobs-api",
+    "pm2:logs": "pm2 logs jobs-api",
+    "pm2:monit": "pm2 monit"
   },
   "keywords": [
     "jobs",
     "placements",
     "recruitment",
-    "api"
+    "api",
+    "nodejs",
+    "express",
+    "mongodb",
+    "socket.io"
   ],
   "author": "Aakash Joshi",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aakashjoshi252/Jobs_placements.git"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cloudinary": "^1.41.3",
