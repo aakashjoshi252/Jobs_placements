@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { blogApi, companyApi } from '../../../api/api';
-import { FaBlog, FaEdit, FaTrash, FaEye, FaHeart, FaPlus, FaImage, FaSave } from 'react-icons/fa';
+import { FaBlog, FaEdit, FaTrash, FaEye, FaHeart, FaPlus, FaImage, FaSave, FaChartLine, FaFileAlt, FaCheckCircle, FaEdit as FaDraft } from 'react-icons/fa';
 import { GiJewelCrown } from 'react-icons/gi';
 
 const BLOG_CATEGORIES = [
@@ -18,7 +18,9 @@ export default function BlogManager() {
   const [companyId, setCompanyId] = useState(null);
   
   const [blogs, setBlogs] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
   
@@ -44,8 +46,6 @@ export default function BlogManager() {
         });
         console.log('Company API response:', response.data);
         
-        // Extract company ID correctly from response structure
-        // Response is: { data: { _id: '...', ... } }
         const company = response.data.data || response.data;
         console.log('Company data:', company);
         
@@ -88,7 +88,6 @@ export default function BlogManager() {
       } catch (error) {
         console.error('Error fetching blogs:', error);
         if (error.response?.status === 404) {
-          // No blogs yet - this is normal for new companies
           console.log('No blogs found (404) - starting fresh');
           setBlogs([]);
         }
@@ -100,10 +99,45 @@ export default function BlogManager() {
     fetchBlogs();
   }, [companyId, token]);
 
+  // Fetch blog statistics
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!companyId) {
+        setStatsLoading(false);
+        return;
+      }
+      
+      try {
+        setStatsLoading(true);
+        console.log('Fetching blog stats for company:', companyId);
+        const response = await blogApi.get(`/stats/${companyId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log('Stats API response:', response.data);
+        setStats(response.data.stats);
+      } catch (error) {
+        console.error('Error fetching blog stats:', error);
+        // Set default stats if fetch fails
+        setStats({
+          totalBlogs: 0,
+          publishedBlogs: 0,
+          draftBlogs: 0,
+          totalViews: 0,
+          totalLikes: 0,
+          avgViews: 0,
+          avgLikes: 0
+        });
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [companyId, token, blogs]); // Refetch when blogs change
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -154,21 +188,19 @@ export default function BlogManager() {
     try {
       const blogData = {
         ...formData,
-        companyId  // This is now a valid MongoDB ObjectId
+        companyId
       };
 
       console.log('Submitting blog data:', blogData);
 
       let response;
       if (editingBlog) {
-        // Update existing blog
         response = await blogApi.put(`/${editingBlog._id}`, blogData, {
           headers: { Authorization: `Bearer ${token}` }
         });
         console.log('Blog updated:', response.data);
         alert('✅ Blog updated successfully!');
       } else {
-        // Create new blog
         response = await blogApi.post('/', blogData, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -182,7 +214,6 @@ export default function BlogManager() {
       });
       setBlogs(blogsResponse.data.blogs || []);
 
-      // Reset form
       resetForm();
     } catch (error) {
       console.error('Error saving blog:', error);
@@ -299,6 +330,85 @@ export default function BlogManager() {
             </button>
           </div>
         </div>
+
+        {/* Statistics Dashboard */}
+        {!statsLoading && stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            {/* Total Blogs */}
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <FaFileAlt className="text-3xl opacity-80" />
+                <span className="text-4xl font-bold">{stats.totalBlogs}</span>
+              </div>
+              <h3 className="text-sm font-semibold opacity-90">Total Blogs</h3>
+            </div>
+
+            {/* Published Blogs */}
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <FaCheckCircle className="text-3xl opacity-80" />
+                <span className="text-4xl font-bold">{stats.publishedBlogs}</span>
+              </div>
+              <h3 className="text-sm font-semibold opacity-90">Published</h3>
+            </div>
+
+            {/* Draft Blogs */}
+            <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <FaDraft className="text-3xl opacity-80" />
+                <span className="text-4xl font-bold">{stats.draftBlogs}</span>
+              </div>
+              <h3 className="text-sm font-semibold opacity-90">Drafts</h3>
+            </div>
+
+            {/* Total Views */}
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <FaEye className="text-3xl opacity-80" />
+                <span className="text-4xl font-bold">{stats.totalViews}</span>
+              </div>
+              <h3 className="text-sm font-semibold opacity-90">Total Views</h3>
+            </div>
+
+            {/* Total Likes */}
+            <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <FaHeart className="text-3xl opacity-80" />
+                <span className="text-4xl font-bold">{stats.totalLikes}</span>
+              </div>
+              <h3 className="text-sm font-semibold opacity-90">Total Likes</h3>
+            </div>
+
+            {/* Average Views */}
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <FaChartLine className="text-3xl opacity-80" />
+                <span className="text-4xl font-bold">{Math.round(stats.avgViews)}</span>
+              </div>
+              <h3 className="text-sm font-semibold opacity-90">Avg Views/Blog</h3>
+            </div>
+
+            {/* Average Likes */}
+            <div className="bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <FaHeart className="text-3xl opacity-80" />
+                <span className="text-4xl font-bold">{Math.round(stats.avgLikes)}</span>
+              </div>
+              <h3 className="text-sm font-semibold opacity-90">Avg Likes/Blog</h3>
+            </div>
+
+            {/* Engagement Rate */}
+            <div className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <FaChartLine className="text-3xl opacity-80" />
+                <span className="text-4xl font-bold">
+                  {stats.totalViews > 0 ? Math.round((stats.totalLikes / stats.totalViews) * 100) : 0}%
+                </span>
+              </div>
+              <h3 className="text-sm font-semibold opacity-90">Engagement Rate</h3>
+            </div>
+          </div>
+        )}
 
         {/* Blog Form */}
         {showForm && (
@@ -433,13 +543,7 @@ export default function BlogManager() {
                   className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm ${
                     errors.content ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="Write your blog content here. You can use line breaks for paragraphs.
-
-Example:
-
-We are excited to announce the launch of our new jewelry collection...
-
-Our team has worked tirelessly..."
+                  placeholder="Write your blog content here. You can use line breaks for paragraphs.\n\nExample:\n\nWe are excited to announce the launch of our new jewelry collection...\n\nOur team has worked tirelessly..."
                 />
                 {errors.content && <p className="text-red-500 text-sm mt-2">{errors.content}</p>}
               </div>
