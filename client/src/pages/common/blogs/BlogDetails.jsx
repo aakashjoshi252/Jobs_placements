@@ -1,230 +1,362 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { FaShareAlt } from "react-icons/fa";
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { blogApi } from '../../../api/api';
+import { FaArrowLeft, FaEye, FaHeart, FaClock, FaBuilding, FaUser, FaShare, FaBookmark } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 
-import { 
-  FaArrowLeft, 
-  FaEye, 
-  FaHeart, 
-  FaClock,
-  FaTag 
-} from "react-icons/fa6";
-import { blogApi } from "../../../api/api";
+const BLOG_CATEGORIES = [
+  { value: 'event', label: '🎉 Company Event', color: 'blue' },
+  { value: 'achievement', label: '🏆 Achievement', color: 'yellow' },
+  { value: 'growth', label: '📈 Company Growth', color: 'green' },
+  { value: 'culture', label: '👥 Company Culture', color: 'purple' },
+  { value: 'news', label: '📰 Industry News', color: 'red' }
+];
 
 export default function BlogDetails() {
-  const { blogId } = useParams();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const token = useSelector((state) => state.auth.token);
+  const user = useSelector((state) => state.auth.user);
+  
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [relatedBlogs, setRelatedBlogs] = useState([]);
 
-  // ✅ Fetch blog data
   useEffect(() => {
-    if (!blogId) {
-      setError("No blog ID provided");
+    fetchBlogDetails();
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  useEffect(() => {
+    if (blog) {
+      fetchRelatedBlogs();
+      checkIfLiked();
+    }
+  }, [blog]);
+
+  const fetchBlogDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await blogApi.get(`/${id}`);
+      setBlog(response.data.blog);
+      setLikesCount(response.data.blog.likes || 0);
+    } catch (error) {
+      console.error('Error fetching blog:', error);
+      toast.error('Blog not found');
+      navigate('/blogs');
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRelatedBlogs = async () => {
+    try {
+      const response = await blogApi.get('/', {
+        params: {
+          category: blog.category,
+          limit: 3
+        }
+      });
+      // Filter out current blog
+      const filtered = response.data.blogs.filter(b => b._id !== blog._id);
+      setRelatedBlogs(filtered.slice(0, 3));
+    } catch (error) {
+      console.error('Error fetching related blogs:', error);
+    }
+  };
+
+  const checkIfLiked = () => {
+    if (blog && user && blog.likedBy) {
+      setIsLiked(blog.likedBy.includes(user._id));
+    }
+  };
+
+  const handleLike = async () => {
+    if (!token) {
+      toast.info('Please login to like this blog');
       return;
     }
-    
-    const handleFetch = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const res = await blogApi.get(`/${blogId}`);
-        const data = res.data.blog || res.data;
-        
-        console.log("Blog data:", data);
-        setBlog(data);
-      } catch (err) {
-        console.error("Error fetching blog:", err);
-        setError("Failed to load blog. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    handleFetch();
-  }, [blogId]);
+    try {
+      const response = await blogApi.post(`/${id}/like`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setIsLiked(response.data.isLiked);
+      setLikesCount(response.data.likes);
+      toast.success(response.data.message);
+    } catch (error) {
+      console.error('Error liking blog:', error);
+      toast.error('Failed to like blog');
+    }
+  };
 
-  // ✅ Loading state
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: blog.title,
+        text: blog.description,
+        url: url
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success('Link copied to clipboard!');
+    }
+  };
+
+  const getCategoryData = (category) => {
+    return BLOG_CATEGORIES.find(c => c.value === category) || {};
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-8">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="text-lg text-gray-600 font-medium">Loading blog details...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading blog...</p>
         </div>
       </div>
     );
   }
 
-  // ✅ Error state
-  if (error || !blog) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8">
-        <div className="max-w-2xl mx-auto">
-          <button 
-            className="mb-8 flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            onClick={() => navigate(-1)}
-          >
-            <FaArrowLeft />
-            Go Back
-          </button>
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-200">
-            <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <FaTag className="w-12 h-12 text-gray-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {error || "Blog Not Found"}
-            </h2>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              The blog you're looking for doesn't exist or has been removed.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
-                onClick={() => navigate(-1)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
-              >
-                Go Back
-              </button>
-              <button 
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  if (!blog) {
+    return null;
   }
 
-  // ✅ Main blog content
+  const categoryData = getCategoryData(blog.category);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      {/* Hero Image Section */}
+      <div className="relative h-[70vh] overflow-hidden">
+        <img
+          src={blog.image}
+          alt={blog.title}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d';
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
+        
         {/* Back Button */}
-        <button 
-          className="mb-8 flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition-all group"
-          onClick={() => navigate(-1)}
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={() => navigate('/blogs')}
+          className="absolute top-8 left-8 px-6 py-3 bg-white/20 backdrop-blur-md text-white rounded-xl font-semibold hover:bg-white/30 transition flex items-center gap-2 shadow-lg"
         >
-          <FaArrowLeft className="group-hover:-translate-x-1 transition-transform" />
-          Back to blogs
-        </button>
+          <FaArrowLeft /> Back to Blogs
+        </motion.button>
 
-        <article className="bg-white/80 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden border border-white/50">
-          {/* Hero Image */}
-          <div className="relative h-80 lg:h-96 overflow-hidden">
-            <img 
-              src={blog.image || "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&fit=crop"} 
-              alt={blog.title}
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 group-hover:scale-105"
-              onError={(e) => {
-                e.target.src = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&fit=crop";
-              }}
-            />
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-          </div>
-
-          {/* Meta Info */}
-          <div className="p-8 lg:p-12">
-            <div className="flex flex-wrap items-center gap-4 mb-6 text-sm">
-              {/* Category Badge */}
-              {blog.category && (
-                <span className={`px-4 py-2 rounded-full font-semibold text-xs uppercase tracking-wide shadow-md ${
-                  blog.category === 'event' ? 'bg-blue-100 text-blue-800' :
-                  blog.category === 'achievement' ? 'bg-yellow-100 text-yellow-800' :
-                  blog.category === 'growth' ? 'bg-green-100 text-green-800' :
-                  blog.category === 'culture' ? 'bg-purple-100 text-purple-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  <FaTag className="inline mr-1 -mt-0.5" />
-                  {blog.category}
-                </span>
-              )}
-              
-              {/* Status Badge */}
-              {blog.status && (
-                <span className={`px-4 py-2 rounded-full font-semibold text-xs shadow-md ${
-                  blog.status === 'published' 
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
-                    : 'bg-amber-100 text-amber-800 border-amber-200'
-                } border`}>
-                  {blog.status.toUpperCase()}
-                </span>
-              )}
+        {/* Blog Title Overlay */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="absolute bottom-0 left-0 right-0 p-12 text-white"
+        >
+          <div className="max-w-4xl mx-auto">
+            {/* Category Badge */}
+            <div className="mb-4">
+              <span className={`bg-${categoryData.color}-500 px-6 py-2 rounded-full text-sm font-semibold inline-block shadow-lg`}>
+                {categoryData.label}
+              </span>
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               {blog.title}
             </h1>
 
-            {/* Description */}
-            {blog.description && (
-              <p className="text-xl lg:text-2xl text-gray-600 mb-8 leading-relaxed max-w-3xl">
-                {blog.description}
-              </p>
+            {/* Meta Information */}
+            <div className="flex flex-wrap items-center gap-6 text-sm md:text-base">
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full">
+                <FaBuilding />
+                <span className="font-semibold">{blog.companyId?.name || 'Company'}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full">
+                <FaUser />
+                <span>{blog.authorId?.name || 'Author'}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full">
+                <FaClock />
+                <span>{formatDate(blog.createdAt)}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full">
+                <FaEye />
+                <span>{blog.views || 0} views</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex items-center justify-between mb-12 pb-8 border-b-2 border-gray-200"
+        >
+          <button
+            onClick={handleLike}
+            className={`px-8 py-4 rounded-xl font-semibold transition-all shadow-lg flex items-center gap-3 ${
+              isLiked
+                ? 'bg-red-500 text-white hover:bg-red-600 scale-105'
+                : 'bg-white text-gray-700 hover:bg-red-50 hover:text-red-500'
+            }`}
+          >
+            <FaHeart className={isLiked ? 'animate-pulse' : ''} />
+            <span>{likesCount} Likes</span>
+          </button>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleShare}
+              className="p-4 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition shadow-lg"
+              title="Share"
+            >
+              <FaShare className="text-xl" />
+            </button>
+            <button
+              className="p-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition shadow-lg"
+              title="Bookmark"
+            >
+              <FaBookmark className="text-xl" />
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Blog Description */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mb-8"
+        >
+          <p className="text-2xl text-gray-700 leading-relaxed font-medium italic border-l-4 border-blue-600 pl-6 py-4 bg-blue-50 rounded-r-xl">
+            {blog.description}
+          </p>
+        </motion.div>
+
+        {/* Blog Content */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="prose prose-lg max-w-none"
+        >
+          <div className="text-gray-800 leading-relaxed space-y-6 text-lg">
+            {blog.content.split('\n').map((paragraph, index) => (
+              paragraph.trim() && (
+                <p key={index} className="mb-6">
+                  {paragraph}
+                </p>
+              )
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Company Info Card */}
+        {blog.companyId && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mt-16 p-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl shadow-2xl"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              {blog.companyId.logo && (
+                <img
+                  src={blog.companyId.logo}
+                  alt={blog.companyId.name}
+                  className="w-16 h-16 rounded-xl object-cover bg-white p-2"
+                />
+              )}
+              <div>
+                <h3 className="text-2xl font-bold">About {blog.companyId.name}</h3>
+                <p className="text-blue-100">Learn more about this company</p>
+              </div>
+            </div>
+            {blog.companyId.website && (
+              <a
+                href={blog.companyId.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-4 px-6 py-3 bg-white text-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition shadow-lg"
+              >
+                Visit Company Website →
+              </a>
             )}
+          </motion.div>
+        )}
 
-            {/* Date & Stats */}
-            <div className="flex flex-wrap items-center gap-6 mb-12 text-lg text-gray-500">
-              <span className="flex items-center gap-2">
-                <FaClock className="text-blue-500" />
-                {new Date(blog.createdAt || blog.date).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </span>
+        {/* Related Blogs */}
+        {relatedBlogs.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="mt-20"
+          >
+            <h2 className="text-3xl font-bold text-gray-800 mb-8">Related Articles</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {relatedBlogs.map((relatedBlog) => (
+                <div
+                  key={relatedBlog._id}
+                  onClick={() => {
+                    navigate(`/blogs/${relatedBlog._id}`);
+                    window.scrollTo(0, 0);
+                  }}
+                  className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all cursor-pointer group"
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={relatedBlog.image}
+                      alt={relatedBlog.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        e.target.src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d';
+                      }}
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-blue-600 transition">
+                      {relatedBlog.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {relatedBlog.description}
+                    </p>
+                    <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <FaEye /> {relatedBlog.views || 0}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <FaHeart className="text-red-400" /> {relatedBlog.likes || 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-
-          {/* Content */}
-          <div className="px-8 lg:px-12 pb-12 prose prose-lg max-w-none">
-            <div className="bg-gradient-to-r from-slate-50 to-blue-50 p-8 rounded-2xl border border-slate-200">
-              <div className="prose prose-headings:text-gray-900 prose-headings:font-bold prose-a:text-blue-600 prose-a:no-underline hover:prose-a:text-blue-700">
-                {typeof blog.content === 'string' 
-                  ? <div dangerouslySetInnerHTML={{ __html: blog.content }} />
-                  : JSON.stringify(blog.content)
-                }
-              </div>
-            </div>
-          </div>
-
-          {/* Stats & Actions */}
-          <div className="px-8 lg:px-12 pb-8 pt-4 border-t border-gray-200 bg-gradient-to-r from-slate-50 to-blue-50">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-              {/* Stats */}
-              <div className="flex items-center gap-8 text-2xl lg:text-xl font-semibold text-gray-600">
-                <span className="flex items-center gap-2 bg-white/60 px-4 py-2 rounded-xl backdrop-blur-sm shadow-lg">
-                  <FaEye className="text-blue-500" />
-                  {blog.views || 0} views
-                </span>
-                <span className="flex items-center gap-2 bg-white/60 px-4 py-2 rounded-xl backdrop-blur-sm shadow-lg">
-                  <FaHeart className="text-red-500" />
-                  {blog.likes || 0} likes
-                </span>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-4">
-                <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:-translate-y-0.5">
-                  <FaHeart />
-                  Like
-                </button>
-                <button className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all duration-300">
-                  <FaShareAlt />
-                  Share
-                </button>
-              </div>
-            </div>
-          </div>
-        </article>
+          </motion.div>
+        )}
       </div>
     </div>
   );
