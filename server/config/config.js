@@ -5,8 +5,6 @@ const logger = require('../utils/logger');
 const connectDb = async () => {
   try {
     const options = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       maxPoolSize: 10, 
       serverSelectionTimeoutMS: 5000, 
       socketTimeoutMS: 45000, 
@@ -15,8 +13,8 @@ const connectDb = async () => {
 
     const conn = await mongoose.connect(process.env.MONGO_URL, options);
 
-    logger.info(` MongoDB Connected: ${conn.connection.host}`);
-    logger.info(` Database: ${conn.connection.name}`);
+    logger.info(`✅ MongoDB Connected: ${conn.connection.host}`);
+    logger.info(`📊 Database: ${conn.connection.name}`);
 
     // Connection event handlers
     mongoose.connection.on('error', (err) => {
