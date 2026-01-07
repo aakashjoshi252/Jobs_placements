@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import { blogApi } from "../../../api/api";
 import {
   HiArrowLeft,
   HiSave,
@@ -12,14 +12,24 @@ import {
   HiStar,
   HiTrendingUp,
   HiUserGroup,
-  HiOfficeBuilding
+  HiOfficeBuilding,
+  HiUpload,
+  HiX,
+  HiCheckCircle
 } from "react-icons/hi";
 
 export default function EditBlog() {
   const navigate = useNavigate();
   const { blogId } = useParams();
   const { user } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(false);
+  const company = useSelector((state) => state.company.data);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -29,24 +39,6 @@ export default function EditBlog() {
     status: "draft"
   });
 
-  useEffect(() => {
-    fetchBlogData();
-  }, [blogId]);
-
-  const fetchBlogData = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`/api/blogs/${blogId}`);
-      setFormData(response.data.blog);
-    } catch (error) {
-      console.error("Error fetching blog:", error);
-      alert("Failed to load blog data");
-      navigate("/recruiter/blogs");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const categories = [
     { value: "event", label: "Event", icon: <HiCalendar />, desc: "Company events, conferences, meetups" },
     { value: "achievement", label: "Achievement", icon: <HiStar />, desc: "Awards, milestones, recognitions" },
@@ -55,9 +47,103 @@ export default function EditBlog() {
     { value: "news", label: "Company News", icon: <HiOfficeBuilding />, desc: "General updates, announcements" }
   ];
 
+  useEffect(() => {
+    fetchBlogData();
+  }, [blogId]);
+
+  const fetchBlogData = async () => {
+    try {
+      setLoading(true);
+      const response = await blogApi.get(`/${blogId}`);
+      
+      if (response.data.success) {
+        const blog = response.data.blog;
+        setFormData({
+          title: blog.title,
+          description: blog.description,
+          content: blog.content,
+          category: blog.category,
+          image: blog.image,
+          status: blog.status
+        });
+        setPreviewUrl(blog.image);
+      }
+    } catch (error) {
+      console.error("Error fetching blog:", error);
+      alert("Failed to load blog. Please try again.");
+      navigate("/recruiter/blogs");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        alert('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setSelectedFile(file);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedFile) return;
+
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+
+      const formDataToUpload = new FormData();
+      formDataToUpload.append('image', selectedFile);
+
+      const response = await blogApi.post('/upload-image', formDataToUpload, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(progress);
+        }
+      });
+
+      if (response.data.success) {
+        setFormData(prev => ({ ...prev, image: response.data.imageUrl }));
+        setSelectedFile(null);
+        alert('✅ Image uploaded successfully!');
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setFormData(prev => ({ ...prev, image: '' }));
   };
 
   const handleSubmit = async (status) => {
@@ -66,28 +152,32 @@ export default function EditBlog() {
       return;
     }
 
+    if (selectedFile && !formData.image) {
+      await handleImageUpload();
+    }
+
     try {
-      setLoading(true);
+      setSaving(true);
       const dataToSubmit = { ...formData, status };
       
-      await axios.put(`/api/blogs/${blogId}`, dataToSubmit);
+      await blogApi.put(`/${blogId}`, dataToSubmit);
       
-      alert(`Blog ${status === 'published' ? 'published' : 'updated'} successfully!`);
+      alert(`✅ Blog ${status === 'published' ? 'published' : 'updated'} successfully!`);
       navigate("/recruiter/blogs");
     } catch (error) {
       console.error("Error updating blog:", error);
       alert("Failed to update blog. Please try again.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  if (loading && !formData.title) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading blog...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-600 mx-auto mb-4" />
+          <p className="text-gray-600 text-lg">Loading blog...</p>
         </div>
       </div>
     );
@@ -120,19 +210,19 @@ export default function EditBlog() {
             <div className="flex gap-3">
               <button
                 onClick={() => handleSubmit('draft')}
-                disabled={loading}
-                className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium flex items-center gap-2 disabled:opacity-50"
+                disabled={saving || uploading}
+                className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <HiSave />
                 Save Draft
               </button>
               <button
                 onClick={() => handleSubmit('published')}
-                disabled={loading}
-                className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold flex items-center gap-2 disabled:opacity-50"
+                disabled={saving || uploading}
+                className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <HiEye />
-                Publish
+                {formData.status === 'published' ? 'Update' : 'Publish'}
               </button>
             </div>
           </div>
@@ -167,7 +257,7 @@ export default function EditBlog() {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Brief summary of your blog post (will be shown in preview)"
+              placeholder="Brief summary of your blog post"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               maxLength={200}
               required
@@ -202,32 +292,62 @@ export default function EditBlog() {
             </div>
           </div>
 
-          {/* Image URL */}
+          {/* Image Upload */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Cover Image URL
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Cover Image
             </label>
-            <div className="relative">
-              <HiPhotograph className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
-              <input
-                type="url"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="https://example.com/image.jpg"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-              />
-            </div>
-            {formData.image && (
-              <div className="mt-3">
-                <img
-                  src={formData.image}
-                  alt="Preview"
-                  className="w-full h-48 object-cover rounded-lg"
-                  onError={(e) => {
-                    e.target.src = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d";
-                  }}
-                />
+            
+            {!previewUrl && !formData.image ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-emerald-400 transition">
+                <HiPhotograph className="mx-auto text-5xl text-gray-400 mb-3" />
+                <p className="text-gray-600 mb-2">Upload a cover image</p>
+                <label className="inline-block px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition cursor-pointer">
+                  <HiUpload className="inline mr-2" />
+                  Choose Image
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="relative group">
+                  <img
+                    src={formData.image || previewUrl}
+                    alt="Blog cover"
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                  <button
+                    onClick={handleRemoveImage}
+                    className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition opacity-0 group-hover:opacity-100"
+                  >
+                    <HiX className="text-xl" />
+                  </button>
+                </div>
+
+                {selectedFile && !formData.image && (
+                  <button
+                    onClick={handleImageUpload}
+                    disabled={uploading}
+                    className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium flex items-center justify-center gap-2"
+                  >
+                    {uploading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Uploading... {uploadProgress}%
+                      </>
+                    ) : (
+                      <>
+                        <HiUpload />
+                        Upload to Cloudinary
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -241,7 +361,7 @@ export default function EditBlog() {
               name="content"
               value={formData.content}
               onChange={handleChange}
-              placeholder="Write your blog content here... Share the story, include details, and make it engaging!"
+              placeholder="Write your blog content here..."
               rows={15}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none"
               required
