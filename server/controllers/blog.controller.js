@@ -200,7 +200,8 @@ exports.createBlog = async (req, res) => {
       });
     }
     
-    if (company.userId.toString() !== req.user._id.toString()) {
+    // Fix: company model uses recruiterId, not userId
+    if (company.recruiterId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to create blogs for this company'
