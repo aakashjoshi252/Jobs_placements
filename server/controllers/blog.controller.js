@@ -28,7 +28,7 @@ exports.getAllBlogs = async (req, res) => {
     
     const blogs = await Blog.find(query)
       .populate('companyId', 'companyName uploadLogo')
-      .populate('authorId', 'fullName email')
+      .populate('authorId', 'username email profilePicture')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip(skip);
@@ -48,6 +48,7 @@ exports.getAllBlogs = async (req, res) => {
     });
   } catch (error) {
     logger.error(`Error in getAllBlogs: ${error.message}`);
+    logger.error(`Stack: ${error.stack}`);
     res.status(500).json({
       success: false,
       message: 'Error fetching blogs',
@@ -79,10 +80,10 @@ exports.getCompanyBlogs = async (req, res) => {
       query.status = status;
     }
     
-    logger.info(`Fetching blogs for company: ${companyId} with query: ${JSON.stringify(query)}`);
+    logger.info(`Fetching blogs for company: ${companyId}`);
     
     const blogs = await Blog.find(query)
-      .populate('authorId', 'fullName email')
+      .populate('authorId', 'username email profilePicture')
       .populate('companyId', 'companyName uploadLogo')
       .sort({ createdAt: -1 })
       .lean();
@@ -122,7 +123,7 @@ exports.getBlogById = async (req, res) => {
     
     const blog = await Blog.findById(id)
       .populate('companyId', 'companyName uploadLogo website location')
-      .populate('authorId', 'fullName email');
+      .populate('authorId', 'username email profilePicture bio');
     
     if (!blog) {
       return res.status(404).json({
@@ -150,6 +151,7 @@ exports.getBlogById = async (req, res) => {
     });
   } catch (error) {
     logger.error(`Error in getBlogById: ${error.message}`);
+    logger.error(`Stack: ${error.stack}`);
     res.status(500).json({
       success: false,
       message: 'Error fetching blog',
@@ -164,7 +166,7 @@ exports.getBlogById = async (req, res) => {
 exports.createBlog = async (req, res) => {
   try {
     logger.info('=== CREATE BLOG REQUEST ===');
-    logger.info(`User: ${JSON.stringify({ id: req.user?._id, role: req.user?.role, fullName: req.user?.fullName })}`);
+    logger.info(`User: ${JSON.stringify({ id: req.user?._id, role: req.user?.role, username: req.user?.username })}`);
     logger.info(`Body: ${JSON.stringify(req.body)}`);
     
     const { title, description, content, category, image, status, companyId } = req.body;
@@ -206,7 +208,7 @@ exports.createBlog = async (req, res) => {
       });
     }
     
-    // Fix: company model uses recruiterId, not userId
+    // Verify company belongs to user (recruiterId field)
     if (company.recruiterId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -234,16 +236,16 @@ exports.createBlog = async (req, res) => {
       logger.info('Populating blog fields...');
       await blog.populate([
         { path: 'companyId', select: 'companyName uploadLogo' },
-        { path: 'authorId', select: 'fullName email' }
+        { path: 'authorId', select: 'username email profilePicture' }
       ]);
       logger.info('Blog populated successfully');
     } catch (populateError) {
       logger.error(`Populate error: ${populateError.message}`);
       logger.error(`Stack: ${populateError.stack}`);
-      // Return blog without populate if it fails
+      // Continue without populate if it fails
     }
     
-    logger.info(`Blog created: ${blog._id} by user ${req.user._id}`);
+    logger.info(`✅ Blog created successfully: ${blog._id} by user ${req.user._id}`);
     
     res.status(201).json({
       success: true,
@@ -251,7 +253,7 @@ exports.createBlog = async (req, res) => {
       blog
     });
   } catch (error) {
-    logger.error(`Error in createBlog: ${error.message}`);
+    logger.error(`❌ Error in createBlog: ${error.message}`);
     logger.error(`Stack trace: ${error.stack}`);
     res.status(500).json({
       success: false,
@@ -309,7 +311,7 @@ exports.updateBlog = async (req, res) => {
       { new: true, runValidators: true }
     ).populate([
       { path: 'companyId', select: 'companyName uploadLogo' },
-      { path: 'authorId', select: 'fullName email' }
+      { path: 'authorId', select: 'username email profilePicture' }
     ]);
     
     logger.info(`Blog updated: ${id} by user ${req.user._id}`);
@@ -321,6 +323,7 @@ exports.updateBlog = async (req, res) => {
     });
   } catch (error) {
     logger.error(`Error in updateBlog: ${error.message}`);
+    logger.error(`Stack: ${error.stack}`);
     res.status(500).json({
       success: false,
       message: 'Error updating blog',
@@ -371,6 +374,7 @@ exports.deleteBlog = async (req, res) => {
     });
   } catch (error) {
     logger.error(`Error in deleteBlog: ${error.message}`);
+    logger.error(`Stack: ${error.stack}`);
     res.status(500).json({
       success: false,
       message: 'Error deleting blog',
@@ -428,6 +432,7 @@ exports.toggleBlogLike = async (req, res) => {
     });
   } catch (error) {
     logger.error(`Error in toggleBlogLike: ${error.message}`);
+    logger.error(`Stack: ${error.stack}`);
     res.status(500).json({
       success: false,
       message: 'Error processing like action',
@@ -453,7 +458,6 @@ exports.getBlogStats = async (req, res) => {
     
     logger.info(`Fetching stats for company: ${companyId}`);
     
-    // Use new mongoose.Types.ObjectId() for Mongoose 6+
     const objectId = new mongoose.Types.ObjectId(companyId);
     
     const stats = await Blog.aggregate([
