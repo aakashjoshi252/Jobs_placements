@@ -58,6 +58,15 @@ const CompanyBlogList = lazy(() => import('./pages/recruiter/blogs/CompanyBlogLi
 const CreateBlog = lazy(() => import('./pages/recruiter/blogs/CreateBlog.jsx'));
 const EditBlog = lazy(() => import('./pages/recruiter/blogs/EditBlog.jsx'));
 
+// Admin Components - NEW
+const AdminLayout = lazy(() => import('./components/AdminLayout.jsx'));
+const ProtectedAdminRoute = lazy(() => import('./components/ProtectedAdminRoute.jsx'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.jsx'));
+const UserManagement = lazy(() => import('./pages/admin/UserManagement.jsx'));
+const CompanyManagement = lazy(() => import('./pages/admin/CompanyManagement.jsx'));
+const JobManagement = lazy(() => import('./pages/admin/JobManagement.jsx'));
+const Analytics = lazy(() => import('./pages/admin/Analytics.jsx'));
+
 const routes = createBrowserRouter([
   {
     path: "/",
@@ -204,7 +213,7 @@ const routes = createBrowserRouter([
         path: "recruiter/notifications",
         element: <Suspense fallback={<LoadingFallback />}><NotificationsPage /></Suspense>
       },
-      // Company Blog Routes - NEW
+      // Company Blog Routes
       {
         path: "recruiter/blogs",
         element: <Suspense fallback={<LoadingFallback />}><CompanyBlogList /></Suspense>
@@ -320,6 +329,39 @@ const routes = createBrowserRouter([
       {
         path: "*",
         element: <Suspense fallback={<LoadingFallback />}><PageNotFound /></Suspense>
+      }
+    ]
+  },
+  // ========== ADMIN ROUTES (SEPARATE LAYOUT) ==========
+  {
+    path: "/admin",
+    element: (
+      <Suspense fallback={<LoadingFallback />}>
+        <ProtectedAdminRoute>
+          <AdminLayout />
+        </ProtectedAdminRoute>
+      </Suspense>
+    ),
+    children: [
+      {
+        index: true,
+        element: <Suspense fallback={<LoadingFallback />}><AdminDashboard /></Suspense>
+      },
+      {
+        path: "users",
+        element: <Suspense fallback={<LoadingFallback />}><UserManagement /></Suspense>
+      },
+      {
+        path: "companies",
+        element: <Suspense fallback={<LoadingFallback />}><CompanyManagement /></Suspense>
+      },
+      {
+        path: "jobs",
+        element: <Suspense fallback={<LoadingFallback />}><JobManagement /></Suspense>
+      },
+      {
+        path: "analytics",
+        element: <Suspense fallback={<LoadingFallback />}><Analytics /></Suspense>
       }
     ]
   }
