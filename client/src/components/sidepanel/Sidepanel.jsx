@@ -1,20 +1,39 @@
 import { FiChevronsRight } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../redux/slices/authSlice";
 import { companyApi, resumeApi } from "../../api/api";
 import { setResume } from "../../redux/slices/resumeSlice";
 import { setCompany } from "../../redux/slices/companySlice";
+import {
+  HiHome,
+  HiOfficeBuilding,
+  HiBriefcase,
+  HiDocumentText,
+  HiUser,
+  HiUserGroup,
+  HiNewspaper,
+  HiCog,
+  HiLogout,
+  HiClipboardList,
+  HiPencilAlt
+} from "react-icons/hi";
 
 export default function SidePanel({ role }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
 
   const loggedUser = useSelector((state) => state.auth.user);
   const resume = useSelector((state) => state.resume.data);
   const company = useSelector((state) => state.company.data);
+
+  // Close sidebar on navigation (mobile)
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
   // Fetch recruiter company
   useEffect(() => {
@@ -54,127 +73,178 @@ export default function SidePanel({ role }) {
     }
   };
 
+  const isActive = (path) => location.pathname.includes(path);
+
+  const MenuItem = ({ icon, label, onClick, path }) => {
+    const active = path && isActive(path);
+    return (
+      <li
+        className={`px-6 py-3 cursor-pointer rounded transition-all flex items-center gap-3 group ${
+          active
+            ? "bg-blue-600 border-l-4 border-blue-400 text-white"
+            : "hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 text-gray-300"
+        }`}
+        onClick={onClick}
+      >
+        <span className="text-xl">{icon}</span>
+        <span className="font-medium">{label}</span>
+      </li>
+    );
+  };
+
   return (
     <>
       {/* Mobile Toggle Button */}
       <button
-        className={`md:hidden fixed  right-4 z-[1500] p-2.5 rounded-md text-xl bg-gray-800 text-white hover:bg-gray-700 transition-transform duration-300`}
+        className={`md:hidden fixed right-4 top-20 z-[1500] p-3 rounded-lg shadow-lg bg-gray-800 text-white hover:bg-gray-700 transition-all ${
+          isOpen ? "rotate-180" : ""
+        }`}
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle Menu"
       >
-        <FiChevronsRight
-          className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-        />
+        <FiChevronsRight className="text-xl transition-transform duration-300" />
       </button>
+
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-[1100]"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 right-0 h-screen w-64 bg-gray-900 pt-16 shadow-lg z-[1200] transform transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "translate-x-full"} md:translate-x-0 md:left-0 md:right-auto md:static md:shadow-none`}
+        className={`fixed top-0 right-0 h-screen w-72 bg-gray-900 pt-20 shadow-2xl z-[1200] transform transition-transform duration-300 ease-in-out overflow-y-auto
+          ${isOpen ? "translate-x-0" : "translate-x-full"} md:translate-x-0 md:left-0 md:right-auto md:static md:shadow-none md:w-64`}
       >
-        <h3 className="text-white font-semibold text-lg px-6 mb-6">
-          {role === "recruiter" ? "Recruiter Panel" : "Candidate Panel"}
-        </h3>
+        {/* Panel Header */}
+        <div className="px-6 mb-6">
+          <h3 className="text-white font-bold text-xl mb-1">
+            {role === "recruiter" ? "Recruiter Panel" : "Candidate Panel"}
+          </h3>
+          <p className="text-gray-400 text-sm">
+            {role === "recruiter" ? "Manage your company" : "Find your dream job"}
+          </p>
+        </div>
 
-        <ul className="flex flex-col px-2 space-y-2 text-gray-300 text-base">
-          {role === "recruiter" && (
-            <>
-              {!company && (
-                <li
-                  className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                  onClick={() => navigate("/recruiter/company/registration")}
-                >
-                  Register Company
-                </li>
-              )}
-              {company && (
-                <>
-                  <li
-                    className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                    onClick={() => navigate("/recruiter/home")}
-                  >
-                    Home
-                  </li>
-                  <li
-                    className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                    onClick={() => navigate(`/recruiter/company/${company._id}`)}
-                  >
-                    View Company
-                  </li>
-                  <li
-                    className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                    onClick={() => navigate("/recruiter/company/jobpost")}
-                  >
-                    Post Jobs
-                  </li>
-                  <li
-                    className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                    onClick={() => navigate("/recruiter/company/postedjobs")}
-                  >
-                    Posted Jobs
-                  </li>
-                  <li
-                    className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                    onClick={() => navigate("/recruiter/profile")}
-                  >
-                    Profile
-                  </li>
-                  <li
-                    className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                    onClick={() => navigate("/recruiter/candidates-list")}
-                  >
-                    Candidates
-                  </li>
-                  <li
-                    className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                    onClick={() => navigate("recruiter/blogs")}
-                  >
-                    Blogs
-                  </li>
-                </>
-              )}
-            </>
-          )}
+        {/* Navigation Menu */}
+        <nav>
+          <ul className="flex flex-col px-2 space-y-1">
+            {role === "recruiter" && (
+              <>
+                {!company ? (
+                  <MenuItem
+                    icon={<HiOfficeBuilding />}
+                    label="Register Company"
+                    onClick={() => navigate("/recruiter/company/registration")}
+                    path="/recruiter/company/registration"
+                  />
+                ) : (
+                  <>
+                    <MenuItem
+                      icon={<HiHome />}
+                      label="Dashboard"
+                      onClick={() => navigate("/recruiter/home")}
+                      path="/recruiter/home"
+                    />
+                    <MenuItem
+                      icon={<HiOfficeBuilding />}
+                      label="Company Profile"
+                      onClick={() => navigate(`/recruiter/company/${company._id}`)}
+                      path="/recruiter/company"
+                    />
+                    <MenuItem
+                      icon={<HiPencilAlt />}
+                      label="Post Job"
+                      onClick={() => navigate("/recruiter/jobpost")}
+                      path="/recruiter/jobpost"
+                    />
+                    <MenuItem
+                      icon={<HiBriefcase />}
+                      label="Posted Jobs"
+                      onClick={() => navigate("/recruiter/postedjobs")}
+                      path="/recruiter/postedjobs"
+                    />
+                    <MenuItem
+                      icon={<HiUserGroup />}
+                      label="Applications"
+                      onClick={() => navigate("/recruiter/candidates-list")}
+                      path="/recruiter/candidates-list"
+                    />
+                    <MenuItem
+                      icon={<HiNewspaper />}
+                      label="Company Blogs"
+                      onClick={() => navigate("/recruiter/blogs")}
+                      path="/recruiter/blogs"
+                    />
+                    <MenuItem
+                      icon={<HiUser />}
+                      label="Profile"
+                      onClick={() => navigate("/recruiter/profile")}
+                      path="/recruiter/profile"
+                    />
+                  </>
+                )}
+              </>
+            )}
 
-          {role === "candidate" && (
-            <>
-              <li
-                className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                onClick={() => navigate("/candidate/home")}
-              >
-                Home
-              </li>
-              <li
-                className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                onClick={() =>
-                  navigate(resume ? "/candidate/resume" : "/candidate/create-resume")
-                }
-              >
-                Resume
-              </li>
-              <li
-                className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                onClick={() => navigate("/candidate/applications/list")}
-              >
-                Applied Job List
-              </li>
-              <li
-                className="px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition"
-                onClick={() => navigate("/candidate/profile")}
-              >
-                Profile
-              </li>
-            </>
-          )}
-        </ul>
+            {role === "candidate" && (
+              <>
+                <MenuItem
+                  icon={<HiHome />}
+                  label="Dashboard"
+                  onClick={() => navigate("/candidate/home")}
+                  path="/candidate/home"
+                />
+                <MenuItem
+                  icon={<HiDocumentText />}
+                  label={resume ? "My Resume" : "Create Resume"}
+                  onClick={() =>
+                    navigate(resume ? "/candidate/resume" : "/candidate/create-resume")
+                  }
+                  path="/candidate/resume"
+                />
+                <MenuItem
+                  icon={<HiBriefcase />}
+                  label="Find Jobs"
+                  onClick={() => navigate("/candidate/jobs")}
+                  path="/candidate/jobs"
+                />
+                <MenuItem
+                  icon={<HiClipboardList />}
+                  label="My Applications"
+                  onClick={() => navigate("/candidate/applications")}
+                  path="/candidate/applications"
+                />
+                <MenuItem
+                  icon={<HiUser />}
+                  label="Profile"
+                  onClick={() => navigate("/candidate/profile")}
+                  path="/candidate/profile"
+                />
+              </>
+            )}
+          </ul>
+        </nav>
 
-        {/* Logout Button */}
-        <h3 className="text-white px-6 py-3 hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 cursor-pointer rounded transition" onClick={()=>navigate("/settings")} > Settings</h3>
-        <button
-          className="mt-6 mx-3 w-[calc(100%-1.5rem)] py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-          onClick={logoutHandler}
-        >
-          Logout
-        </button>
+        {/* Bottom Actions */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gray-950 border-t border-gray-800">
+          <button
+            className="w-full px-6 py-3 mb-2 text-gray-300 hover:bg-gray-800 rounded-lg transition flex items-center gap-3 font-medium"
+            onClick={() => navigate("/settings")}
+          >
+            <HiCog className="text-xl" />
+            Settings
+          </button>
+          <button
+            className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2 font-semibold shadow-lg"
+            onClick={logoutHandler}
+          >
+            <HiLogout className="text-xl" />
+            Logout
+          </button>
+        </div>
       </aside>
     </>
   );
