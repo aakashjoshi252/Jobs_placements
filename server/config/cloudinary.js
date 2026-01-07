@@ -61,6 +61,29 @@ const uploadCompanyLogo = multer({
   },
 });
 
+// Multer configuration for blog images
+const uploadBlogImage = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for blog images
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+    ];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.'),
+        false
+      );
+    }
+  },
+});
+
 // Multer configuration for resumes
 const uploadResume = multer({
   storage: storage,
@@ -106,6 +129,25 @@ const uploadToCloudinary = (buffer, options = {}) => {
   });
 };
 
+// Upload blog image with optimizations
+const uploadBlogImageToCloudinary = async (buffer, fileName) => {
+  try {
+    const result = await uploadToCloudinary(buffer, {
+      folder: 'jobs_portal/blogs',
+      public_id: `blog_${Date.now()}_${fileName.split('.')[0]}`,
+      transformation: [
+        { width: 1200, height: 630, crop: 'limit' }, // Max dimensions
+        { quality: 'auto:good' }, // Auto quality
+        { fetch_format: 'auto' }, // Auto format (WebP if supported)
+      ],
+    });
+    return result;
+  } catch (error) {
+    logger.error(`Blog image upload failed: ${error.message}`);
+    throw error;
+  }
+};
+
 // Delete image from Cloudinary
 const deleteFromCloudinary = async (publicId) => {
   try {
@@ -122,7 +164,9 @@ module.exports = {
   cloudinary,
   uploadProfilePicture,
   uploadCompanyLogo,
+  uploadBlogImage,
   uploadResume,
   uploadToCloudinary,
+  uploadBlogImageToCloudinary,
   deleteFromCloudinary,
 };
