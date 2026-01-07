@@ -1,6 +1,45 @@
 const Blog = require('../models/Blog');
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
+const { uploadBlogImageToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
+
+// @desc    Upload blog image
+// @route   POST /api/v1/blog/upload-image
+// @access  Private (Recruiter only)
+exports.uploadBlogImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided'
+      });
+    }
+
+    logger.info(`Uploading blog image: ${req.file.originalname}`);
+
+    // Upload to Cloudinary
+    const result = await uploadBlogImageToCloudinary(
+      req.file.buffer,
+      req.file.originalname
+    );
+
+    logger.info(`Blog image uploaded successfully: ${result.secure_url}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Image uploaded successfully',
+      imageUrl: result.secure_url,
+      publicId: result.public_id
+    });
+  } catch (error) {
+    logger.error(`Error uploading blog image: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error uploading image',
+      error: error.message
+    });
+  }
+};
 
 // @desc    Get all published blogs (public)
 // @route   GET /api/v1/blog
@@ -223,7 +262,7 @@ exports.createBlog = async (req, res) => {
       description,
       content,
       category,
-      image: image || undefined,
+      image: image || undefined, // Use uploaded image URL or default
       status: status || 'draft',
       companyId,
       authorId: req.user._id
@@ -332,6 +371,29 @@ exports.updateBlog = async (req, res) => {
   }
 };
 
+// Helper: Extract Cloudinary public_id from URL
+const extractPublicId = (url) => {
+  if (!url || !url.includes('cloudinary.com')) return null;
+  
+  try {
+    // Extract public_id from Cloudinary URL
+    // Format: https://res.cloudinary.com/{cloud_name}/image/upload/{transformations}/{folder}/{public_id}.{format}
+    const parts = url.split('/');
+    const uploadIndex = parts.findIndex(part => part === 'upload');
+    if (uploadIndex === -1) return null;
+    
+    // Get everything after 'upload' and transformations
+    const pathAfterUpload = parts.slice(uploadIndex + 1).join('/');
+    // Remove file extension
+    const publicId = pathAfterUpload.replace(/\.[^.]+$/, '');
+    
+    return publicId;
+  } catch (error) {
+    logger.error(`Error extracting public_id: ${error.message}`);
+    return null;
+  }
+};
+
 // @desc    Delete blog
 // @route   DELETE /api/v1/blog/:id
 // @access  Private (Recruiter only)
@@ -362,6 +424,20 @@ exports.deleteBlog = async (req, res) => {
         success: false,
         message: 'Not authorized to delete this blog'
       });
+    }
+    
+    // Delete blog image from Cloudinary if it exists and is not default
+    if (blog.image && blog.image.includes('cloudinary.com')) {
+      const publicId = extractPublicId(blog.image);
+      if (publicId) {
+        try {
+          await deleteFromCloudinary(publicId);
+          logger.info(`Deleted blog image from Cloudinary: ${publicId}`);
+        } catch (cloudinaryError) {
+          logger.error(`Failed to delete image from Cloudinary: ${cloudinaryError.message}`);
+          // Continue with blog deletion even if image deletion fails
+        }
+      }
     }
     
     await blog.deleteOne();
