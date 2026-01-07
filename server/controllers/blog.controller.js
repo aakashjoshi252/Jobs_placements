@@ -72,7 +72,7 @@ exports.getCompanyBlogs = async (req, res) => {
       });
     }
     
-    const query = { companyId: mongoose.Types.ObjectId(companyId) };
+    const query = { companyId: new mongoose.Types.ObjectId(companyId) };
     
     // Filter by status if provided
     if (status && status !== 'all') {
@@ -434,10 +434,8 @@ exports.getBlogStats = async (req, res) => {
     
     logger.info(`Fetching stats for company: ${companyId}`);
     
-    // Use new mongoose.Types.ObjectId() syntax for newer versions
-    const objectId = mongoose.Types.ObjectId.isValid(companyId) 
-      ? new mongoose.Types.ObjectId(companyId)
-      : companyId;
+    // Use new mongoose.Types.ObjectId() for Mongoose 6+
+    const objectId = new mongoose.Types.ObjectId(companyId);
     
     const stats = await Blog.aggregate([
       { $match: { companyId: objectId } },
