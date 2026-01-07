@@ -160,6 +160,12 @@ const deleteFromCloudinary = async (publicId) => {
   }
 };
 
+// Verify exports before exporting
+if (!uploadBlogImage) {
+  console.error('❌ CRITICAL: uploadBlogImage is undefined before export!');
+}
+
+// Export everything
 module.exports = {
   cloudinary,
   uploadProfilePicture,
@@ -170,3 +176,12 @@ module.exports = {
   uploadBlogImageToCloudinary,
   deleteFromCloudinary,
 };
+
+// Debug log
+console.log('✅ Cloudinary config loaded. Exports:', {
+  cloudinary: !!cloudinary,
+  uploadProfilePicture: !!uploadProfilePicture,
+  uploadCompanyLogo: !!uploadCompanyLogo,
+  uploadBlogImage: !!uploadBlogImage,
+  uploadResume: !!uploadResume,
+});
