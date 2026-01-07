@@ -27,8 +27,8 @@ exports.getAllBlogs = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
     const blogs = await Blog.find(query)
-      .populate('companyId', 'name logo')
-      .populate('authorId', 'name')
+      .populate('companyId', 'companyName uploadLogo')
+      .populate('authorId', 'fullName email')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip(skip);
@@ -82,8 +82,8 @@ exports.getCompanyBlogs = async (req, res) => {
     logger.info(`Fetching blogs for company: ${companyId} with query: ${JSON.stringify(query)}`);
     
     const blogs = await Blog.find(query)
-      .populate('authorId', 'name email')
-      .populate('companyId', 'name logo')
+      .populate('authorId', 'fullName email')
+      .populate('companyId', 'companyName uploadLogo')
       .sort({ createdAt: -1 })
       .lean();
     
@@ -121,8 +121,8 @@ exports.getBlogById = async (req, res) => {
     }
     
     const blog = await Blog.findById(id)
-      .populate('companyId', 'name logo website location')
-      .populate('authorId', 'name email');
+      .populate('companyId', 'companyName uploadLogo website location')
+      .populate('authorId', 'fullName email');
     
     if (!blog) {
       return res.status(404).json({
@@ -163,6 +163,10 @@ exports.getBlogById = async (req, res) => {
 // @access  Private (Recruiter only)
 exports.createBlog = async (req, res) => {
   try {
+    logger.info('=== CREATE BLOG REQUEST ===');
+    logger.info(`User: ${JSON.stringify({ id: req.user?._id, role: req.user?.role, fullName: req.user?.fullName })}`);
+    logger.info(`Body: ${JSON.stringify(req.body)}`);
+    
     const { title, description, content, category, image, status, companyId } = req.body;
     
     // Validation
@@ -193,6 +197,8 @@ exports.createBlog = async (req, res) => {
     const Company = require('../models/company.model');
     const company = await Company.findById(companyId);
     
+    logger.info(`Company found: ${JSON.stringify({ id: company?._id, companyName: company?.companyName, recruiterId: company?.recruiterId })}`);
+    
     if (!company) {
       return res.status(404).json({
         success: false,
@@ -209,6 +215,7 @@ exports.createBlog = async (req, res) => {
     }
     
     // Create blog
+    logger.info('Creating blog document...');
     const blog = await Blog.create({
       title,
       description,
@@ -220,11 +227,21 @@ exports.createBlog = async (req, res) => {
       authorId: req.user._id
     });
     
+    logger.info(`Blog created with ID: ${blog._id}`);
+    
     // Populate fields for response
-    await blog.populate([
-      { path: 'companyId', select: 'name logo' },
-      { path: 'authorId', select: 'name email' }
-    ]);
+    try {
+      logger.info('Populating blog fields...');
+      await blog.populate([
+        { path: 'companyId', select: 'companyName uploadLogo' },
+        { path: 'authorId', select: 'fullName email' }
+      ]);
+      logger.info('Blog populated successfully');
+    } catch (populateError) {
+      logger.error(`Populate error: ${populateError.message}`);
+      logger.error(`Stack: ${populateError.stack}`);
+      // Return blog without populate if it fails
+    }
     
     logger.info(`Blog created: ${blog._id} by user ${req.user._id}`);
     
@@ -235,6 +252,7 @@ exports.createBlog = async (req, res) => {
     });
   } catch (error) {
     logger.error(`Error in createBlog: ${error.message}`);
+    logger.error(`Stack trace: ${error.stack}`);
     res.status(500).json({
       success: false,
       message: 'Error creating blog',
@@ -290,8 +308,8 @@ exports.updateBlog = async (req, res) => {
       updates,
       { new: true, runValidators: true }
     ).populate([
-      { path: 'companyId', select: 'name logo' },
-      { path: 'authorId', select: 'name email' }
+      { path: 'companyId', select: 'companyName uploadLogo' },
+      { path: 'authorId', select: 'fullName email' }
     ]);
     
     logger.info(`Blog updated: ${id} by user ${req.user._id}`);
