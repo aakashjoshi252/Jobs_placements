@@ -1,26 +1,19 @@
 const express = require('express');
 const blogRouter = express.Router();
 const { protect } = require('../middlewares/auth.middleware');
+const { uploadBlogImage } = require('../config/cloudinary');
 const blogController = require('../controllers/blog.controller');
-
-// Import multer configurations from cloudinary config
-const cloudinaryConfig = require('../config/cloudinary');
-const uploadBlogImage = cloudinaryConfig.uploadBlogImage;
 
 // Public routes - specific routes BEFORE dynamic :id
 blogRouter.get('/', blogController.getAllBlogs);
 
 // Image upload route - MUST come before /:id
-if (uploadBlogImage) {
-  blogRouter.post(
-    '/upload-image',
-    protect,
-    uploadBlogImage.single('image'),
-    blogController.uploadBlogImage
-  );
-} else {
-  console.error('❌ uploadBlogImage middleware is undefined!');
-}
+blogRouter.post(
+  '/upload-image',
+  protect,
+  uploadBlogImage.single('image'),
+  blogController.uploadBlogImage
+);
 
 // Protected specific routes - MUST come before /:id to avoid conflicts
 blogRouter.get('/company/:companyId', protect, blogController.getCompanyBlogs);
