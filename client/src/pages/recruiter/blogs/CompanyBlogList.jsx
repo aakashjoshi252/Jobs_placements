@@ -59,12 +59,12 @@ export default function CompanyBlogList() {
 
   const handleDelete = async (blogId) => {
     if (!window.confirm("Are you sure you want to delete this blog post?")) return;
-    if (!companyId) return;
 
     try {
-      // ✅ Clean API endpoint
-      await blogApi.delete(`/company/${companyId}/blogs/${blogId}`);
+      // ✅ Correct API endpoint: DELETE /api/v1/blog/:id
+      await blogApi.delete(`/${blogId}`);
       setBlogs((prev) => prev.filter((blog) => blog._id !== blogId));
+      alert('✅ Blog deleted successfully!');
     } catch (error) {
       console.error("Error deleting blog:", error);
       alert("Failed to delete blog. Please try again.");
@@ -123,7 +123,7 @@ export default function CompanyBlogList() {
                 <HiNewspaper className="text-3xl" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">{company?.name || "Company"} Blog Posts</h1>
+                <h1 className="text-3xl font-bold">{company?.companyName || "Company"} Blog Posts</h1>
                 <p className="text-emerald-100 mt-1">Share your company's journey, achievements, and culture</p>
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function CompanyBlogList() {
             {blogs.length === 0 && (
               <button
                 onClick={() => navigate("/recruiter/blogs/create")}
-                className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold flex items-center gap-2"
+                className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold gap-2"
               >
                 <HiPlus />
                 Create Your First Blog Post
