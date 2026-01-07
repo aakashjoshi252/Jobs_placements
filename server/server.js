@@ -1,4 +1,5 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
@@ -38,8 +39,8 @@ const port = process.env.PORT || 3000;
 const nodeEnv = process.env.NODE_ENV || 'development';
 
 /* ================= DATABASE CONNECTION ================= */
-// FIXED: Properly call the database connection function
-connectDb;
+// Call the database connection function
+connectDb();
 
 /* ================= SECURITY MIDDLEWARE ================= */
 // Helmet - Secure HTTP headers
@@ -425,8 +426,6 @@ const gracefulShutdown = (signal) => {
     logger.info('HTTP server closed');
 
     try {
-      const mongoose = require('mongoose');
-
       if (mongoose.connection.readyState !== 0) {
         mongoose.connection.close(false, () => {
           logger.info('MongoDB connection closed');
