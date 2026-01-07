@@ -12,7 +12,10 @@ import {
   HiStar,
   HiTrendingUp,
   HiUserGroup,
-  HiOfficeBuilding
+  HiOfficeBuilding,
+  HiUpload,
+  HiX,
+  HiCheckCircle
 } from "react-icons/hi";
 
 export default function CreateBlog() {
@@ -20,7 +23,11 @@ export default function CreateBlog() {
   const { user } = useSelector((state) => state.auth);
   const company = useSelector((state) => state.company.data);
   const [loading, setLoading] = useState(false);
-  console.log(company?._id)
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -28,7 +35,7 @@ export default function CreateBlog() {
     category: "news",
     image: "",
     status: "draft",
-    companyId:company?._id || "",
+    companyId: company?._id || "",
     authorId: user?._id || ""
   });
 
@@ -45,20 +52,93 @@ export default function CreateBlog() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handle file selection
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        alert('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
+        return;
+      }
+
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setSelectedFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Upload image to Cloudinary
+  const handleImageUpload = async () => {
+    if (!selectedFile) return;
+
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+
+      const formDataToUpload = new FormData();
+      formDataToUpload.append('image', selectedFile);
+
+      const response = await blogApi.post('/upload-image', formDataToUpload, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(progress);
+        }
+      });
+
+      if (response.data.success) {
+        setFormData(prev => ({ ...prev, image: response.data.imageUrl }));
+        alert('✅ Image uploaded successfully!');
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // Remove selected image
+  const handleRemoveImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setFormData(prev => ({ ...prev, image: '' }));
+  };
+
   const handleSubmit = async (status) => {
     if (!formData.title.trim() || !formData.description.trim() || !formData.content.trim()) {
       alert("Please fill in all required fields");
       return;
     }
 
+    // Upload image if selected but not uploaded yet
+    if (selectedFile && !formData.image) {
+      await handleImageUpload();
+    }
+
     try {
       setLoading(true);
       const dataToSubmit = { ...formData, status };
       
-      // Replace with your actual API endpoint
       await blogApi.post(`/`, dataToSubmit);
       
-      alert(`Blog ${status === 'published' ? 'published' : 'saved as draft'} successfully!`);
+      alert(`✅ Blog ${status === 'published' ? 'published' : 'saved as draft'} successfully!`);
       navigate("/recruiter/blogs");
     } catch (error) {
       console.error("Error creating blog:", error);
@@ -95,16 +175,16 @@ export default function CreateBlog() {
             <div className="flex gap-3">
               <button
                 onClick={() => handleSubmit('draft')}
-                disabled={loading}
-                className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium flex items-center gap-2 disabled:opacity-50"
+                disabled={loading || uploading}
+                className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <HiSave />
                 Save Draft
               </button>
               <button
                 onClick={() => handleSubmit('published')}
-                disabled={loading}
-                className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold flex items-center gap-2 disabled:opacity-50"
+                disabled={loading || uploading}
+                className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <HiEye />
                 Publish
@@ -177,32 +257,100 @@ export default function CreateBlog() {
             </div>
           </div>
 
-          {/* Image URL */}
+          {/* Image Upload Section */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Cover Image URL
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Cover Image
             </label>
-            <div className="relative">
-              <HiPhotograph className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
-              <input
-                type="url"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="https://example.com/image.jpg"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-              />
-            </div>
-            {formData.image && (
-              <div className="mt-3">
-                <img
-                  src={formData.image}
-                  alt="Preview"
-                  className="w-full h-48 object-cover rounded-lg"
-                  onError={(e) => {
-                    e.target.src = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d";
-                  }}
-                />
+            
+            {/* Upload Area */}
+            {!previewUrl && !formData.image && (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-emerald-400 transition">
+                <HiPhotograph className="mx-auto text-5xl text-gray-400 mb-3" />
+                <p className="text-gray-600 mb-2">Upload a cover image for your blog</p>
+                <p className="text-sm text-gray-500 mb-4">JPEG, PNG, WebP, or GIF • Max 10MB</p>
+                <label className="inline-block px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition cursor-pointer">
+                  <HiUpload className="inline mr-2" />
+                  Choose Image
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            )}
+
+            {/* Preview and Upload Button */}
+            {(previewUrl || formData.image) && (
+              <div className="space-y-3">
+                <div className="relative group">
+                  <img
+                    src={formData.image || previewUrl}
+                    alt="Blog cover preview"
+                    className="w-full h-64 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.target.src = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d";
+                    }}
+                  />
+                  <button
+                    onClick={handleRemoveImage}
+                    className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition opacity-0 group-hover:opacity-100"
+                  >
+                    <HiX className="text-xl" />
+                  </button>
+                </div>
+
+                {/* Upload button if file selected but not uploaded */}
+                {selectedFile && !formData.image && (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleImageUpload}
+                      disabled={uploading}
+                      className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {uploading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Uploading... {uploadProgress}%
+                        </>
+                      ) : (
+                        <>
+                          <HiUpload />
+                          Upload to Cloudinary
+                        </>
+                      )}
+                    </button>
+                    <label className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium cursor-pointer">
+                      Change
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                )}
+
+                {/* Upload progress bar */}
+                {uploading && (
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                )}
+
+                {/* Success message */}
+                {formData.image && !selectedFile && (
+                  <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg">
+                    <HiCheckCircle className="text-xl" />
+                    <span className="text-sm font-medium">Image uploaded successfully</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -233,7 +381,7 @@ export default function CreateBlog() {
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• Use a catchy, descriptive title</li>
               <li>• Keep your description concise and engaging</li>
-              <li>• Add a high-quality cover image</li>
+              <li>• Add a high-quality cover image (uploads to Cloudinary)</li>
               <li>• Structure your content with clear sections</li>
               <li>• Include specific details and examples</li>
               <li>• Proofread before publishing</li>
