@@ -357,20 +357,20 @@ process.on('unhandledRejection', (reason, promise) => {
 
 /* ================= START SERVER ================= */
 server.listen(port, '0.0.0.0', () => {
-  const dbStatus = mongoose.connection.readyState === 1 ? '✅ Connected' : '⏳ Connecting...';
+  const dbStatus = mongoose.connection.readyState === 1 ? ' Connected' : ' Connecting...';
   
-  console.log(`
-╭${'─'.repeat(63)}╮
-│ 🚀 Job Placements Portal API Server Started${' '.repeat(17)}│
-├${'─'.repeat(63)}┤
-│ 📍 Local:      http://localhost:${port}${' '.repeat(24 - port.toString().length)}│
-│ 🔧 Environment: ${nodeEnv.toUpperCase()}${' '.repeat(39 - nodeEnv.length)}│
-│ 📊 Database:    ${dbStatus}${' '.repeat(40 - dbStatus.length)}│
-│ 🔌 Socket.IO:   Enabled${' '.repeat(35)}│
-╰${'─'.repeat(63)}╯
-`);
+//   console.log(`
+// ╭${'─'.repeat(63)}╮
+// │ 🚀 Job Placements Portal API Server Started${' '.repeat(17)}│
+// ├${'─'.repeat(63)}┤
+// │ 📍 Local:      http://localhost:${port}${' '.repeat(24 - port.toString().length)}│
+// │ 🔧 Environment: ${nodeEnv.toUpperCase()}${' '.repeat(39 - nodeEnv.length)}│
+// │ 📊 Database:    ${dbStatus}${' '.repeat(40 - dbStatus.length)}│
+// │ 🔌 Socket.IO:   Enabled${' '.repeat(35)}│
+// ╰${'─'.repeat(63)}╯
+// `);
 
-  logger.info(`Server started on port ${port}`);
+  logger.info(`Server started on port http://localhost:${port}`);
 });
 
 module.exports = { app, server, io };

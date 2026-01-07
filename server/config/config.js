@@ -13,8 +13,8 @@ const connectDb = async () => {
 
     const conn = await mongoose.connect(process.env.MONGO_URL, options);
 
-    logger.info(`✅ MongoDB Connected: ${conn.connection.host}`);
-    logger.info(`📊 Database: ${conn.connection.name}`);
+    logger.info(` MongoDB Connected: ${conn.connection.host}`);
+    logger.info(` Database: ${conn.connection.name}`);
 
     // Connection event handlers
     mongoose.connection.on('error', (err) => {
@@ -31,7 +31,7 @@ const connectDb = async () => {
 
     return conn;
   } catch (error) {
-    logger.error(`❌ Database Connection Failed: ${error.message}`);
+    logger.error(` Database Connection Failed: ${error.message}`);
     logger.error(`Stack trace: ${error.stack}`);
     
     // In production, you might want to retry instead of exit
