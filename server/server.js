@@ -424,15 +424,23 @@ const gracefulShutdown = (signal) => {
   server.close(() => {
     logger.info('HTTP server closed');
 
-    // Close database connection
-    const mongoose = require('mongoose');
-    mongoose.connection.close(false, () => {
-      logger.info('MongoDB connection closed');
-      process.exit(0);
-    });
+    try {
+      const mongoose = require('mongoose');
+
+      if (mongoose.connection.readyState !== 0) {
+        mongoose.connection.close(false, () => {
+          logger.info('MongoDB connection closed');
+          process.exit(0);
+        });
+      } else {
+        process.exit(0);
+      }
+    } catch (err) {
+      logger.error('Error closing MongoDB connection:', err.message);
+      process.exit(1);
+    }
   });
 
-  // Force close after 30 seconds
   setTimeout(() => {
     logger.error('Forcing shutdown after timeout');
     process.exit(1);

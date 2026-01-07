@@ -7,11 +7,11 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 
 const BLOG_CATEGORIES = [
-  { value: 'event', label: '🎉 Company Event', color: 'blue' },
-  { value: 'achievement', label: '🏆 Achievement', color: 'yellow' },
-  { value: 'growth', label: '📈 Company Growth', color: 'green' },
-  { value: 'culture', label: '👥 Company Culture', color: 'purple' },
-  { value: 'news', label: '📰 Industry News', color: 'red' }
+  { value: 'event', label: ' Company Event', color: 'blue' },
+  { value: 'achievement', label: ' Achievement', color: 'yellow' },
+  { value: 'growth', label: ' Company Growth', color: 'green' },
+  { value: 'culture', label: ' Company Culture', color: 'purple' },
+  { value: 'news', label: ' Industry News', color: 'red' }
 ];
 
 export default function BlogDetails() {
