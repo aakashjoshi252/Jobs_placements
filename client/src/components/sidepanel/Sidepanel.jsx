@@ -79,10 +79,10 @@ export default function SidePanel({ role }) {
     const active = path && isActive(path);
     return (
       <li
-        className={`px-6 py-3 cursor-pointer rounded transition-all flex items-center gap-3 group ${
+        className={`px-6 py-3 cursor-pointer rounded-lg transition-all flex items-center gap-3 group ${
           active
-            ? "bg-blue-600 border-l-4 border-blue-400 text-white"
-            : "hover:bg-gray-800 hover:border-l-4 hover:border-blue-500 text-gray-300"
+            ? "bg-gradient-navy-teal border-l-4 border-teal-400 text-white shadow-navy"
+            : "hover:bg-navy-700 hover:border-l-4 hover:border-teal-500 text-navy-100 hover:text-white"
         }`}
         onClick={onClick}
       >
@@ -96,7 +96,7 @@ export default function SidePanel({ role }) {
     <>
       {/* Mobile Toggle Button */}
       <button
-        className={`md:hidden fixed right-4 top-20 z-[1500] p-3 rounded-lg shadow-lg bg-gray-800 text-white hover:bg-gray-700 transition-all ${
+        className={`md:hidden fixed right-4 top-20 z-[1500] p-3 rounded-lg shadow-navy-lg bg-navy-600 text-white hover:bg-navy-700 transition-all ${
           isOpen ? "rotate-180" : ""
         }`}
         onClick={() => setIsOpen(!isOpen)}
@@ -108,14 +108,14 @@ export default function SidePanel({ role }) {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-[1100]"
+          className="md:hidden fixed inset-0 bg-navy-950 bg-opacity-60 z-[1100]"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 right-0 h-screen w-72 bg-gray-900 pt-20 shadow-2xl z-[1200] transform transition-transform duration-300 ease-in-out overflow-y-auto
+        className={`fixed top-0 right-0 h-screen w-72 bg-navy-900 pt-20 shadow-navy-lg z-[1200] transform transition-transform duration-300 ease-in-out overflow-y-auto
           ${isOpen ? "translate-x-0" : "translate-x-full"} md:translate-x-0 md:left-0 md:right-auto md:static md:shadow-none md:w-64`}
       >
         {/* Panel Header */}
@@ -123,7 +123,7 @@ export default function SidePanel({ role }) {
           <h3 className="text-white font-bold text-xl mb-1">
             {role === "recruiter" ? "Recruiter Panel" : "Candidate Panel"}
           </h3>
-          <p className="text-gray-400 text-sm">
+          <p className="text-teal-300 text-sm">
             {role === "recruiter" ? "Manage your company" : "Find your dream job"}
           </p>
         </div>
@@ -229,16 +229,16 @@ export default function SidePanel({ role }) {
         </nav>
 
         {/* Bottom Actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gray-950 border-t border-gray-800">
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-navy-950 border-t border-navy-700">
           <button
-            className="w-full px-6 py-3 mb-2 text-gray-300 hover:bg-gray-800 rounded-lg transition flex items-center gap-3 font-medium"
+            className="w-full px-6 py-3 mb-2 text-navy-100 hover:bg-navy-800 rounded-lg transition flex items-center gap-3 font-medium hover:text-white"
             onClick={() => navigate("/settings")}
           >
             <HiCog className="text-xl" />
             Settings
           </button>
           <button
-            className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2 font-semibold shadow-lg"
+            className="w-full py-3 bg-gradient-coral text-white rounded-lg hover:shadow-coral transition-all flex items-center justify-center gap-2 font-semibold shadow-lg hover:scale-105"
             onClick={logoutHandler}
           >
             <HiLogout className="text-xl" />
