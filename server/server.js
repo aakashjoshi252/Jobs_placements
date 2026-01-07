@@ -27,6 +27,7 @@ const chatRoute = require('./routes/chat.route.js');
 const notificationRoute = require('./routes/notification.route.js');
 const blogRouter = require('./routes/blog.route.js');
 const healthRouter = require('./routes/health.route.js');
+const adminRouter = require('./routes/admin.route.js');
 
 // Socket.IO
 const { Server } = require('socket.io');
@@ -141,6 +142,7 @@ app.get('/', (req, res) => {
       notifications: '/api/v1/notifications',
       blog: '/api/v1/blog',
       dashboard: '/api/v1/dashboard',
+      admin: '/api/v1/admin',
     },
   });
 });
@@ -159,6 +161,7 @@ app.use(`${API_VERSION}/dashboard`, dashboardRoutes);
 app.use(`${API_VERSION}/chat`, chatRoute);
 app.use(`${API_VERSION}/notifications`, notificationRoute);
 app.use(`${API_VERSION}/blog`, blogRouter);
+app.use(`${API_VERSION}/admin`, adminRouter);
 
 /* ================= SOCKET.IO CONFIGURATION ================= */
 const io = new Server(server, {
