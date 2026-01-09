@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import {adminApi} from "../../api/api"
 import {
   Search,
   Trash2,
@@ -38,8 +38,8 @@ const JobManagement = () => {
         ...(search && { search }),
       };
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/jobs`,
+      const response = await adminApi.get(
+        `/jobs`,
         { params, withCredentials: true }
       );
 
@@ -62,7 +62,7 @@ const JobManagement = () => {
 
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/jobs/${jobId}`,
+        `/jobs/${jobId}`,
         { withCredentials: true }
       );
       fetchJobs();

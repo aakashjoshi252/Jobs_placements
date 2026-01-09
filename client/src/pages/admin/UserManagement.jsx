@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { adminApi } from '../../api/api';
 import {
   Search,
   Edit,
@@ -38,8 +38,8 @@ const UserManagement = () => {
         ...(search && { search }),
       };
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/users`,
+      const response = await adminApi.get(
+        `/users`,
         { params, withCredentials: true }
       );
 
@@ -65,8 +65,8 @@ const UserManagement = () => {
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/users/${editingUser._id}`,
+      await adminApi.put(
+        `/users/${editingUser._id}`,
         editingUser,
         { withCredentials: true }
       );
@@ -81,8 +81,8 @@ const UserManagement = () => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/users/${userId}`,
+      await adminApi.delete(
+        `/users/${userId}`,
         { withCredentials: true }
       );
       fetchUsers();

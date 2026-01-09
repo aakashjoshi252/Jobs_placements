@@ -53,7 +53,7 @@ export default function Login() {
       }
 
       if (user.role === "admin") {
-        navigate("/admin/home");
+        navigate("/admin");
       }
     } catch (err) {
       setFieldError("email", "Invalid email or password");

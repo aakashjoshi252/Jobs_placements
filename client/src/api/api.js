@@ -69,6 +69,7 @@ export const chatApi = createApiInstance(`${API_BASE_URL}/chat`, 'Chat');
 export const notificationApi = createApiInstance(`${API_BASE_URL}/notifications`, 'Notification');
 export const blogApi = createApiInstance(`${API_BASE_URL}/blog`, 'Blog');
 export const dashboardApi = createApiInstance(`${API_BASE_URL}/dashboard`, 'Dashboard');
+export const adminApi= createApiInstance(`${API_BASE_URL}/admin`, 'Admin')
 
 // Exports
 export { BASE_URL, API_BASE_URL };

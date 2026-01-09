@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import {adminApi} from "../../api/api"
 import {
   Search,
   CheckCircle,
@@ -36,8 +36,8 @@ const CompanyManagement = () => {
         ...(search && { search }),
       };
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/companies`,
+      const response = await adminApi.get(
+        `/companies`,
         { params, withCredentials: true }
       );
 
@@ -57,8 +57,8 @@ const CompanyManagement = () => {
 
   const handleVerify = async (companyId, isVerified) => {
     try {
-      await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/companies/${companyId}/verify`,
+      await adminApi.patch(
+        `/companies/${companyId}/verify`,
         { isVerified },
         { withCredentials: true }
       );
@@ -72,8 +72,8 @@ const CompanyManagement = () => {
     if (!window.confirm('Are you sure you want to delete this company?')) return;
 
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/companies/${companyId}`,
+      await adminApi.delete(
+        `/companies/${companyId}`,
         { withCredentials: true }
       );
       fetchCompanies();
