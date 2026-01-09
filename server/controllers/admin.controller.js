@@ -2,7 +2,7 @@ const User = require('../models/user.model');
 const Company = require('../models/company.model');
 const Job = require('../models/jobs.model');
 const Application = require('../models/application.model');
-const Blog = require('../models/blog.model');
+const Blog = require('../models/Blog');
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
 
