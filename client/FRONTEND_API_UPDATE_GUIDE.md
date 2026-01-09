@@ -7,8 +7,8 @@ Your frontend has been successfully updated to work with the new backend API str
 ### What Changed?
 
 1. **API Endpoints Now Use `/api/v1` Prefix**
-   - Old: `http://localhost:5000/user/login`
-   - New: `http://localhost:5000/api/v1/user/login`
+   - Old: `http://localhost:3000/user/login`
+   - New: `http://localhost:3000/api/v1/user/login`
 
 2. **Blog Route Fixed**
    - Old: `/blogs` (incorrect)
@@ -36,9 +36,9 @@ cp .env.example .env
 ### 2. Update `.env` File
 
 ```env
-VITE_API_URL=http://localhost:5000/api/v1
-VITE_API_PORT=5000
-VITE_SOCKET_URL=http://localhost:5000
+VITE_API_URL=http://localhost:3000/api/v1
+VITE_API_PORT=3000
+VITE_SOCKET_URL=http://localhost:3000
 ```
 
 ### 3. Install Dependencies (if needed)
@@ -253,27 +253,27 @@ const initializeApp = async () => {
 In development mode, you'll see detailed API logs:
 
 ```
-🌐 API Base URL: http://localhost:5000
+🌐 API Base URL: http://localhost:3000
 🔧 API Version: /api/v1
-✅ Full API URL: http://localhost:5000/api/v1
+✅ Full API URL: http://localhost:3000/api/v1
 
 📋 API Configuration:
-├─ Base URL: http://localhost:5000
+├─ Base URL: http://localhost:3000
 ├─ API Version: /api/v1
-├─ Full API URL: http://localhost:5000/api/v1
+├─ Full API URL: http://localhost:3000/api/v1
 ├─ With Credentials: true
 └─ Environment: development
 
 🔗 Available APIs:
-├─ User: http://localhost:5000/api/v1/user
-├─ Company: http://localhost:5000/api/v1/company
-├─ Jobs: http://localhost:5000/api/v1/jobs
-├─ Application: http://localhost:5000/api/v1/application
-├─ Resume: http://localhost:5000/api/v1/resume
-├─ Chat: http://localhost:5000/api/v1/chat
-├─ Notification: http://localhost:5000/api/v1/notifications
-├─ Blog: http://localhost:5000/api/v1/blog (Fixed from /blogs)
-└─ Dashboard: http://localhost:5000/api/v1/dashboard
+├─ User: http://localhost:3000/api/v1/user
+├─ Company: http://localhost:3000/api/v1/company
+├─ Jobs: http://localhost:3000/api/v1/jobs
+├─ Application: http://localhost:3000/api/v1/application
+├─ Resume: http://localhost:3000/api/v1/resume
+├─ Chat: http://localhost:3000/api/v1/chat
+├─ Notification: http://localhost:3000/api/v1/notifications
+├─ Blog: http://localhost:3000/api/v1/blog (Fixed from /blogs)
+└─ Dashboard: http://localhost:3000/api/v1/dashboard
 
 ✨ Frontend API configuration updated successfully!
 ```
@@ -283,7 +283,7 @@ In development mode, you'll see detailed API logs:
 Every API call shows:
 
 ```
-📤 [UserAPI] POST http://localhost:5000/api/v1/user/login
+📤 [UserAPI] POST http://localhost:3000/api/v1/user/login
 ✅ [UserAPI] POST /login - 200
 ```
 
@@ -335,10 +335,10 @@ const response = await userApi.post('/login', {
 # In browser console (F12)
 const testApis = async () => {
   const apis = [
-    { name: 'Health', url: 'http://localhost:5000/health' },
-    { name: 'User', url: 'http://localhost:5000/api/v1/user' },
-    { name: 'Jobs', url: 'http://localhost:5000/api/v1/jobs' },
-    { name: 'Blog', url: 'http://localhost:5000/api/v1/blog' },
+    { name: 'Health', url: 'http://localhost:3000/health' },
+    { name: 'User', url: 'http://localhost:3000/api/v1/user' },
+    { name: 'Jobs', url: 'http://localhost:3000/api/v1/jobs' },
+    { name: 'Blog', url: 'http://localhost:3000/api/v1/blog' },
   ];
 
   for (const api of apis) {
@@ -363,7 +363,7 @@ testApis();
 **Problem:** `Access-Control-Allow-Origin` errors
 
 **Solution:**
-- Ensure backend is running on `http://localhost:5000`
+- Ensure backend is running on `http://localhost:3000`
 - Check `withCredentials: true` is set in axios config
 - Verify CORS configuration in `server/server.js`
 
@@ -433,7 +433,7 @@ Your frontend is now fully configured to work with the updated backend!
 **Need Help?**
 - Check the console logs for detailed error messages
 - Review `WORKFLOW_FIXES_SUMMARY.md` for backend changes
-- Test API health: `http://localhost:5000/health`
+- Test API health: `http://localhost:3000/health`
 
 **Last Updated:** January 5, 2026  
 **Version:** 1.1.0

@@ -61,7 +61,7 @@ const JobManagement = () => {
     if (!window.confirm('Are you sure you want to delete this job?')) return;
 
     try {
-      await axios.delete(
+      await adminApi.delete(
         `/jobs/${jobId}`,
         { withCredentials: true }
       );
