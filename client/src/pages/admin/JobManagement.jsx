@@ -147,7 +147,7 @@ const JobManagement = () => {
                             {job.title}
                           </h3>
                           <p className="text-gray-600 font-medium">
-                            {job.company?.name || 'Company Name'}
+                            {job.companyId?.companyName || 'Company Name'}
                           </p>
                         </div>
                         <span
@@ -165,7 +165,7 @@ const JobManagement = () => {
                       <div className="flex flex-wrap gap-4 mb-3">
                         <div className="flex items-center text-gray-600">
                           <MapPin className="w-4 h-4 mr-1" />
-                          <span className="text-sm">{job.location}</span>
+                          <span className="text-sm">{job.jobLocation}</span>
                         </div>
                         <div className="flex items-center text-gray-600">
                           <Briefcase className="w-4 h-4 mr-1" />
@@ -174,7 +174,7 @@ const JobManagement = () => {
                         <div className="flex items-center text-gray-600">
                           <DollarSign className="w-4 h-4 mr-1" />
                           <span className="text-sm">
-                            {formatSalary(job.salaryMin, job.salaryMax)}
+                            {formatSalary(job.salary, job.salary)}
                           </span>
                         </div>
                         <div className="flex items-center text-gray-600">
@@ -211,7 +211,7 @@ const JobManagement = () => {
                           {job.applicants?.length || 0} applicants
                         </span>
                         <span>•</span>
-                        <span>Created by: {job.createdBy?.username || 'N/A'}</span>
+                        <span>Created by: {job.recruiterId?.username || 'N/A'}</span>
                       </div>
                     </div>
 

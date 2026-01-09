@@ -145,7 +145,7 @@ const CompanyManagement = () => {
                       Email
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Owner
+                      Recruiter
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -166,7 +166,7 @@ const CompanyManagement = () => {
                           {company.logo ? (
                             <img
                               src={company.logo}
-                              alt={company.name}
+                              alt={company?.companyName}
                               className="w-10 h-10 rounded-full object-cover mr-3"
                             />
                           ) : (
@@ -175,15 +175,15 @@ const CompanyManagement = () => {
                             </div>
                           )}
                           <p className="text-sm font-medium text-gray-900">
-                            {company.name}
+                            {company.companyName}
                           </p>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {company.email}
+                        {company.contactEmail}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {company.userId?.username || 'N/A'}
+                        {company.recruiterId?.username || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {company.isVerified ? (

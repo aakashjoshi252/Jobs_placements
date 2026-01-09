@@ -319,7 +319,7 @@ const getAllCompanies = async (req, res) => {
 
     const [companies, total] = await Promise.all([
       Company.find(query)
-        .populate('userId', 'username email')
+        .populate('recruiterId', 'username email')
         .sort({ [sortBy]: sortOrder })
         .skip(skip)
         .limit(parseInt(limit)),
@@ -444,8 +444,8 @@ const getAllJobs = async (req, res) => {
 
     const [jobs, total] = await Promise.all([
       Job.find(query)
-        .populate('company', 'name email logo')
-        .populate('createdBy', 'username email')
+        .populate('companyId', 'companyName email')
+        .populate('recruiterId', 'username email')
         .sort({ [sortBy]: sortOrder })
         .skip(skip)
         .limit(parseInt(limit)),
