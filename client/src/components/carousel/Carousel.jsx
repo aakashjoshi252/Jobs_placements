@@ -20,7 +20,7 @@ export default function Carousel() {
   }, [images.length]);
 
   return (
-    <div className="relative w-full overflow-hidden h-64 md:h-80 lg:h-[450px]">
+    <div className="relative  w-full overflow-hidden h-64 md:h-80 lg:h-[450px]">
       {/* Slider */}
       <div
         className="flex transition-transform duration-700 ease-in-out"

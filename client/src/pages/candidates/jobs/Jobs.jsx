@@ -133,8 +133,8 @@ export default function Jobs() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12 px-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12 px-6 mt-4">
+        <div className="max-w-7xl  mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <GiJewelCrown className="text-6xl" />
             <div>
