@@ -2,8 +2,8 @@ import { FiChevronsRight } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../../redux/slices/authSlice";
-import { companyApi, resumeApi } from "../../api/api";
+import { logout as logoutAction} from "../../redux/slices/authSlice";
+import { companyApi, resumeApi ,userApi } from "../../api/api";
 import { setResume } from "../../redux/slices/resumeSlice";
 import { setCompany } from "../../redux/slices/companySlice";
 import {
@@ -66,12 +66,21 @@ export default function SidePanel({ role }) {
     fetchCandidateResume();
   }, [loggedUser?._id, role, dispatch]);
 
-  const logoutHandler = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      dispatch(logout());
-      navigate("/login");
-    }
-  };
+   const logoutHandler = async () => {
+     if (!window.confirm("Are you sure you want to logout?")) return;
+     
+     try {
+       await userApi.post("/logout");
+       dispatch(logoutAction()); // Now calls Redux action
+       // Clear specific auth items only
+       localStorage.removeItem('token'); // Adjust key as per your storage
+       sessionStorage.removeItem('token');
+     } catch (err) {
+       console.error("Logout failed:", err);
+     } finally {
+       navigate("/");
+     }
+   };
 
   const isActive = (path) => location.pathname.includes(path);
 
