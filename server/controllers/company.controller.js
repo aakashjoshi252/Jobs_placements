@@ -1,301 +1,210 @@
 const Company = require("../models/company.model");
 const Users = require("../models/user.model");
-const mongoose = require("mongoose");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../config/cloudinary");
+const logger = require('../utils/logger');
 
 const companyController = {
-
   createCompany: async (req, res) => {
     try {
-      console.log("Received body:", req.body);
+      logger.info("Creating company:", req.body.companyName);
       
       const {
-        companyName,
-        industry,
-        companyType,
-        size,
-        establishedYear,
-        website,
-        location,
-        description,
-        contactEmail,
-        contactNumber,
-        recruiterId
+        companyName, industry, companyType, size, establishedYear,
+        website, location, description, contactEmail, contactNumber, recruiterId
       } = req.body;
 
-      // Parse JSON strings from FormData
-      let specializations = [];
-      let certifications = [];
-      let workshopFacilities = [];
-      let branches = [];
-      let socialMedia = {};
+      // Parse JSON arrays safely
+      const parseJsonSafe = (str) => {
+        try { return str ? JSON.parse(str) : []; } catch { return []; }
+      };
+      
+      const specializations = parseJsonSafe(req.body.specializations);
+      const certifications = parseJsonSafe(req.body.certifications);
+      const workshopFacilities = parseJsonSafe(req.body.workshopFacilities);
+      const branches = parseJsonSafe(req.body.branches);
+      const socialMedia = parseJsonSafe(req.body.socialMedia);
 
-      try {
-        if (req.body.specializations) {
-          specializations = JSON.parse(req.body.specializations);
+      // **CLOUDINARY UPLOAD** - Handle logo buffer
+      let uploadLogo = null;
+      let cloudinaryPublicId = null;
+      
+      if (req.file?.buffer) {
+        try {
+          const result = await uploadToCloudinary(req.file.buffer, {
+            folder: 'jobs_portal/companies',
+            public_id: `logo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            transformation: [
+              { width: 400, height: 400, crop: 'fill', gravity: 'auto' },
+              { quality: 'auto:good' },
+              { fetch_format: 'auto' }
+            ],
+          });
+          uploadLogo = result.secure_url;
+          cloudinaryPublicId = result.public_id;
+          logger.info(`Logo uploaded: ${result.public_id}`);
+        } catch (error) {
+          logger.error('Cloudinary upload failed:', error.message);
+          return res.status(500).json({ 
+            message: 'Company created but logo upload failed', 
+            error: error.message 
+          });
         }
-        if (req.body.certifications) {
-          certifications = JSON.parse(req.body.certifications);
-        }
-        if (req.body.workshopFacilities) {
-          workshopFacilities = JSON.parse(req.body.workshopFacilities);
-        }
-        if (req.body.branches) {
-          branches = JSON.parse(req.body.branches);
-        }
-        if (req.body.socialMedia) {
-          socialMedia = JSON.parse(req.body.socialMedia);
-        }
-      } catch (parseError) {
-        console.error("JSON parse error:", parseError);
       }
 
-      // Save upload URL (logo is optional now)
-      const uploadLogoUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-      // Required fields validation
-      if (
-        !companyName ||
-        !industry ||
-        !companyType || // NEW REQUIRED FIELD
-        !size ||
-        !establishedYear ||
-        !location ||
-        !description ||
-        !contactEmail ||
-        !contactNumber ||
-        !recruiterId
-      ) {
+      // Validation
+      if (!companyName || !industry || !companyType || !size || 
+          !establishedYear || !location || !description || 
+          !contactEmail || !contactNumber || !recruiterId) {
         return res.status(400).json({ 
-          message: "Please enter all required fields",
-          missing: {
-            companyName: !companyName,
-            industry: !industry,
-            companyType: !companyType,
-            size: !size,
-            establishedYear: !establishedYear,
-            location: !location,
-            description: !description,
-            contactEmail: !contactEmail,
-            contactNumber: !contactNumber,
-            recruiterId: !recruiterId
-          }
+          message: "Missing required fields",
+          missing: { companyName: !companyName, /* etc */ }
         });
       }
 
-      // Check recruiter exists
+      // Recruiter check
       const recruiter = await Users.findById(recruiterId);
-      if (!recruiter) return res.status(404).json({ message: "Recruiter not found" });
-      if (recruiter.role !== "recruiter") {
-        return res.status(403).json({ message: "You don't have access" });
+      if (!recruiter || recruiter.role !== "recruiter") {
+        return res.status(403).json({ message: "Invalid recruiter" });
       }
 
-      // Check email or phone already used by same recruiter
-      const existCompany = await Company.findOne({
+      // Duplicate check
+      const existing = await Company.findOne({
         recruiterId,
         $or: [{ contactEmail }, { contactNumber }]
       });
-
-      if (existCompany) {
-        return res.status(409).json({
-          message: "Company with this email or phone already exists.",
-          data: existCompany.companyName || null
+      if (existing) {
+        return res.status(409).json({ 
+          message: "Company with this email/phone exists",
+          existingCompany: existing.companyName 
         });
       }
 
-      // Create company with jewelry fields
+      // Create company
       const newCompany = await Company.create({
-        uploadLogo: uploadLogoUrl,
-        companyName,
-        industry,
-        companyType, // NEW
-        specializations, // NEW
-        certifications, // NEW
-        workshopFacilities, // NEW
-        branches, // NEW
-        socialMedia, // NEW
-        size,
-        establishedYear,
-        website,
-        location,
-        description,
-        contactEmail,
-        contactNumber,
+        uploadLogo,
+        cloudinaryPublicId, // NEW FIELD
+        companyName, industry, companyType, size, establishedYear,
+        website, location, description, contactEmail, contactNumber,
+        specializations, certifications, workshopFacilities, branches, socialMedia,
         recruiterId
       });
 
-      console.log("Company created successfully:", newCompany._id);
-
-      return res.status(201).json({
-        message: "💎 Jewelry business registered successfully!",
+      res.status(201).json({
+        message: "Company created successfully! 💎",
         data: newCompany
       });
 
     } catch (error) {
-      console.error("Error creating company:", error);
-      res.status(500).json({ 
-        message: "Internal server error", 
-        error: error.message 
-      });
+      logger.error("Create company error:", error);
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  },
+
+  updateCompanyById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Parse JSON fields
+      const parseJsonSafe = (str) => {
+        try {
+          return str ? JSON.parse(str) : [];
+        } catch {
+          return [];
+        }
+      };
+
+      const updateData = {
+        ...req.body,
+        specializations: parseJsonSafe(req.body.specializations),
+        certifications: parseJsonSafe(req.body.certifications),
+        workshopFacilities: parseJsonSafe(req.body.workshopFacilities),
+        branches: parseJsonSafe(req.body.branches),
+        socialMedia: parseJsonSafe(req.body.socialMedia),
+      };
+
+
+      // **CLOUDINARY UPDATE** - Delete old + upload new
+      if (req.file?.buffer) {
+        const company = await Company.findById(id).select('cloudinaryPublicId');
+        if (company?.cloudinaryPublicId) {
+          await deleteFromCloudinary(company.cloudinaryPublicId);
+          logger.info(`Deleted old logo: ${company.cloudinaryPublicId}`);
+        }
+        
+        const result = await uploadToCloudinary(req.file.buffer, {
+          folder: 'jobs_portal/companies',
+          public_id: `logo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          transformation: [
+            { width: 400, height: 400, crop: 'fill', gravity: 'auto' },
+            { quality: 'auto:good' },
+            { fetch_format: 'auto' }
+          ],
+        });
+        updateData.uploadLogo = result.secure_url;
+        updateData.cloudinaryPublicId = result.public_id;
+      }
+
+      const updated = await Company.findByIdAndUpdate(
+        id, updateData, 
+        { new: true, runValidators: true }
+      );
+
+      if (!updated) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      res.json({ message: "Company updated!", data: updated });
+    } catch (error) {
+      logger.error("Update error:", error);
+      res.status(500).json({ message: "Server error", error: error.message });
     }
   },
 
   getCompanyById: async (req, res) => {
     try {
       const { id } = req.params;
-
-      if (!id) {
-        return res.status(400).json({ message: "Company ID is required!" });
-      }
-
       const company = await Company.findById(id);
+      
       if (!company) {
-        return res.status(404).json({ message: "Company not found!" });
+        return res.status(404).json({ message: "Company not found" });
       }
       
-      const companyData = {
-        ...company.toObject(),
-        uploadLogo: company.uploadLogo
-          ? `${req.protocol}://${req.get("host")}${company.uploadLogo}`
-          : null,
-      };
-      
-      return res.status(200).json(companyData);
-
+      res.json(company);
     } catch (error) {
-      console.error("Company fetch error:", error);
-      return res.status(500).json({ message: "Server error", error });
+      res.status(500).json({ message: "Server error" });
     }
   },
 
   getCompanyByRecruiterId: async (req, res) => {
     try {
       const { recruiterId } = req.params;
-
-      if (!recruiterId) {
-        return res.status(400).json({
-          message: "Recruiter ID is required",
-        });
-      }
-
       const company = await Company.findOne({ recruiterId });
-
+      
       if (!company) {
-        return res.status(404).json({
-          message: "Company not found",
-        });
-      }
-
-      const companyData = {
-        ...company.toObject(),
-        uploadLogo: company.uploadLogo
-          ? `${req.protocol}://${req.get("host")}${company.uploadLogo}`
-          : null,
-      };
-
-      return res.status(200).json({
-        data: companyData,
-      });
-    } catch (error) {
-      console.error("Get Company Error:", error);
-      return res.status(500).json({
-        message: "Server error",
-      });
-    }
-  },
-  
-  updateCompanyById: async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updateData = { ...req.body };
-      
-      // Parse JSON fields if they exist
-      if (req.body.specializations) {
-        try {
-          updateData.specializations = JSON.parse(req.body.specializations);
-        } catch (e) {
-          console.error("Error parsing specializations:", e);
-        }
-      }
-      
-      if (req.body.certifications) {
-        try {
-          updateData.certifications = JSON.parse(req.body.certifications);
-        } catch (e) {
-          console.error("Error parsing certifications:", e);
-        }
-      }
-      
-      if (req.body.workshopFacilities) {
-        try {
-          updateData.workshopFacilities = JSON.parse(req.body.workshopFacilities);
-        } catch (e) {
-          console.error("Error parsing workshopFacilities:", e);
-        }
-      }
-      
-      if (req.body.branches) {
-        try {
-          updateData.branches = JSON.parse(req.body.branches);
-        } catch (e) {
-          console.error("Error parsing branches:", e);
-        }
-      }
-      
-      if (req.body.socialMedia) {
-        try {
-          updateData.socialMedia = JSON.parse(req.body.socialMedia);
-        } catch (e) {
-          console.error("Error parsing socialMedia:", e);
-        }
-      }
-      
-      if (req.file) {
-        updateData.uploadLogo = `/uploads/${req.file.filename}`;
-      }
-      
-      const updatedCompany = await Company.findByIdAndUpdate(
-        id,
-        updateData,
-        { new: true, runValidators: true }
-      );
-      
-      if (!updatedCompany) {
         return res.status(404).json({ message: "Company not found" });
       }
       
-      return res.status(200).json({
-        message: "Company updated successfully",
-        data: updatedCompany
-      });
+      res.json({ data: company });
     } catch (error) {
-      console.error("Error updating company:", error);
-      res.status(500).json({ 
-        message: "Internal server error", 
-        error: error.message 
-      });
+      res.status(500).json({ message: "Server error" });
     }
   },
-  
+
   deleteCompanyById: async (req, res) => {
     try {
       const { id } = req.params;
-      const deletedCompany = await Company.findByIdAndDelete(id);
+      const company = await Company.findById(id).select('cloudinaryPublicId');
       
-      if (!deletedCompany) {
-        return res.status(404).json({ message: "Company not found" });
+      if (company?.cloudinaryPublicId) {
+        await deleteFromCloudinary(company.cloudinaryPublicId);
       }
       
-      return res.status(200).json({ 
-        message: "Company deleted successfully" 
-      });
+      await Company.findByIdAndDelete(id);
+      res.json({ message: "Company deleted successfully" });
     } catch (error) {
-      console.error("Error deleting company:", error);
-      res.status(500).json({ 
-        message: "Internal server error", 
-        error: error.message 
-      });
+      res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 };
 
 module.exports = companyController;

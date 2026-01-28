@@ -103,7 +103,7 @@ export default function CreateBlog() {
 
       if (response.data.success) {
         setFormData(prev => ({ ...prev, image: response.data.imageUrl }));
-        alert('✅ Image uploaded successfully!');
+        alert(' Image uploaded successfully!');
       }
     } catch (error) {
       console.error('Image upload error:', error);

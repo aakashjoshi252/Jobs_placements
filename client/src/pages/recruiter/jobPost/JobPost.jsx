@@ -538,7 +538,7 @@ export default function JobPost() {
             type="submit"
             className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-semibold shadow-lg hover:shadow-xl"
           >
-            💎 Post Jewelry Job
+             Post Jewelry Job
           </button>
 
           <button
@@ -551,5 +551,5 @@ export default function JobPost() {
         </div>
       </form>
     </div>
-  );
+  );  
 }
